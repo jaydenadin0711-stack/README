@@ -42,4 +42,4 @@ The logo is currently an SVG recreation. To use the actual logo file:
 
 ## Updating the TikTok link
 
-The TikTok links point to `https://www.tiktok.com/@ripssociety`. If the handle is different, search-and-replace that URL in `index.html`.
+The TikTok links point to `https://www.tiktok.com/@rips.society`. If the handle changes, search-and-replace that URL in `index.html`.
