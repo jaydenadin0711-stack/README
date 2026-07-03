@@ -10,7 +10,7 @@ Single-page website for **Rips Society**, a Las Vegas based sports card breaking
   - [Whatnot — @ripssocietylive](https://www.whatnot.com/user/ripssocietylive) — Pokémon, baseball, basketball singles + occasional soccer breaks
   - [Fanatics Live](https://www.fanatics.live/shows/4794c551-7fbc-4ebb-a386-7c6cc098f395) — PYT (Pick Your Team) breaks
   - TikTok — Pokémon breaks (character breaks, Rip Till You Hit, energy breaks)
-- **Sports Breaks** — PYT, Random Team Spin, $1 Singles, plus baseball / basketball / soccer
+- **Sports Breaks** — PYT, Random Team Spin, $1 Singles, plus baseball / basketball / football / soccer
 - **Pokémon Breaks** — Character Breaks, Rip Till You Hit, Energy Breaks
 - **Follow** panel with [Instagram — @ripssociety](https://www.instagram.com/ripssociety/) and every channel link
 - Scroll effects throughout: scroll-progress bar, word-by-word manifesto reveal, sticky stacking channel cards, parallax crack texture, marquees, count-up stats, staggered section reveals
