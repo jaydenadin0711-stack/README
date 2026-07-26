@@ -1,12 +1,12 @@
 /* ============================================================
-   Rips Society — shared store logic
+   TCSC — Twin City to Sin City Cards — shared store logic
    Cart is stored in localStorage. Products load from
    data/products.json (served statically or by the Node server).
    ============================================================ */
 (function (global) {
   'use strict';
 
-  var CART_KEY = 'rips_cart_v1';
+  var CART_KEY = 'tcsc_cart_v1';
   var API_BASE = ''; // same origin — the Node server mounts /api here
 
   /* ---------------- products ---------------- */
@@ -59,11 +59,13 @@
         '<g opacity="0.14" font-size="26" fill="#f4f1ec">' +
           '<text x="26" y="270">♠</text><text x="352" y="46">♦</text>' +
         '</g>' +
-        '<rect x="130" y="52" width="140" height="196" rx="10" fill="#0b0b0d" stroke="' + glow + '" stroke-opacity="0.75" stroke-width="2"/>' +
-        '<rect x="141" y="63" width="118" height="174" rx="6" fill="none" stroke="#f4f1ec" stroke-opacity="0.22" stroke-width="1"/>' +
-        '<text x="200" y="168" text-anchor="middle" font-size="64">' + em + '</text>' +
-        '<text x="200" y="222" text-anchor="middle" font-family="Arial Black, Arial, sans-serif" font-weight="900" font-size="13" letter-spacing="3" fill="#f4f1ec" opacity="0.85">RIPS</text>' +
-        '<circle cx="200" cy="90" r="4" fill="' + glow + '"/>' +
+        '<rect x="128" y="46" width="144" height="208" rx="10" fill="#0b0b0d" stroke="' + glow + '" stroke-opacity="0.8" stroke-width="2.5"/>' +
+        '<rect x="138" y="56" width="124" height="30" rx="4" fill="#15151c" stroke="' + glow + '" stroke-opacity="0.5" stroke-width="1"/>' +
+        '<text x="146" y="76" font-family="Arial Black, Arial, sans-serif" font-weight="900" font-size="13" letter-spacing="1" fill="#eceaf1">TCSC</text>' +
+        '<text x="254" y="77" text-anchor="end" font-family="Arial Black, Arial, sans-serif" font-weight="900" font-size="16" fill="' + glow + '">10</text>' +
+        '<rect x="138" y="94" width="124" height="150" rx="5" fill="none" stroke="#eceaf1" stroke-opacity="0.2" stroke-width="1"/>' +
+        '<text x="200" y="185" text-anchor="middle" font-size="58">' + em + '</text>' +
+        '<text x="200" y="230" text-anchor="middle" font-family="Arial Black, Arial, sans-serif" font-weight="900" font-size="11" letter-spacing="4" fill="#eceaf1" opacity="0.6">GRADED</text>' +
       '</svg>';
   }
 
@@ -135,11 +137,16 @@
   }
 
   /* ---------------- product card renderer ---------------- */
+  function badgeClass(badge) {
+    if (badge === 'Jackpot' || badge === '$1' || badge === 'High Roller') return ' gold';
+    if (badge === 'Home Team' || badge === 'Vault' || badge === 'Duo') return ' purple';
+    return '';
+  }
   function productCardHTML(catalog, p) {
     var priceParts = Number(p.price).toFixed(2).split('.');
     return '' +
       '<article class="p-card">' +
-        (p.badge ? '<span class="p-badge' + (p.badge === 'Jackpot' || p.badge === '$1' ? ' gold' : '') + '">' + p.badge + '</span>' : '') +
+        (p.badge ? '<span class="p-badge' + badgeClass(p.badge) + '">' + p.badge + '</span>' : '') +
         '<div class="art">' + artFor(p) + '</div>' +
         '<div class="info">' +
           '<div class="cat">' + categoryLabel(catalog, p.category) + '</div>' +

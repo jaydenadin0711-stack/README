@@ -1,5 +1,5 @@
 /* ============================================================
-   Rips Society — order notifications (email + SMS)
+   TCSC — Twin City to Sin City Cards — order notifications (email + SMS)
 
    Email: any SMTP provider via nodemailer (Gmail app password,
           Resend, SendGrid, Mailgun SMTP, etc.)
@@ -33,8 +33,8 @@ function buildEmailHTML(order) {
   return '<!doctype html><html><body style="margin:0;background:#0b0b0d;font-family:Helvetica,Arial,sans-serif">' +
     '<div style="max-width:560px;margin:0 auto;padding:32px 20px">' +
     '<div style="text-align:center;padding-bottom:24px">' +
-    '<div style="font-size:34px;font-weight:900;letter-spacing:2px;color:#f4f1ec">RIPS</div>' +
-    '<div style="font-size:13px;font-weight:800;letter-spacing:8px;color:#f4f1ec">SOCIETY</div>' +
+    '<div style="font-size:38px;font-weight:900;letter-spacing:3px;color:#eceaf1">TCSC</div>' +
+    '<div style="font-size:12px;font-weight:800;letter-spacing:2px"><span style="color:#a86bff">TWIN CITY</span><span style="color:#a9a6b4"> TO </span><span style="color:#ff4a52">SIN CITY</span><span style="color:#a9a6b4"> CARDS</span></div>' +
     '</div>' +
     '<div style="background:#121216;border:1px solid #26262c;padding:28px 24px">' +
     '<div style="font-size:22px;font-weight:900;color:#f4f1ec">You’re in — order confirmed ✅</div>' +
@@ -47,10 +47,10 @@ function buildEmailHTML(order) {
     '<div style="margin-top:18px;padding:14px;border:1px solid #26262c;color:#b9b4ab;font-size:13px;line-height:1.6">' +
     'Shipping to: <span style="color:#f4f1ec">' + order.customer.name + ', ' + order.customer.address + ', ' +
     order.customer.city + ', ' + order.customer.state + ' ' + order.customer.zip + '</span><br>' +
-    'Break spots get called out live on stream. Sealed product ships within 2 business days.' +
+    'Your order ships within 2 business days — slabs verified and padded, singles sleeved and top-loaded.' +
     '</div>' +
     '</div>' +
-    '<div style="text-align:center;padding-top:22px;color:#6d6a64;font-size:12px">Rips Society • Las Vegas, NV ♦ Rip responsibly.</div>' +
+    '<div style="text-align:center;padding-top:22px;color:#6d6a64;font-size:12px">Twin City to Sin City Cards • Twin Cities ➤ Las Vegas ♦ Ship it graded.</div>' +
     '</div></body></html>';
 }
 
@@ -75,7 +75,7 @@ async function sendEmail(opts) {
   });
 
   await transporter.sendMail({
-    from: process.env.EMAIL_FROM || ('Rips Society <' + user + '>'),
+    from: process.env.EMAIL_FROM || ('Twin City to Sin City Cards <' + user + '>'),
     to: opts.to,
     subject: opts.subject,
     text: opts.text,
@@ -112,17 +112,17 @@ async function notifyOrder(order) {
   try {
     results.email = await sendEmail({
       to: order.customer.email,
-      subject: 'Order confirmed — ' + order.id + ' | Rips Society',
+      subject: 'Order confirmed — ' + order.id + ' | Twin City to Sin City Cards',
       text:
-        'You’re in — your Rips Society order is confirmed!\n\n' +
+        'You’re in — your Twin City to Sin City Cards order is confirmed!\n\n' +
         'Order ' + order.id + '\n\n' + summary + '\n\n' +
         'Subtotal: ' + money(order.subtotal) + '\n' +
         'Shipping: ' + (order.shipping === 0 ? 'FREE' : money(order.shipping)) + '\n' +
         'Total: ' + money(order.total) + '\n\n' +
         'Shipping to: ' + order.customer.name + ', ' + order.customer.address + ', ' +
         order.customer.city + ', ' + order.customer.state + ' ' + order.customer.zip + '\n\n' +
-        'Break spots get called out live on stream. Sealed product ships within 2 business days.\n\n' +
-        '— Rips Society, Las Vegas NV',
+        'Your order ships within 2 business days — slabs verified and padded, singles sleeved and top-loaded.\n\n' +
+        '— Twin City to Sin City Cards (TCSC)',
       html: buildEmailHTML(order)
     });
   } catch (e) {
@@ -134,9 +134,9 @@ async function notifyOrder(order) {
   try {
     results.sms = await sendSMS(
       order.customer.phone,
-      'RIPS SOCIETY: Order ' + order.id + ' confirmed — ' + money(order.total) +
+      'TCSC: Order ' + order.id + ' confirmed — ' + money(order.total) +
       ' (' + order.items.reduce(function (n, it) { return n + it.qty; }, 0) + ' items). ' +
-      'Confirmation email sent to ' + order.customer.email + '. See you at the break! ♠♥♣♦'
+      'Confirmation email sent to ' + order.customer.email + '. Thanks for shopping Twin City to Sin City Cards! ♦'
     );
   } catch (e) {
     console.error('[notify] customer SMS failed:', e.message);

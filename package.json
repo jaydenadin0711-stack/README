@@ -1,8 +1,8 @@
 {
-  "name": "rips-society-store",
+  "name": "tcsc-store",
   "version": "1.0.0",
   "private": true,
-  "description": "Rips Society — Las Vegas sports card & Pokémon shop with live break spots, Stripe checkout, and email/SMS order confirmations.",
+  "description": "Twin City to Sin City Cards (TCSC) — sports card & Pokémon shop with Stripe checkout and email/SMS order confirmations.",
   "main": "server/server.js",
   "scripts": {
     "start": "node server/server.js",

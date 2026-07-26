@@ -1,7 +1,7 @@
 /* ============================================================
-   Rips Society — shared store styles
-   Brand system: ink dark theme, Anton display, Archivo body,
-   red (#e3232b) + gold (#d9a441) accents.
+   TCSC — Twin City to Sin City Cards — shared store styles
+   Brand system from the TCSC logo: black background, chrome
+   lettering, Twin City purple + Sin City red dual accents.
    ============================================================ */
 
 @font-face{
@@ -14,16 +14,19 @@
 }
 
 :root{
-  --ink:#0b0b0d;
-  --ink-2:#121216;
-  --ink-3:#1a1a20;
-  --bone:#f4f1ec;
-  --bone-dim:#b9b4ab;
+  --ink:#08080b;
+  --ink-2:#101016;
+  --ink-3:#181822;
+  --bone:#eceaf1;
+  --bone-dim:#a9a6b4;
   --red:#e3232b;
   --red-deep:#a3151b;
+  --purple:#8b30ff;
+  --purple-soft:#a86bff;
   --gold:#d9a441;
   --green:#3ecf6f;
-  --line:rgba(244,241,236,.14);
+  --line:rgba(236,234,241,.14);
+  --duo:linear-gradient(90deg,var(--purple),var(--red));
   --display:'Anton', Impact, sans-serif;
   --body:'Archivo', Helvetica, Arial, sans-serif;
 }
@@ -49,7 +52,7 @@ button{font-family:var(--body)}
 
 /* ---------- announcement bar ---------- */
 .announce{
-  background:var(--red);color:var(--bone);text-align:center;
+  background:var(--duo);color:#fff;text-align:center;
   font-size:.72rem;font-weight:800;letter-spacing:.22em;text-transform:uppercase;
   padding:.55rem 1rem;position:relative;z-index:950;
 }
@@ -153,7 +156,14 @@ h1.giant,h2.giant{
   font-size:clamp(2.4rem,6.5vw,4.8rem);line-height:.98;letter-spacing:.01em;
 }
 .giant .accent{color:var(--red)}
+.giant .accent2{color:var(--purple-soft)}
 .giant .outline{color:transparent;-webkit-text-stroke:2px var(--bone)}
+.giant .chrome{
+  background:linear-gradient(180deg,#ffffff 0%,#d7d5df 38%,#8f8c9c 52%,#e8e6ef 66%,#b9b6c4 100%);
+  -webkit-background-clip:text;background-clip:text;color:transparent;
+}
+.kicker.tc{color:var(--purple-soft)}
+.kicker.tc::before{background:var(--purple-soft)}
 .sub{color:var(--bone-dim);line-height:1.7;max-width:62ch;margin-top:1.2rem;font-size:1.02rem}
 .sub strong{color:var(--bone)}
 
@@ -176,11 +186,12 @@ h1.giant,h2.giant{
 .p-card:hover .art svg{transform:scale(1.05)}
 .p-badge{
   position:absolute;top:.7rem;left:.7rem;z-index:2;
-  background:var(--red);color:var(--bone);
+  background:var(--red);color:#fff;
   font-size:.62rem;font-weight:800;letter-spacing:.18em;text-transform:uppercase;
   padding:.32rem .6rem;
 }
 .p-badge.gold{background:var(--gold);color:var(--ink)}
+.p-badge.purple{background:var(--purple);color:#fff}
 .p-card .info{padding:1rem 1.1rem 1.2rem;display:flex;flex-direction:column;gap:.5rem;flex:1}
 .p-card .cat{font-size:.66rem;font-weight:800;letter-spacing:.24em;text-transform:uppercase;color:var(--bone-dim)}
 .p-card h3{font-size:1rem;font-weight:700;line-height:1.35;flex:1}
@@ -349,12 +360,14 @@ h1.giant,h2.giant{
 /* ---------- home extras ---------- */
 .hero-shop{
   position:relative;text-align:center;
-  padding:clamp(4.5rem,11vh,8rem) 1.5rem clamp(3.5rem,8vh,6rem);
+  padding:clamp(3.5rem,9vh,6.5rem) 1.5rem clamp(3.5rem,8vh,6rem);
   overflow:hidden;
   background:
-    radial-gradient(900px 420px at 50% -10%, rgba(227,35,43,.18), transparent 65%),
+    radial-gradient(700px 380px at 22% -8%, rgba(139,48,255,.20), transparent 62%),
+    radial-gradient(700px 380px at 78% -8%, rgba(227,35,43,.20), transparent 62%),
     var(--ink);
 }
+.hero-logo-badge{width:min(340px,64vw);margin:0 auto 1.8rem;filter:drop-shadow(0 14px 60px rgba(139,48,255,.25)) drop-shadow(0 14px 60px rgba(227,35,43,.2))}
 .hero-shop .hero-badge{
   margin-bottom:1.5rem;display:inline-flex;align-items:center;gap:.6rem;
   font-size:.72rem;font-weight:700;letter-spacing:.28em;text-transform:uppercase;
@@ -384,7 +397,7 @@ h1.giant,h2.giant{
 .marquee{
   position:relative;z-index:2;overflow:hidden;white-space:nowrap;
   border-top:1px solid var(--line);border-bottom:1px solid var(--line);
-  background:var(--red);color:var(--bone);
+  background:var(--duo);color:#fff;
 }
 .marquee-track{display:inline-flex;padding:.8rem 0;animation:scroll-x 28s linear infinite}
 .marquee-track span{
@@ -423,10 +436,36 @@ section.home-sec{padding:clamp(4rem,9vh,6.5rem) 0}
 .step p{color:var(--bone-dim);font-size:.92rem;line-height:1.65}
 .step p strong{color:var(--bone)}
 
+/* two-city split band */
+.city-band{
+  display:grid;grid-template-columns:1fr 1fr;border:1px solid var(--line);overflow:hidden;
+}
+.city-half{
+  padding:clamp(2.2rem,5vw,3.6rem);position:relative;
+}
+.city-half.tc{background:radial-gradient(500px 260px at 20% 0%, rgba(139,48,255,.22), transparent 65%), var(--ink-2)}
+.city-half.sc{background:radial-gradient(500px 260px at 80% 0%, rgba(227,35,43,.22), transparent 65%), var(--ink-2);border-left:1px solid var(--line)}
+.city-half .tag{
+  font-size:.7rem;font-weight:800;letter-spacing:.3em;text-transform:uppercase;margin-bottom:1rem;
+}
+.city-half.tc .tag{color:var(--purple-soft)}
+.city-half.sc .tag{color:#ff5a60}
+.city-half h3{
+  font-family:var(--display);font-weight:400;text-transform:uppercase;
+  font-size:clamp(1.6rem,3.6vw,2.6rem);line-height:1.02;
+}
+.city-half p{color:var(--bone-dim);line-height:1.7;margin-top:.9rem;font-size:.97rem;max-width:44ch}
+.city-half p strong{color:var(--bone)}
+@media(max-width:760px){
+  .city-band{grid-template-columns:1fr}
+  .city-half.sc{border-left:none;border-top:1px solid var(--line)}
+}
+
 .live-band{
   border:1px solid var(--line);
   background:
-    radial-gradient(700px 300px at 12% 0%, rgba(227,35,43,.16), transparent 60%),
+    radial-gradient(700px 300px at 12% 0%, rgba(139,48,255,.14), transparent 60%),
+    radial-gradient(700px 300px at 88% 100%, rgba(227,35,43,.14), transparent 60%),
     var(--ink-2);
   padding:clamp(2rem,5vw,3.5rem);
   display:grid;grid-template-columns:1.2fr 1fr;gap:2.5rem;align-items:center;

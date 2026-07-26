@@ -1,5 +1,5 @@
 /* ============================================================
-   Rips Society — store server
+   TCSC — Twin City to Sin City Cards — store server
 
    Serves the static site and provides the store API:
      POST /api/checkout          → create order + Stripe Checkout session
@@ -48,7 +48,7 @@ function saveOrders(orders) {
   fs.writeFileSync(ORDERS_FILE, JSON.stringify(orders, null, 2));
 }
 function newOrderId() {
-  return 'RS-' + Date.now().toString(36).toUpperCase() + '-' + crypto.randomBytes(2).toString('hex').toUpperCase();
+  return 'TCSC-' + Date.now().toString(36).toUpperCase() + '-' + crypto.randomBytes(2).toString('hex').toUpperCase();
 }
 function publicOrder(o) {
   return {
@@ -268,7 +268,7 @@ app.use(express.static(ROOT, { extensions: ['html'] }));
 
 app.listen(PORT, () => {
   console.log('');
-  console.log('  ♠♥ RIPS SOCIETY store server ♣♦');
+  console.log('  ◆ TCSC — TWIN CITY TO SIN CITY CARDS — store server ◆');
   console.log('  → http://localhost:' + PORT);
   console.log('  Payments: ' + (stripe ? 'STRIPE (' + (STRIPE_KEY.startsWith('sk_live') ? 'LIVE' : 'test key') + ')' : 'TEST MODE — set STRIPE_SECRET_KEY to charge real cards'));
   console.log('  Email:    ' + (process.env.SMTP_HOST ? 'SMTP configured' : 'not configured — logged to console'));
