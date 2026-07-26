@@ -1,0 +1,179 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Product — Rips Society</title>
+<meta name="description" content="Product details — Rips Society, Las Vegas sports card and Pokémon shop.">
+<link rel="preload" href="assets/fonts/anton-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/fonts/archivo-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%230b0b0d'/><text x='50' y='72' font-size='62' font-family='Arial Black,sans-serif' font-weight='900' fill='%23f4f1ec' text-anchor='middle'>R</text></svg>">
+<link rel="stylesheet" href="assets/css/site.css">
+</head>
+<body>
+
+<div class="announce">Free shipping on orders <span class="gold">$100+</span> &nbsp;◆&nbsp; Order confirmations by email &amp; text &nbsp;◆&nbsp; Live breaks weekly</div>
+
+<nav class="site-nav">
+  <a class="nav-logo" href="index.html" aria-label="Rips Society home">
+    <svg class="mark" viewBox="0 0 300 100" role="img" aria-label="Rips Society logo">
+      <text x="8" y="62" font-family="Anton, Impact, sans-serif" font-size="58" fill="#f4f1ec" letter-spacing="2">RIPS</text>
+      <text x="10" y="90" font-family="Archivo, sans-serif" font-weight="800" font-size="19" fill="#f4f1ec" letter-spacing="10">SOCIETY</text>
+    </svg>
+  </a>
+  <div class="nav-links">
+    <a href="index.html">Home</a>
+    <a href="catalog.html">Catalog</a>
+    <a href="breaks.html">Live Breaks</a>
+    <a href="contact.html">Contact</a>
+  </div>
+  <div class="nav-actions">
+    <a class="cart-link" href="cart.html">Cart <span class="cart-count empty">0</span></a>
+    <button class="menu-btn" aria-label="Open menu">☰</button>
+  </div>
+</nav>
+<div class="menu-scrim"></div>
+<aside class="mobile-menu" aria-label="Mobile menu">
+  <button class="close-menu" aria-label="Close menu">×</button>
+  <a href="index.html">Home</a>
+  <a href="catalog.html">Catalog</a>
+  <a href="breaks.html">Live Breaks</a>
+  <a href="contact.html">Contact</a>
+  <a href="cart.html">Cart</a>
+</aside>
+
+<main>
+<div class="wrap">
+  <div id="product-root">
+    <div class="page-head"><p class="sub">Loading product…</p></div>
+  </div>
+
+  <section class="home-sec" id="related-sec" style="display:none">
+    <div class="sec-head">
+      <div>
+        <div class="kicker">Keep Ripping</div>
+        <h2 class="giant">More from this <span class="accent">table.</span></h2>
+      </div>
+      <a class="more" href="catalog.html" id="related-more">View Category →</a>
+    </div>
+    <div class="grid-products" id="related-grid"></div>
+  </section>
+</div>
+</main>
+
+<footer class="site-footer">
+  <div class="foot">
+    <div>
+      <svg class="mark" viewBox="0 0 300 100" role="img" aria-label="Rips Society logo">
+        <text x="8" y="62" font-family="Anton, Impact, sans-serif" font-size="58" fill="#f4f1ec" letter-spacing="2">RIPS</text>
+        <text x="10" y="90" font-family="Archivo, sans-serif" font-weight="800" font-size="19" fill="#f4f1ec" letter-spacing="10">SOCIETY</text>
+      </svg>
+    </div>
+    <div>
+      <h5>Shop</h5>
+      <ul>
+        <li><a href="catalog.html">Full Catalog</a></li>
+        <li><a href="catalog.html?cat=breaks">Break Spots</a></li>
+        <li><a href="catalog.html?cat=wax">Sports Wax</a></li>
+        <li><a href="catalog.html?cat=pokemon">Pokémon</a></li>
+      </ul>
+    </div>
+    <div>
+      <h5>Watch Live</h5>
+      <ul>
+        <li><a href="https://www.whatnot.com/user/ripssociety" target="_blank" rel="noopener">Whatnot — @ripssociety</a></li>
+        <li><a href="https://www.whatnot.com/user/ripssocietylive" target="_blank" rel="noopener">Whatnot — @ripssocietylive</a></li>
+        <li><a href="https://www.fanatics.live/shows/4794c551-7fbc-4ebb-a386-7c6cc098f395" target="_blank" rel="noopener">Fanatics Live</a></li>
+        <li><a href="https://www.tiktok.com/@rips.society" target="_blank" rel="noopener">TikTok Live</a></li>
+      </ul>
+    </div>
+    <div>
+      <h5>Support</h5>
+      <ul>
+        <li><a href="contact.html">Contact Us</a></li>
+        <li><a href="breaks.html">About The Society</a></li>
+        <li><a href="https://www.instagram.com/ripssociety/" target="_blank" rel="noopener">Instagram — @ripssociety</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="foot-bottom">
+    <span>© <span id="yr"></span> Rips Society. All rights reserved.</span>
+    <span>Made in <span class="vegas">Las Vegas, NV</span> ♦ Rip responsibly.</span>
+  </div>
+</footer>
+
+<script src="assets/js/shop.js"></script>
+<script>
+(function(){
+  var id = new URLSearchParams(location.search).get('id');
+  var root = document.getElementById('product-root');
+
+  Shop.loadCatalog().then(function(catalog){
+    var p = id && Shop.findProduct(catalog, id);
+    if (!p) {
+      root.innerHTML = '<div class="page-head"><h1 class="giant">Card not <span class="accent">found.</span></h1>' +
+        '<p class="sub">That product isn\'t on the table anymore.</p>' +
+        '<p style="margin-top:1.5rem"><a class="btn" href="catalog.html">Back To Catalog</a></p></div>';
+      return;
+    }
+
+    document.title = p.name + ' — Rips Society';
+    var isBreak = p.category === 'breaks';
+
+    root.innerHTML =
+      '<div class="detail">' +
+        '<div class="art-big">' + Shop.artFor(p, true) + '</div>' +
+        '<div>' +
+          '<div class="kicker">' + Shop.categoryLabel(catalog, p.category) + (p.badge ? ' — ' + p.badge : '') + '</div>' +
+          '<h1>' + p.name + '</h1>' +
+          '<div class="price-big">' + Shop.money(p.price) + ' <small>USD</small></div>' +
+          '<p class="desc">' + p.desc + '</p>' +
+          '<div class="qty-row">' +
+            '<div class="qty">' +
+              '<button type="button" id="q-minus" aria-label="Decrease quantity">−</button>' +
+              '<input id="q-input" type="number" min="1" max="99" value="1" aria-label="Quantity">' +
+              '<button type="button" id="q-plus" aria-label="Increase quantity">+</button>' +
+            '</div>' +
+            '<button class="btn" id="add-btn" style="flex:1">Add To Cart</button>' +
+          '</div>' +
+          '<a class="btn gold wide" href="cart.html" id="buy-now" style="display:none">Go To Checkout →</a>' +
+          '<div class="trust">' +
+            '<div><span class="ic">✓</span><span><b>Secure card checkout</b> powered by Stripe — your card number never touches our servers.</span></div>' +
+            '<div><span class="ic">✓</span><span><b>Instant confirmation</b> by email and text message the moment your order goes through.</span></div>' +
+            (isBreak
+              ? '<div><span class="ic">✓</span><span><b>Live on stream</b> — this spot gets ripped live so you see every pull. Hits ship right after the break.</span></div>'
+              : '<div><span class="ic">✓</span><span><b>Ships protected</b> — sleeved, top-loaded, and boxed. Free shipping on orders $100+.</span></div>') +
+          '</div>' +
+        '</div>' +
+      '</div>';
+
+    var qInput = document.getElementById('q-input');
+    function clampQty(){ qInput.value = Math.max(1, Math.min(99, parseInt(qInput.value, 10) || 1)); }
+    document.getElementById('q-minus').addEventListener('click', function(){ qInput.value = Math.max(1, (parseInt(qInput.value,10)||1) - 1); });
+    document.getElementById('q-plus').addEventListener('click', function(){ qInput.value = Math.min(99, (parseInt(qInput.value,10)||1) + 1); });
+    qInput.addEventListener('change', clampQty);
+
+    document.getElementById('add-btn').addEventListener('click', function(){
+      clampQty();
+      Shop.addToCart(p.id, parseInt(qInput.value, 10));
+      Shop.toast('Added to cart — ' + Shop.cartCount() + ' item' + (Shop.cartCount() === 1 ? '' : 's'));
+      document.getElementById('buy-now').style.display = 'inline-flex';
+    });
+
+    // related products
+    var related = catalog.products.filter(function(x){ return x.category === p.category && x.id !== p.id; }).slice(0, 4);
+    if (related.length) {
+      document.getElementById('related-sec').style.display = '';
+      document.getElementById('related-more').href = 'catalog.html?cat=' + p.category;
+      var rg = document.getElementById('related-grid');
+      rg.innerHTML = related.map(function(x){ return Shop.productCardHTML(catalog, x); }).join('');
+      Shop.bindAddButtons(rg);
+    }
+  }).catch(function(e){
+    root.innerHTML = '<div class="page-head"><p class="sub">Could not load this product. Refresh to try again.</p></div>';
+    console.error(e);
+  });
+})();
+</script>
+</body>
+</html>

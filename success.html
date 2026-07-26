@@ -1,0 +1,146 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Order Confirmed — Rips Society</title>
+<meta name="robots" content="noindex">
+<link rel="preload" href="assets/fonts/anton-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/fonts/archivo-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%230b0b0d'/><text x='50' y='72' font-size='62' font-family='Arial Black,sans-serif' font-weight='900' fill='%23f4f1ec' text-anchor='middle'>R</text></svg>">
+<link rel="stylesheet" href="assets/css/site.css">
+</head>
+<body>
+
+<div class="announce">Free shipping on orders <span class="gold">$100+</span> &nbsp;◆&nbsp; Order confirmations by email &amp; text &nbsp;◆&nbsp; Live breaks weekly</div>
+
+<nav class="site-nav">
+  <a class="nav-logo" href="index.html" aria-label="Rips Society home">
+    <svg class="mark" viewBox="0 0 300 100" role="img" aria-label="Rips Society logo">
+      <text x="8" y="62" font-family="Anton, Impact, sans-serif" font-size="58" fill="#f4f1ec" letter-spacing="2">RIPS</text>
+      <text x="10" y="90" font-family="Archivo, sans-serif" font-weight="800" font-size="19" fill="#f4f1ec" letter-spacing="10">SOCIETY</text>
+    </svg>
+  </a>
+  <div class="nav-links">
+    <a href="index.html">Home</a>
+    <a href="catalog.html">Catalog</a>
+    <a href="breaks.html">Live Breaks</a>
+    <a href="contact.html">Contact</a>
+  </div>
+  <div class="nav-actions">
+    <a class="cart-link" href="cart.html">Cart <span class="cart-count empty">0</span></a>
+    <button class="menu-btn" aria-label="Open menu">☰</button>
+  </div>
+</nav>
+<div class="menu-scrim"></div>
+<aside class="mobile-menu" aria-label="Mobile menu">
+  <button class="close-menu" aria-label="Close menu">×</button>
+  <a href="index.html">Home</a>
+  <a href="catalog.html">Catalog</a>
+  <a href="breaks.html">Live Breaks</a>
+  <a href="contact.html">Contact</a>
+  <a href="cart.html">Cart</a>
+</aside>
+
+<main>
+<div class="wrap" style="padding-top:3rem;padding-bottom:3rem">
+  <div id="demo-banner-slot"></div>
+  <div class="receipt" id="receipt">
+    <div class="check">✓</div>
+    <h1>Verifying your<br>order…</h1>
+    <p class="order-id">One moment</p>
+  </div>
+  <p style="text-align:center;margin-top:2rem">
+    <a class="btn" href="catalog.html">Keep Shopping</a>
+  </p>
+</div>
+</main>
+
+<footer class="site-footer">
+  <div class="foot-bottom" style="border-top:none;margin-top:0">
+    <span>© <span id="yr"></span> Rips Society. All rights reserved.</span>
+    <span>Made in <span class="vegas">Las Vegas, NV</span> ♦ Rip responsibly.</span>
+  </div>
+</footer>
+
+<script src="assets/js/shop.js"></script>
+<script>
+(function(){
+  var params = new URLSearchParams(location.search);
+  var receipt = document.getElementById('receipt');
+
+  function line(label, value, cls){
+    return '<div class="r-line' + (cls ? ' ' + cls : '') + '"><span>' + label + '</span><span>' + value + '</span></div>';
+  }
+
+  function renderOrder(order, opts){
+    opts = opts || {};
+    var itemLines = order.items.map(function(it){
+      return line(it.name + ' × ' + it.qty, Shop.money(it.line != null ? it.line : it.price * it.qty));
+    }).join('');
+    var contactBits = [];
+    if (order.customer && order.customer.email) contactBits.push('<b>' + order.customer.email + '</b>');
+    if (order.customer && order.customer.phone) contactBits.push('a text at <b>' + order.customer.phone + '</b>');
+
+    receipt.innerHTML =
+      '<div class="check">✓</div>' +
+      '<h1>You\'re in.<br>Order confirmed.</h1>' +
+      '<p class="order-id">Order ' + order.id + '</p>' +
+      '<div class="lines">' + itemLines +
+        line('Subtotal', Shop.money(order.subtotal)) +
+        line('Shipping', order.shipping === 0 ? 'FREE' : Shop.money(order.shipping)) +
+        line('Total', Shop.money(order.total), 'total') +
+      '</div>' +
+      '<div class="notice">' +
+        (opts.demoNote
+          ? opts.demoNote
+          : '📬 Your confirmation ' + (contactBits.length ? 'is on its way to ' + contactBits.join(' and ') : 'is on its way') +
+            '. <b>Break spots get called out live on stream</b> — sealed product ships within 2 business days.') +
+      '</div>';
+  }
+
+  function fail(msg){
+    receipt.innerHTML =
+      '<div class="check" style="border-color:var(--gold);color:var(--gold);background:rgba(217,164,65,.1)">!</div>' +
+      '<h1>We couldn\'t verify<br>that order.</h1>' +
+      '<div class="notice">' + msg + '</div>';
+  }
+
+  // Case 1: local demo order (static hosting, no backend)
+  if (params.get('demo') === 'local') {
+    var raw = null;
+    try { raw = localStorage.getItem('rips_last_order'); } catch(e) {}
+    if (raw) {
+      var order = JSON.parse(raw);
+      document.getElementById('demo-banner-slot').innerHTML =
+        '<div class="demo-banner">⚠ <b>Demo checkout.</b> This preview site isn\'t connected to the payment server yet, so no card was charged and no confirmation was sent. ' +
+        'Once the store server is running with Stripe keys, this exact flow charges the card and texts/emails the confirmation automatically.</div>';
+      renderOrder(order, { demoNote: 'This was a demo order — nothing was charged and nothing ships. Connect the backend to go live.' });
+    } else {
+      fail('No recent order found on this device.');
+    }
+    return;
+  }
+
+  // Case 2: real order — confirm with the backend (verifies payment with Stripe, triggers email + SMS)
+  var orderId = params.get('order');
+  var sessionId = params.get('session_id');
+  if (!orderId) { fail('Missing order reference. If you were charged, contact us and we\'ll sort it out.'); return; }
+
+  fetch(Shop.API_BASE + '/api/checkout/confirm', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({ order: orderId, session_id: sessionId })
+  })
+  .then(function(r){ return r.json().then(function(d){ if (!r.ok) throw new Error(d.error || 'Verification failed'); return d; }); })
+  .then(function(data){
+    Shop.clearCart();
+    renderOrder(data.order, data.order.demo ? { demoNote: '🧪 <b>Test-mode order</b> — the server is running without live Stripe keys, so no real card was charged. Notifications were ' + (data.notified ? 'sent' : 'logged to the server console') + '.' } : {});
+  })
+  .catch(function(e){
+    fail('Your payment may still have gone through — check your email for a Stripe receipt, or <a href="contact.html" style="color:var(--gold)">contact us</a> with your name and we\'ll confirm your order. (' + e.message + ')');
+  });
+})();
+</script>
+</body>
+</html>

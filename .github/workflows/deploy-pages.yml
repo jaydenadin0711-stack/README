@@ -2,7 +2,9 @@ name: Deploy website to GitHub Pages
 
 on:
   push:
-    branches: [claude/rips-society-website-rmo0pl]
+    branches:
+      - claude/rips-society-website-rmo0pl
+      - claude/ecommerce-website-rebuild-rj6o35
   workflow_dispatch:
 
 permissions:

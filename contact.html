@@ -1,0 +1,158 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Contact — Rips Society | Las Vegas</title>
+<meta name="description" content="Get in touch with Rips Society — order questions, break spots, trades, and everything else. Las Vegas, NV.">
+<link rel="preload" href="assets/fonts/anton-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/fonts/archivo-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%230b0b0d'/><text x='50' y='72' font-size='62' font-family='Arial Black,sans-serif' font-weight='900' fill='%23f4f1ec' text-anchor='middle'>R</text></svg>">
+<link rel="stylesheet" href="assets/css/site.css">
+</head>
+<body>
+
+<div class="announce">Free shipping on orders <span class="gold">$100+</span> &nbsp;◆&nbsp; Order confirmations by email &amp; text &nbsp;◆&nbsp; Live breaks weekly</div>
+
+<nav class="site-nav">
+  <a class="nav-logo" href="index.html" aria-label="Rips Society home">
+    <svg class="mark" viewBox="0 0 300 100" role="img" aria-label="Rips Society logo">
+      <text x="8" y="62" font-family="Anton, Impact, sans-serif" font-size="58" fill="#f4f1ec" letter-spacing="2">RIPS</text>
+      <text x="10" y="90" font-family="Archivo, sans-serif" font-weight="800" font-size="19" fill="#f4f1ec" letter-spacing="10">SOCIETY</text>
+    </svg>
+  </a>
+  <div class="nav-links">
+    <a href="index.html">Home</a>
+    <a href="catalog.html">Catalog</a>
+    <a href="breaks.html">Live Breaks</a>
+    <a href="contact.html">Contact</a>
+  </div>
+  <div class="nav-actions">
+    <a class="cart-link" href="cart.html">Cart <span class="cart-count empty">0</span></a>
+    <button class="menu-btn" aria-label="Open menu">☰</button>
+  </div>
+</nav>
+<div class="menu-scrim"></div>
+<aside class="mobile-menu" aria-label="Mobile menu">
+  <button class="close-menu" aria-label="Close menu">×</button>
+  <a href="index.html">Home</a>
+  <a href="catalog.html">Catalog</a>
+  <a href="breaks.html">Live Breaks</a>
+  <a href="contact.html">Contact</a>
+  <a href="cart.html">Cart</a>
+</aside>
+
+<main>
+<div class="wrap">
+  <div class="page-head">
+    <div class="kicker">Contact</div>
+    <h1 class="giant">Talk to the <span class="accent">house.</span></h1>
+    <p class="sub">Order questions, break spot requests, sizing, trades — drop us a line and we'll get back to you fast. <strong>During live streams, chat is the quickest way to reach us.</strong></p>
+  </div>
+
+  <div class="contact-layout">
+    <div class="contact-info">
+      <div class="blk">
+        <h4>Based In</h4>
+        <p>Las Vegas, Nevada</p>
+        <p class="muted">Shipping nationwide, ripping worldwide.</p>
+      </div>
+      <div class="blk">
+        <h4>Catch Us Live</h4>
+        <p><a href="https://www.whatnot.com/user/ripssociety" target="_blank" rel="noopener">Whatnot — @ripssociety</a></p>
+        <p><a href="https://www.whatnot.com/user/ripssocietylive" target="_blank" rel="noopener">Whatnot — @ripssocietylive</a></p>
+        <p><a href="https://www.fanatics.live/shows/4794c551-7fbc-4ebb-a386-7c6cc098f395" target="_blank" rel="noopener">Fanatics Live</a></p>
+        <p><a href="https://www.tiktok.com/@rips.society" target="_blank" rel="noopener">TikTok — @rips.society</a></p>
+      </div>
+      <div class="blk">
+        <h4>Social</h4>
+        <p><a href="https://www.instagram.com/ripssociety/" target="_blank" rel="noopener">Instagram — @ripssociety</a></p>
+      </div>
+      <div class="blk">
+        <h4>Order Issues</h4>
+        <p class="muted">Include your order number (starts with <b style="color:var(--bone)">RS-</b>) and we'll track it down.</p>
+      </div>
+    </div>
+
+    <div class="panel">
+      <h3>Send A Message</h3>
+      <form id="contact-form" novalidate>
+        <div class="two-col">
+          <div class="field">
+            <label for="m-name">Your Name</label>
+            <input id="m-name" name="name" autocomplete="name" required>
+          </div>
+          <div class="field">
+            <label for="m-email">Email</label>
+            <input id="m-email" name="email" type="email" autocomplete="email" required>
+          </div>
+        </div>
+        <div class="field">
+          <label for="m-subject">Subject</label>
+          <select id="m-subject" name="subject">
+            <option>Order question</option>
+            <option>Break spots</option>
+            <option>Product request</option>
+            <option>Trades &amp; buying collections</option>
+            <option>Something else</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="m-msg">Message</label>
+          <textarea id="m-msg" name="message" required></textarea>
+        </div>
+        <button class="btn wide" type="submit" id="send-btn">Send Message</button>
+        <div class="form-msg" id="contact-msg"></div>
+      </form>
+    </div>
+  </div>
+</div>
+</main>
+
+<footer class="site-footer">
+  <div class="foot-bottom" style="border-top:none;margin-top:0">
+    <span>© <span id="yr"></span> Rips Society. All rights reserved.</span>
+    <span>Made in <span class="vegas">Las Vegas, NV</span> ♦ Rip responsibly.</span>
+  </div>
+</footer>
+
+<script src="assets/js/shop.js"></script>
+<script>
+(function(){
+  var form = document.getElementById('contact-form');
+  function showMsg(kind, text){
+    var el = document.getElementById('contact-msg');
+    el.className = 'form-msg ' + kind;
+    el.innerHTML = text;
+  }
+  form.addEventListener('submit', function(e){
+    e.preventDefault();
+    var name = form.name.value.trim(), email = form.email.value.trim(), msg = form.message.value.trim();
+    if (!name || !email || !msg) { showMsg('err', 'Please fill in your name, email, and a message.'); return; }
+
+    var btn = document.getElementById('send-btn');
+    btn.disabled = true; btn.textContent = 'Sending…';
+
+    fetch(Shop.API_BASE + '/api/contact', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name: name, email: email, subject: form.subject.value, message: msg })
+    })
+    .then(function(r){ return r.json().then(function(d){ if (!r.ok) throw new Error(d.error || 'Send failed'); return d; }); })
+    .then(function(){
+      form.reset();
+      showMsg('ok', '✓ Message sent — we\'ll get back to you at ' + email + ' shortly.');
+    })
+    .catch(function(){
+      // Static hosting fallback: open the visitor's own mail app instead
+      showMsg('ok', 'Opening your email app… If nothing opens, reach us through <a href="https://www.instagram.com/ripssociety/" target="_blank" rel="noopener" style="color:var(--gold)">Instagram @ripssociety</a>.');
+      var body = encodeURIComponent(msg + '\n\n— ' + name);
+      var subj = encodeURIComponent('[Rips Society] ' + form.subject.value);
+      window.location.href = 'mailto:?subject=' + subj + '&body=' + body;
+    })
+    .finally(function(){ btn.disabled = false; btn.textContent = 'Send Message'; });
+  });
+})();
+</script>
+</body>
+</html>

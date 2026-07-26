@@ -3,434 +3,60 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Rips Society — Live Sports Card &amp; Pokémon Breaks | Las Vegas</title>
-<meta name="description" content="Rips Society is a Las Vegas based sports card breaking company. Catch us live on Whatnot, Fanatics Live, and TikTok — PYT breaks, random team spins, Pokémon breaks, and $1 singles.">
+<title>Rips Society — Sports Card & Pokémon Shop | Las Vegas</title>
+<meta name="description" content="Shop break spots, sealed wax, Pokémon, singles, and mystery boxes from Rips Society — the Las Vegas live breaking company. Secure checkout, order confirmations by email and text.">
 <link rel="preload" href="assets/fonts/anton-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="preload" href="assets/fonts/archivo-latin.woff2" as="font" type="font/woff2" crossorigin>
 <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%230b0b0d'/><text x='50' y='72' font-size='62' font-family='Arial Black,sans-serif' font-weight='900' fill='%23f4f1ec' text-anchor='middle'>R</text></svg>">
-<style>
-  @font-face{
-    font-family:'Anton';font-style:normal;font-weight:400;font-display:swap;
-    src:url('assets/fonts/anton-latin.woff2') format('woff2');
-  }
-  @font-face{
-    font-family:'Archivo';font-style:normal;font-weight:100 900;font-display:swap;
-    src:url('assets/fonts/archivo-latin.woff2') format('woff2');
-  }
-  :root{
-    --ink:#0b0b0d;
-    --ink-2:#121216;
-    --ink-3:#1a1a20;
-    --bone:#f4f1ec;
-    --bone-dim:#b9b4ab;
-    --red:#e3232b;
-    --red-deep:#a3151b;
-    --gold:#d9a441;
-    --display:'Anton', Impact, sans-serif;
-    --body:'Archivo', Helvetica, Arial, sans-serif;
-  }
-  *{margin:0;padding:0;box-sizing:border-box}
-  html{scroll-behavior:smooth}
-  html,body{overflow-x:hidden;overflow-x:clip}
-  body{
-    background:var(--ink);
-    color:var(--bone);
-    font-family:var(--body);
-    -webkit-font-smoothing:antialiased;
-  }
-  ::selection{background:var(--red);color:var(--bone)}
-  a{color:inherit;text-decoration:none}
-  img,svg{max-width:100%;display:block}
-
-  /* ---------- scroll progress ---------- */
-  #progress{
-    position:fixed;top:0;left:0;height:3px;width:0%;
-    background:linear-gradient(90deg,var(--red),#ff5a4e);
-    z-index:1000;box-shadow:0 0 12px rgba(227,35,43,.8);
-  }
-
-  /* ---------- crack texture layers ---------- */
-  .cracks{
-    position:fixed;inset:-10vh -10vw;z-index:0;pointer-events:none;
-    opacity:.5;will-change:transform;
-  }
-  .cracks svg{width:100%;height:100%}
-
-  /* ---------- nav ---------- */
-  nav{
-    position:fixed;top:0;left:0;right:0;z-index:900;
-    display:flex;align-items:center;justify-content:space-between;
-    padding:1rem 1.5rem;
-    transition:background .4s ease, box-shadow .4s ease, padding .4s ease;
-  }
-  nav.scrolled{
-    background:rgba(11,11,13,.88);
-    backdrop-filter:blur(14px);-webkit-backdrop-filter:blur(14px);
-    box-shadow:0 1px 0 rgba(244,241,236,.08);
-    padding:.65rem 1.5rem;
-  }
-  .nav-logo{display:flex;align-items:center;gap:.6rem}
-  .nav-logo .mark{height:40px;width:auto}
-  .nav-links{display:flex;align-items:center;gap:1.6rem;font-weight:600;font-size:.85rem;letter-spacing:.08em;text-transform:uppercase}
-  .nav-links a{position:relative;padding:.25rem 0;color:var(--bone-dim);transition:color .25s}
-  .nav-links a:hover{color:var(--bone)}
-  .nav-links a::after{
-    content:"";position:absolute;left:0;bottom:-2px;height:2px;width:0;
-    background:var(--red);transition:width .3s ease;
-  }
-  .nav-links a:hover::after{width:100%}
-  .btn{
-    display:inline-flex;align-items:center;gap:.5rem;
-    background:var(--red);color:var(--bone);
-    font-family:var(--body);font-weight:800;font-size:.85rem;
-    letter-spacing:.1em;text-transform:uppercase;
-    padding:.8rem 1.5rem;border:none;cursor:pointer;
-    clip-path:polygon(0 0,100% 0,100% calc(100% - 10px),calc(100% - 10px) 100%,0 100%);
-    transition:transform .2s ease, background .2s ease, box-shadow .2s ease;
-  }
-  .btn:hover{background:#ff2e37;transform:translateY(-2px);box-shadow:0 8px 28px rgba(227,35,43,.4)}
-  .btn.ghost{background:transparent;box-shadow:inset 0 0 0 2px var(--bone);clip-path:none}
-  .btn.ghost:hover{background:var(--bone);color:var(--ink);box-shadow:inset 0 0 0 2px var(--bone)}
-  nav .btn{padding:.5rem 1rem;font-size:.78rem;font-weight:700;letter-spacing:.08em}
-  @media(max-width:760px){.nav-links{display:none}}
-
-  /* ---------- hero ---------- */
-  header{
-    position:relative;min-height:100svh;z-index:1;
-    display:flex;flex-direction:column;align-items:center;justify-content:center;
-    text-align:center;padding:6rem 1.5rem 4rem;overflow:hidden;
-  }
-  .hero-logo{width:min(560px,82vw);margin-bottom:1.2rem;filter:drop-shadow(0 12px 60px rgba(227,35,43,.25))}
-  .hero-tag{
-    font-size:clamp(1rem,2.2vw,1.35rem);color:var(--bone-dim);
-    max-width:34ch;line-height:1.5;font-weight:500;
-  }
-  .hero-tag strong{color:var(--bone)}
-  .hero-tag .vegas{color:var(--gold);font-weight:700}
-  .hero-ctas{display:flex;gap:1rem;margin-top:2.2rem;flex-wrap:wrap;justify-content:center}
-  .hero-badge{
-    margin-bottom:1.6rem;display:inline-flex;align-items:center;gap:.6rem;
-    font-size:.75rem;font-weight:700;letter-spacing:.28em;text-transform:uppercase;
-    color:var(--bone-dim);border:1px solid rgba(244,241,236,.2);
-    padding:.5rem 1.1rem;border-radius:99px;
-  }
-  .live-dot{width:8px;height:8px;border-radius:50%;background:var(--red);box-shadow:0 0 0 0 rgba(227,35,43,.7);animation:pulse 1.8s infinite}
-  @keyframes pulse{
-    0%{box-shadow:0 0 0 0 rgba(227,35,43,.7)}
-    70%{box-shadow:0 0 0 12px rgba(227,35,43,0)}
-    100%{box-shadow:0 0 0 0 rgba(227,35,43,0)}
-  }
-  .scroll-cue{
-    position:absolute;bottom:2rem;left:50%;transform:translateX(-50%);
-    display:flex;flex-direction:column;align-items:center;gap:.5rem;
-    font-size:.7rem;letter-spacing:.3em;text-transform:uppercase;color:var(--bone-dim);
-  }
-  .scroll-cue span.line{width:1px;height:44px;background:linear-gradient(var(--bone-dim),transparent);animation:drip 1.8s ease-in-out infinite}
-  @keyframes drip{0%{transform:scaleY(0);transform-origin:top}45%{transform:scaleY(1);transform-origin:top}55%{transform:scaleY(1);transform-origin:bottom}100%{transform:scaleY(0);transform-origin:bottom}}
-
-  /* hero entrance */
-  .rise{opacity:0;transform:translateY(36px);animation:rise 1s cubic-bezier(.2,.7,.2,1) forwards}
-  .rise.d1{animation-delay:.15s}.rise.d2{animation-delay:.35s}.rise.d3{animation-delay:.55s}.rise.d4{animation-delay:.75s}
-  @keyframes rise{to{opacity:1;transform:none}}
-
-  /* ---------- marquee ---------- */
-  .marquee{
-    position:relative;z-index:2;overflow:hidden;white-space:nowrap;
-    border-top:1px solid rgba(244,241,236,.12);border-bottom:1px solid rgba(244,241,236,.12);
-    background:var(--red);color:var(--bone);
-    transform:rotate(-1.2deg) scale(1.02);
-  }
-  .marquee.alt{background:var(--ink-2);color:var(--bone-dim);transform:rotate(1.2deg) scale(1.02)}
-  .marquee-track{display:inline-flex;padding:.85rem 0;animation:scroll-x 28s linear infinite}
-  .marquee.alt .marquee-track{animation-duration:36s;animation-direction:reverse}
-  .marquee-track span{
-    font-family:var(--display);font-size:clamp(1.1rem,2.6vw,1.7rem);
-    letter-spacing:.06em;text-transform:uppercase;padding:0 1.4rem;
-  }
-  .marquee-track .dot{color:rgba(11,11,13,.55)}
-  .marquee.alt .marquee-track .dot{color:var(--red)}
-  @keyframes scroll-x{to{transform:translateX(-50%)}}
-
-  /* ---------- generic section ---------- */
-  section{position:relative;z-index:1;padding:clamp(5rem,12vh,9rem) 1.5rem}
-  .wrap{max-width:1200px;margin:0 auto}
-  .kicker{
-    display:inline-flex;align-items:center;gap:.7rem;
-    font-size:.75rem;font-weight:800;letter-spacing:.3em;text-transform:uppercase;color:var(--red);
-    margin-bottom:1.2rem;
-  }
-  .kicker::before{content:"";width:34px;height:2px;background:var(--red)}
-  h2.giant{
-    font-family:var(--display);font-weight:400;text-transform:uppercase;
-    font-size:clamp(2.6rem,7.5vw,5.6rem);line-height:.98;letter-spacing:.01em;
-  }
-  h2.giant .accent{color:var(--red)}
-  h2.giant .outline{
-    color:transparent;-webkit-text-stroke:2px var(--bone);
-  }
-
-  /* scroll reveal */
-  .reveal{opacity:0;transform:translateY(46px);transition:opacity .9s cubic-bezier(.2,.7,.2,1),transform .9s cubic-bezier(.2,.7,.2,1)}
-  .reveal.in{opacity:1;transform:none}
-  .reveal.left{transform:translateX(-56px)}
-  .reveal.right{transform:translateX(56px)}
-  .reveal.left.in,.reveal.right.in{transform:none}
-
-  /* ---------- manifesto (word-by-word scroll reveal, 10ksb style) ---------- */
-  #about{padding-top:clamp(6rem,14vh,10rem)}
-  .manifesto{
-    font-family:var(--display);text-transform:uppercase;
-    font-size:clamp(1.9rem,5vw,3.9rem);line-height:1.16;letter-spacing:.015em;
-    max-width:1100px;
-  }
-  .manifesto .w{opacity:.13;transition:opacity .35s linear;display:inline-block}
-  .manifesto .w.lit{opacity:1}
-  .manifesto .w.red{color:var(--red)}
-  .manifesto .w.gold{color:var(--gold)}
-  .about-sub{
-    margin-top:2.4rem;max-width:62ch;color:var(--bone-dim);
-    font-size:clamp(1rem,1.6vw,1.15rem);line-height:1.7;
-  }
-  .about-sub strong{color:var(--bone)}
-
-  /* stat strip */
-  .stats{
-    display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));
-    gap:1px;background:rgba(244,241,236,.12);margin-top:4rem;
-    border:1px solid rgba(244,241,236,.12);
-  }
-  .stat{background:var(--ink);padding:2rem 1.6rem}
-  .stat .num{font-family:var(--display);font-size:clamp(2.2rem,4.5vw,3.4rem);color:var(--bone);line-height:1}
-  .stat .num em{font-style:normal;color:var(--red)}
-  .stat .lbl{margin-top:.6rem;font-size:.78rem;font-weight:700;letter-spacing:.22em;text-transform:uppercase;color:var(--bone-dim)}
-
-  /* ---------- channels: sticky stacked deck ---------- */
-  #watch .intro{max-width:760px;margin-bottom:4rem}
-  .deck{display:flex;flex-direction:column;gap:0}
-  .card{
-    position:sticky;
-    border:1px solid rgba(244,241,236,.14);
-    background:linear-gradient(160deg,var(--ink-2) 0%,var(--ink) 70%);
-    padding:clamp(1.8rem,4vw,3.2rem);
-    margin-bottom:2rem;
-    display:grid;grid-template-columns:1fr auto;gap:2rem;align-items:start;
-    box-shadow:0 -18px 50px rgba(0,0,0,.55);
-    overflow:hidden;
-  }
-  .card::before{
-    content:attr(data-index);
-    position:absolute;right:1.2rem;bottom:-1.4rem;
-    font-family:var(--display);font-size:9rem;line-height:1;
-    color:transparent;-webkit-text-stroke:1px rgba(244,241,236,.1);
-    pointer-events:none;
-  }
-  .card:nth-child(1){top:90px}
-  .card:nth-child(2){top:120px}
-  .card:nth-child(3){top:150px}
-  .card:nth-child(4){top:180px}
-  .card .platform{
-    display:inline-flex;align-items:center;gap:.55rem;
-    font-size:.72rem;font-weight:800;letter-spacing:.26em;text-transform:uppercase;
-    color:var(--ink);background:var(--bone);padding:.4rem .9rem;margin-bottom:1.2rem;
-  }
-  .card.hot .platform{background:var(--red);color:var(--bone)}
-  .card h3{
-    font-family:var(--display);font-weight:400;text-transform:uppercase;
-    font-size:clamp(1.7rem,3.6vw,2.8rem);line-height:1.02;margin-bottom:1rem;
-  }
-  .card h3 .at{color:var(--red)}
-  .card p{color:var(--bone-dim);line-height:1.7;max-width:56ch;font-size:1rem}
-  .card p strong{color:var(--bone)}
-  .card .chips{display:flex;flex-wrap:wrap;gap:.5rem;margin-top:1.3rem}
-  .chip{
-    font-size:.72rem;font-weight:700;letter-spacing:.12em;text-transform:uppercase;
-    border:1px solid rgba(244,241,236,.28);padding:.42rem .8rem;color:var(--bone-dim);
-  }
-  .chip.red{border-color:var(--red);color:var(--red)}
-  .card .go{align-self:center}
-  @media(max-width:820px){
-    .card{grid-template-columns:1fr}
-    .card .go{align-self:start}
-  }
-
-  /* ---------- breaks grids ---------- */
-  .grid-3{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:1.4rem;margin-top:3.5rem}
-  .break-card{
-    position:relative;border:1px solid rgba(244,241,236,.14);
-    background:var(--ink-2);padding:2.2rem 1.9rem 2rem;overflow:hidden;
-    transition:transform .35s cubic-bezier(.2,.7,.2,1), border-color .35s, box-shadow .35s;
-  }
-  .break-card:hover{transform:translateY(-8px);border-color:var(--red);box-shadow:0 24px 60px rgba(0,0,0,.5)}
-  .break-card::after{
-    content:"";position:absolute;left:0;top:0;height:3px;width:0;background:var(--red);
-    transition:width .45s cubic-bezier(.2,.7,.2,1);
-  }
-  .break-card:hover::after{width:100%}
-  .break-card .ico{
-    font-family:var(--display);font-size:2.4rem;color:var(--red);line-height:1;margin-bottom:1.1rem;
-  }
-  .break-card h4{
-    font-family:var(--display);font-weight:400;text-transform:uppercase;
-    font-size:1.5rem;letter-spacing:.03em;margin-bottom:.8rem;
-  }
-  .break-card p{color:var(--bone-dim);line-height:1.7;font-size:.97rem}
-  .break-card p strong{color:var(--bone)}
-  .break-card .tagline{
-    margin-top:1.2rem;font-size:.72rem;font-weight:800;letter-spacing:.24em;
-    text-transform:uppercase;color:var(--red);
-  }
-
-  /* pokemon section tint */
-  #pokemon{background:linear-gradient(180deg,transparent, rgba(227,35,43,.06) 30%, rgba(227,35,43,.06) 70%, transparent)}
-  #pokemon .platform-note{
-    margin-top:3rem;display:flex;align-items:center;gap:1rem;flex-wrap:wrap;
-    border:1px dashed rgba(244,241,236,.3);padding:1.2rem 1.5rem;color:var(--bone-dim);
-  }
-  #pokemon .platform-note strong{color:var(--bone)}
-
-  /* ---------- vegas strip banner ---------- */
-  .vegas-strip{
-    position:relative;z-index:1;text-align:center;
-    padding:clamp(5rem,14vh,9rem) 1.5rem;overflow:hidden;
-  }
-  .vegas-strip .big{
-    font-family:var(--display);text-transform:uppercase;line-height:.95;
-    font-size:clamp(3rem,11vw,9rem);
-  }
-  .vegas-strip .big .row{display:block}
-  .vegas-strip .big .fill{color:var(--bone)}
-  .vegas-strip .big .stroke{color:transparent;-webkit-text-stroke:2px rgba(244,241,236,.55)}
-  .vegas-strip .big .redfill{color:var(--red);text-shadow:0 0 44px rgba(227,35,43,.55)}
-  .vegas-strip .small{
-    margin-top:1.6rem;color:var(--gold);font-weight:700;
-    letter-spacing:.34em;text-transform:uppercase;font-size:.8rem;
-  }
-  .suits{margin-top:1.2rem;font-size:1.3rem;letter-spacing:1.2rem;color:var(--bone-dim)}
-  .suits b{color:var(--red)}
-
-  /* ---------- follow / instagram ---------- */
-  #follow .panel{
-    border:1px solid rgba(244,241,236,.14);
-    background:
-      radial-gradient(700px 300px at 85% 0%, rgba(227,35,43,.16), transparent 60%),
-      var(--ink-2);
-    padding:clamp(2.5rem,6vw,4.5rem);
-    display:grid;grid-template-columns:1.3fr 1fr;gap:3rem;align-items:center;
-  }
-  #follow h2.giant{font-size:clamp(2.2rem,5.5vw,4rem)}
-  #follow p{color:var(--bone-dim);line-height:1.7;margin-top:1.2rem;max-width:52ch}
-  #follow p strong{color:var(--bone)}
-  .follow-links{display:flex;flex-direction:column;gap:.9rem}
-  .follow-link{
-    display:flex;align-items:center;justify-content:space-between;gap:1rem;
-    border:1px solid rgba(244,241,236,.18);padding:1.05rem 1.3rem;
-    font-weight:700;letter-spacing:.06em;
-    transition:border-color .25s, background .25s, transform .25s;
-  }
-  .follow-link small{display:block;font-weight:500;color:var(--bone-dim);letter-spacing:.02em;margin-top:.15rem}
-  .follow-link .arrow{font-family:var(--display);color:var(--red);font-size:1.2rem;transition:transform .25s}
-  .follow-link:hover{border-color:var(--red);background:rgba(227,35,43,.07);transform:translateX(6px)}
-  .follow-link:hover .arrow{transform:translateX(5px)}
-  @media(max-width:860px){#follow .panel{grid-template-columns:1fr}}
-
-  /* ---------- footer ---------- */
-  footer{
-    position:relative;z-index:1;border-top:1px solid rgba(244,241,236,.12);
-    padding:3.5rem 1.5rem 2.5rem;background:#070708;
-  }
-  .foot{max-width:1200px;margin:0 auto;display:flex;flex-wrap:wrap;gap:2.5rem;justify-content:space-between;align-items:flex-start}
-  .foot .mark{height:64px}
-  .foot h5{font-size:.75rem;letter-spacing:.26em;text-transform:uppercase;color:var(--bone-dim);margin-bottom:1rem}
-  .foot ul{list-style:none;display:flex;flex-direction:column;gap:.55rem;font-size:.95rem}
-  .foot ul a{color:var(--bone-dim);transition:color .2s}
-  .foot ul a:hover{color:var(--red)}
-  .foot-bottom{
-    max-width:1200px;margin:2.8rem auto 0;padding-top:1.6rem;
-    border-top:1px solid rgba(244,241,236,.08);
-    display:flex;flex-wrap:wrap;gap:1rem;justify-content:space-between;
-    color:#6d6a64;font-size:.8rem;letter-spacing:.04em;
-  }
-  .foot-bottom .vegas{color:var(--gold)}
-
-  @media (prefers-reduced-motion: reduce){
-    *,*::before,*::after{animation-duration:.01ms !important;animation-iteration-count:1 !important;transition-duration:.01ms !important}
-    html{scroll-behavior:auto}
-    .reveal,.rise{opacity:1 !important;transform:none !important}
-    .manifesto .w{opacity:1}
-  }
-</style>
+<link rel="stylesheet" href="assets/css/site.css">
 </head>
 <body>
 
-<div id="progress"></div>
+<div class="announce">Free shipping on orders <span class="gold">$100+</span> &nbsp;◆&nbsp; Order confirmations by email &amp; text &nbsp;◆&nbsp; Live breaks weekly</div>
 
-<!-- floating crack texture (parallax) -->
-<div class="cracks" id="cracks" aria-hidden="true">
-  <svg viewBox="0 0 1440 900" preserveAspectRatio="xMidYMid slice" fill="none">
-    <g stroke="#2a2a31" stroke-width="1.4">
-      <path d="M-20 120 L180 210 L260 190 L340 300 L310 420"/>
-      <path d="M340 300 L520 330 L610 260 L780 310"/>
-      <path d="M1460 80 L1290 220 L1330 340 L1180 430 L1210 560"/>
-      <path d="M1180 430 L1000 470 L940 600 L1020 720"/>
-      <path d="M60 900 L200 760 L170 640 L320 560"/>
-      <path d="M700 920 L760 780 L900 740 L920 620"/>
-      <path d="M480 -20 L520 90 L470 180"/>
-    </g>
-    <g stroke="#e3232b" stroke-width="1.6" opacity=".38">
-      <path d="M260 190 L300 140 L390 120"/>
-      <path d="M1330 340 L1420 380"/>
-      <path d="M900 740 L980 800"/>
-    </g>
-  </svg>
-</div>
-
-<!-- ================= NAV ================= -->
-<nav id="nav">
-  <a class="nav-logo" href="#top" aria-label="Rips Society home">
+<nav class="site-nav">
+  <a class="nav-logo" href="index.html" aria-label="Rips Society home">
     <svg class="mark" viewBox="0 0 300 100" role="img" aria-label="Rips Society logo">
       <text x="8" y="62" font-family="Anton, Impact, sans-serif" font-size="58" fill="#f4f1ec" letter-spacing="2">RIPS</text>
       <text x="10" y="90" font-family="Archivo, sans-serif" font-weight="800" font-size="19" fill="#f4f1ec" letter-spacing="10">SOCIETY</text>
     </svg>
   </a>
   <div class="nav-links">
-    <a href="#about">The Society</a>
-    <a href="#watch">Where To Watch</a>
-    <a href="#breaks">Sports Breaks</a>
-    <a href="#pokemon">Pokémon</a>
-    <a href="#follow">Follow</a>
+    <a href="index.html">Home</a>
+    <a href="catalog.html">Catalog</a>
+    <a href="breaks.html">Live Breaks</a>
+    <a href="contact.html">Contact</a>
   </div>
-  <a class="btn" href="https://www.whatnot.com/user/ripssociety" target="_blank" rel="noopener">▶ Watch Live</a>
+  <div class="nav-actions">
+    <a class="cart-link" href="cart.html">Cart <span class="cart-count empty">0</span></a>
+    <button class="menu-btn" aria-label="Open menu">☰</button>
+  </div>
 </nav>
+<div class="menu-scrim"></div>
+<aside class="mobile-menu" aria-label="Mobile menu">
+  <button class="close-menu" aria-label="Close menu">×</button>
+  <a href="index.html">Home</a>
+  <a href="catalog.html">Catalog</a>
+  <a href="breaks.html">Live Breaks</a>
+  <a href="contact.html">Contact</a>
+  <a href="cart.html">Cart</a>
+</aside>
+
+<main>
 
 <!-- ================= HERO ================= -->
-<header id="top">
-  <div class="hero-badge rise d1"><span class="live-dot"></span> Live Breaks &nbsp;•&nbsp; Las Vegas, NV</div>
-
-  <svg class="hero-logo rise d2" viewBox="0 0 900 420" role="img" aria-label="Rips Society">
-    <!-- RIPS wordmark -->
-    <text x="450" y="252" text-anchor="middle" font-family="Anton, Impact, sans-serif" font-size="252" fill="#f4f1ec" letter-spacing="6">RIPS</text>
-    <!-- red rip accents echoing the logo -->
-    <!-- SOCIETY -->
-    <text x="450" y="340" text-anchor="middle" font-family="Archivo, sans-serif" font-weight="800" font-size="56" fill="#f4f1ec" letter-spacing="42">SOCIETY</text>
-    <!-- crack details -->
-    <g stroke="#3a3a42" stroke-width="2.5" fill="none">
-      <path d="M60 380 L150 340 L140 300"/>
-      <path d="M840 60 L760 120 L790 170"/>
-    </g>
-  </svg>
-
-  <p class="hero-tag rise d3">
-    Live sports card &amp; Pokémon breaks, straight out of <span class="vegas">Las Vegas</span>.
-    <strong>PYT breaks. Random team spins. Singles starting at $1.</strong>
-    Pull up a chair — every rip could hit.
+<header class="hero-shop">
+  <div class="hero-badge"><span class="live-dot"></span> Las Vegas, NV &nbsp;•&nbsp; Ships Nationwide</div>
+  <h1>The house<br><span class="accent">always rips.</span></h1>
+  <p>
+    Break spots, sealed wax, Pokémon, dollar singles, and Vegas-style mystery boxes —
+    straight from the <span class="vegas">Rips Society</span> tables in <span class="vegas">Las Vegas</span>.
+    <strong>Secure checkout, and your order confirmation hits your email and phone the second you pay.</strong>
   </p>
-
-  <div class="hero-ctas rise d4">
-    <a class="btn" href="#watch">Find Our Channels</a>
-    <a class="btn ghost" href="https://www.instagram.com/ripssociety/" target="_blank" rel="noopener">@ripssociety on IG</a>
+  <div class="hero-ctas">
+    <a class="btn" href="catalog.html">Shop The Catalog</a>
+    <a class="btn ghost" href="breaks.html">Watch Us Live</a>
   </div>
-
-  <div class="scroll-cue" aria-hidden="true">Scroll <span class="line"></span></div>
 </header>
 
 <!-- ================= MARQUEE ================= -->
@@ -438,304 +64,110 @@
   <div class="marquee-track" id="mq1"></div>
 </div>
 
-<!-- ================= ABOUT / MANIFESTO ================= -->
-<section id="about">
+<!-- ================= FEATURED ================= -->
+<section class="home-sec">
   <div class="wrap">
-    <div class="kicker reveal">The Society</div>
-    <p class="manifesto" id="manifesto">
-      We rip cards live, every week, from the entertainment capital of the world.
-      Baseball. Basketball. Football. Soccer. Pokémon.
-      Dollar starts, real hits, no gimmicks —
-      just the rush of the rip, Vegas style.
-    </p>
-    <p class="about-sub reveal">
-      <strong>Rips Society</strong> is a Las Vegas based sports card breaking company.
-      We stream live breaks across <strong>Whatnot</strong>, <strong>Fanatics Live</strong>, and
-      <strong>TikTok</strong> — running everything from <strong>Pick&nbsp;Your&nbsp;Team</strong> breaks and
-      <strong>randomized team spins</strong> to Pokémon <strong>character breaks</strong>,
-      <strong>Rip&nbsp;Till&nbsp;You&nbsp;Hit</strong>, and <strong>energy breaks</strong>.
-      And if you're hunting singles, ours start at just a dollar.
-    </p>
-
-    <div class="stats reveal">
-      <div class="stat"><div class="num"><em>$</em><span class="count" data-to="1">0</span></div><div class="lbl">Singles Start At</div></div>
-      <div class="stat"><div class="num"><span class="count" data-to="3">0</span></div><div class="lbl">Live Platforms</div></div>
-      <div class="stat"><div class="num"><span class="count" data-to="6">0</span>+</div><div class="lbl">Break Formats</div></div>
-      <div class="stat"><div class="num"><em>∞</em></div><div class="lbl">Chances To Hit</div></div>
-    </div>
-  </div>
-</section>
-
-<!-- ================= WHERE TO WATCH ================= -->
-<section id="watch">
-  <div class="wrap">
-    <div class="intro">
-      <div class="kicker reveal">Where To Watch</div>
-      <h2 class="giant reveal">Catch us <span class="accent">live.</span><br><span class="outline">Four tables, one house.</span></h2>
-    </div>
-
-    <div class="deck">
-      <!-- Whatnot main -->
-      <article class="card hot reveal" data-index="01">
-        <div>
-          <span class="platform">Whatnot — Main Channel</span>
-          <h3><span class="at">@</span>ripssociety</h3>
-          <p>
-            The flagship table. This is where we mainly stream — <strong>baseball breaks starting
-            at just $1</strong>. Dollar starts, live rips, and the best seats in the house.
-          </p>
-          <div class="chips">
-            <span class="chip red">Baseball Breaks</span>
-            <span class="chip">$1 Starts</span>
-            <span class="chip">Main Stream</span>
-          </div>
-        </div>
-        <a class="btn go" href="https://www.whatnot.com/user/ripssociety" target="_blank" rel="noopener">Watch On Whatnot</a>
-      </article>
-
-      <!-- Whatnot live -->
-      <article class="card reveal" data-index="02">
-        <div>
-          <span class="platform">Whatnot — Everything Channel</span>
-          <h3><span class="at">@</span>ripssocietylive</h3>
-          <p>
-            The whole casino floor. We run it all here — <strong>Pokémon, baseball, and basketball
-            singles</strong>, plus <strong>soccer breaks</strong> every now and then. If it rips, it's on this channel.
-          </p>
-          <div class="chips">
-            <span class="chip red">Pokémon</span>
-            <span class="chip">Baseball</span>
-            <span class="chip">Basketball Singles</span>
-            <span class="chip">Soccer Breaks</span>
-          </div>
-        </div>
-        <a class="btn go" href="https://www.whatnot.com/user/ripssocietylive" target="_blank" rel="noopener">Watch On Whatnot</a>
-      </article>
-
-      <!-- Fanatics -->
-      <article class="card reveal" data-index="03">
-        <div>
-          <span class="platform">Fanatics Live</span>
-          <h3>Rips Society on <span class="at">Fanatics</span></h3>
-          <p>
-            Our home for <strong>PYT — Pick Your Team — breaks</strong>. Lock in your squad,
-            and every hit that lands for your team goes home with you.
-          </p>
-          <div class="chips">
-            <span class="chip red">PYT Breaks</span>
-            <span class="chip">Pick Your Team</span>
-          </div>
-        </div>
-        <a class="btn go" href="https://www.fanatics.live/shows/4794c551-7fbc-4ebb-a386-7c6cc098f395" target="_blank" rel="noopener">Watch On Fanatics</a>
-      </article>
-
-      <!-- TikTok -->
-      <article class="card reveal" data-index="04">
-        <div>
-          <span class="platform">TikTok Live</span>
-          <h3>Pokémon HQ on <span class="at">TikTok</span></h3>
-          <p>
-            The Pokémon table never sleeps. Catch our <strong>character breaks</strong>,
-            <strong>Rip Till You Hit</strong>, and <strong>energy breaks</strong> live on TikTok.
-          </p>
-          <div class="chips">
-            <span class="chip red">Character Breaks</span>
-            <span class="chip">Rip Till You Hit</span>
-            <span class="chip">Energy Breaks</span>
-          </div>
-        </div>
-        <a class="btn go" href="https://www.tiktok.com/@rips.society" target="_blank" rel="noopener">Find Us On TikTok</a>
-      </article>
-    </div>
-  </div>
-</section>
-
-<div class="marquee alt" aria-hidden="true">
-  <div class="marquee-track" id="mq2"></div>
-</div>
-
-<!-- ================= SPORTS BREAKS ================= -->
-<section id="breaks">
-  <div class="wrap">
-    <div class="kicker reveal">Sports Card Breaks</div>
-    <h2 class="giant reveal">Pick a seat.<br><span class="accent">Place your rip.</span></h2>
-
-    <div class="grid-3">
-      <article class="break-card reveal">
-        <div class="ico">PYT</div>
-        <h4>Pick Your Team</h4>
-        <p>
-          You choose your team before the box is cracked. <strong>Every card that hits for your
-          team is yours</strong> — rookies, autos, patches, the works. Our PYT breaks run on
-          Fanatics Live and Whatnot.
-        </p>
-        <div class="tagline">You call the shot</div>
-      </article>
-
-      <article class="break-card reveal">
-        <div class="ico">SPIN</div>
-        <h4>Random Team Spin</h4>
-        <p>
-          Pure Vegas. Buy a spot and <strong>the wheel decides your team</strong> — every spot has a
-          shot at the top squads. Randomized live on stream, so everyone sees the spin land.
-        </p>
-        <div class="tagline">Let it ride</div>
-      </article>
-
-      <article class="break-card reveal">
-        <div class="ico">$1</div>
-        <h4>Dollar Singles</h4>
-        <p>
-          Building a collection shouldn't break the bank. Our <strong>singles start at just $1</strong> —
-          baseball and basketball singles hit the auction block on our live streams.
-        </p>
-        <div class="tagline">Everyone plays</div>
-      </article>
-    </div>
-
-    <div class="grid-3">
-      <article class="break-card reveal">
-        <div class="ico">⚾</div>
-        <h4>Baseball</h4>
-        <p>
-          Our bread and butter. <strong>Baseball breaks starting at $1</strong> headline the main
-          channel — <strong>@ripssociety</strong> on Whatnot.
-        </p>
-        <div class="tagline">The flagship</div>
-      </article>
-
-      <article class="break-card reveal">
-        <div class="ico">🏀</div>
-        <h4>Basketball</h4>
-        <p>
-          Basketball singles run live on <strong>@ripssocietylive</strong> — grab your guys
-          one card at a time, starting at a buck.
-        </p>
-        <div class="tagline">Buckets &amp; breaks</div>
-      </article>
-
-      <article class="break-card reveal">
-        <div class="ico">🏈</div>
-        <h4>Football</h4>
-        <p>
-          Gridiron heat, all year long. <strong>Football breaks</strong> bring the rookie chases,
-          autos, and patch pulls — catch the next kickoff live on our channels.
-        </p>
-        <div class="tagline">Rip the gridiron</div>
-      </article>
-
-      <article class="break-card reveal">
-        <div class="ico">⚽</div>
-        <h4>Soccer</h4>
-        <p>
-          Every now and then the pitch takes over — <strong>soccer breaks</strong> drop on
-          <strong>@ripssocietylive</strong>. Follow us so you never miss one.
-        </p>
-        <div class="tagline">Special sessions</div>
-      </article>
-    </div>
-  </div>
-</section>
-
-<!-- ================= VEGAS BANNER ================= -->
-<div class="vegas-strip">
-  <div class="big">
-    <span class="row stroke reveal">Born &amp; ripped in</span>
-    <span class="row redfill reveal">Las Vegas</span>
-    <span class="row fill reveal">Every rip's a jackpot</span>
-  </div>
-  <div class="small reveal">Entertainment Capital of the World</div>
-  <div class="suits reveal" aria-hidden="true">♠ <b>♥</b> ♣ <b>♦</b></div>
-</div>
-
-<!-- ================= POKEMON ================= -->
-<section id="pokemon">
-  <div class="wrap">
-    <div class="kicker reveal">Pokémon Breaks</div>
-    <h2 class="giant reveal">Gotta rip<br><span class="accent">'em all.</span></h2>
-
-    <div class="grid-3">
-      <article class="break-card reveal">
-        <div class="ico">★</div>
-        <h4>Character Breaks</h4>
-        <p>
-          Claim your favorite character or evolution line before we rip. <strong>Every pull of
-          your character goes to you</strong> — chase your Charizard, your Pikachu, your Eeveelutions.
-        </p>
-        <div class="tagline">Claim your chase</div>
-      </article>
-
-      <article class="break-card reveal">
-        <div class="ico">🔥</div>
-        <h4>Rip Till You Hit</h4>
-        <p>
-          The name says it all — <strong>we keep ripping packs until you hit</strong>. No hit, no stop.
-          Guaranteed heat in every session.
-        </p>
-        <div class="tagline">No hit, no stop</div>
-      </article>
-
-      <article class="break-card reveal">
-        <div class="ico">⚡</div>
-        <h4>Energy Breaks</h4>
-        <p>
-          Spots are randomized by <strong>energy type</strong> — fire, water, lightning, psychic and
-          more. Your energy decides which pulls are yours. Pure chaos, pure fun.
-        </p>
-        <div class="tagline">Trust the type</div>
-      </article>
-    </div>
-
-    <div class="platform-note reveal">
-      <span class="live-dot" aria-hidden="true"></span>
-      <span><strong>Pokémon breaks go live on TikTok</strong> — and you'll also catch Pokémon on our
-      <strong>@ripssocietylive</strong> Whatnot channel.</span>
-      <a class="btn" href="https://www.tiktok.com/@rips.society" target="_blank" rel="noopener">TikTok Live</a>
-    </div>
-  </div>
-</section>
-
-<!-- ================= FOLLOW ================= -->
-<section id="follow">
-  <div class="wrap">
-    <div class="panel reveal">
+    <div class="sec-head reveal">
       <div>
-        <div class="kicker">Join The Society</div>
-        <h2 class="giant">Never miss<br>a <span class="accent">rip.</span></h2>
+        <div class="kicker">Fresh Off The Table</div>
+        <h2 class="giant">Featured <span class="accent">heat.</span></h2>
+      </div>
+      <a class="more" href="catalog.html">View Full Catalog →</a>
+    </div>
+    <div class="grid-products" id="featured-grid"></div>
+  </div>
+</section>
+
+<!-- ================= CATEGORIES ================= -->
+<section class="home-sec" style="padding-top:0">
+  <div class="wrap">
+    <div class="kicker reveal">Shop By Category</div>
+    <h2 class="giant reveal">Pick your <span class="outline">table.</span></h2>
+    <div class="cat-tiles" id="cat-tiles"></div>
+  </div>
+</section>
+
+<!-- ================= HOW IT WORKS ================= -->
+<section class="home-sec" style="padding-top:0">
+  <div class="wrap">
+    <div class="kicker reveal">How It Works</div>
+    <h2 class="giant reveal">Easy money.<br><span class="accent">Easier checkout.</span></h2>
+    <div class="steps">
+      <div class="step reveal">
+        <div class="n">01</div>
+        <h4>Load Your Cart</h4>
+        <p>Grab break spots, wax, Pokémon, or mystery boxes. <strong>Free shipping kicks in at $100.</strong></p>
+      </div>
+      <div class="step reveal">
+        <div class="n">02</div>
+        <h4>Pay Securely</h4>
+        <p>Card payments run through <strong>Stripe secure checkout</strong> — the same processor trusted by millions of stores. We never see or store your card number.</p>
+      </div>
+      <div class="step reveal">
+        <div class="n">03</div>
+        <h4>Get Confirmed</h4>
+        <p>The moment your payment lands, your <strong>order confirmation hits your email and your phone by text</strong>. Break spots get called out live on stream.</p>
+      </div>
+      <div class="step reveal">
+        <div class="n">04</div>
+        <h4>We Ship The Hits</h4>
+        <p>Sealed product ships fast and protected. Break hits ship right after the stream — <strong>sleeved, top-loaded, and ready for the shelf.</strong></p>
+      </div>
+    </div>
+  </div>
+</section>
+
+<!-- ================= LIVE BAND ================= -->
+<section class="home-sec" style="padding-top:0">
+  <div class="wrap">
+    <div class="live-band reveal">
+      <div>
+        <div class="kicker">Live Every Week</div>
+        <h2 class="giant">Catch the<br><span class="accent">next rip.</span></h2>
         <p>
-          Schedules, hit reels, giveaways, and behind-the-scenes from the tables — it all drops on
-          <strong>Instagram</strong> first. Follow every channel so you know the second we go live.
+          Buy a break spot here, then pull up a chair — every box gets cracked
+          <strong>live on stream</strong> so you see every card the second it's pulled.
+          Four tables, one house.
         </p>
       </div>
-      <div class="follow-links">
-        <a class="follow-link" href="https://www.instagram.com/ripssociety/" target="_blank" rel="noopener">
-          <span>Instagram<small>@ripssociety — hits, schedules &amp; giveaways</small></span><span class="arrow">→</span>
-        </a>
-        <a class="follow-link" href="https://www.whatnot.com/user/ripssociety" target="_blank" rel="noopener">
+      <div class="live-links">
+        <a class="live-link" href="https://www.whatnot.com/user/ripssociety" target="_blank" rel="noopener">
           <span>Whatnot — Main<small>@ripssociety — $1 baseball breaks</small></span><span class="arrow">→</span>
         </a>
-        <a class="follow-link" href="https://www.whatnot.com/user/ripssocietylive" target="_blank" rel="noopener">
+        <a class="live-link" href="https://www.whatnot.com/user/ripssocietylive" target="_blank" rel="noopener">
           <span>Whatnot — Live<small>@ripssocietylive — Pokémon, baseball, basketball &amp; soccer</small></span><span class="arrow">→</span>
         </a>
-        <a class="follow-link" href="https://www.fanatics.live/shows/4794c551-7fbc-4ebb-a386-7c6cc098f395" target="_blank" rel="noopener">
+        <a class="live-link" href="https://www.fanatics.live/shows/4794c551-7fbc-4ebb-a386-7c6cc098f395" target="_blank" rel="noopener">
           <span>Fanatics Live<small>PYT — Pick Your Team breaks</small></span><span class="arrow">→</span>
         </a>
-        <a class="follow-link" href="https://www.tiktok.com/@rips.society" target="_blank" rel="noopener">
-          <span>TikTok<small>Pokémon breaks — character, rip till you hit &amp; energy</small></span><span class="arrow">→</span>
+        <a class="live-link" href="https://www.tiktok.com/@rips.society" target="_blank" rel="noopener">
+          <span>TikTok<small>Pokémon — character breaks, rip till you hit &amp; energy</small></span><span class="arrow">→</span>
         </a>
       </div>
     </div>
   </div>
 </section>
 
+</main>
+
 <!-- ================= FOOTER ================= -->
-<footer>
+<footer class="site-footer">
   <div class="foot">
     <div>
       <svg class="mark" viewBox="0 0 300 100" role="img" aria-label="Rips Society logo">
         <text x="8" y="62" font-family="Anton, Impact, sans-serif" font-size="58" fill="#f4f1ec" letter-spacing="2">RIPS</text>
-          <text x="10" y="90" font-family="Archivo, sans-serif" font-weight="800" font-size="19" fill="#f4f1ec" letter-spacing="10">SOCIETY</text>
+        <text x="10" y="90" font-family="Archivo, sans-serif" font-weight="800" font-size="19" fill="#f4f1ec" letter-spacing="10">SOCIETY</text>
       </svg>
+    </div>
+    <div>
+      <h5>Shop</h5>
+      <ul>
+        <li><a href="catalog.html">Full Catalog</a></li>
+        <li><a href="catalog.html?cat=breaks">Break Spots</a></li>
+        <li><a href="catalog.html?cat=wax">Sports Wax</a></li>
+        <li><a href="catalog.html?cat=pokemon">Pokémon</a></li>
+        <li><a href="catalog.html?cat=singles">Singles &amp; Mystery</a></li>
+      </ul>
     </div>
     <div>
       <h5>Watch Live</h5>
@@ -747,17 +179,10 @@
       </ul>
     </div>
     <div>
-      <h5>The Breaks</h5>
+      <h5>Support</h5>
       <ul>
-        <li><a href="#breaks">Pick Your Team (PYT)</a></li>
-        <li><a href="#breaks">Random Team Spin</a></li>
-        <li><a href="#breaks">$1 Singles</a></li>
-        <li><a href="#pokemon">Pokémon Breaks</a></li>
-      </ul>
-    </div>
-    <div>
-      <h5>Social</h5>
-      <ul>
+        <li><a href="contact.html">Contact Us</a></li>
+        <li><a href="breaks.html">About The Society</a></li>
         <li><a href="https://www.instagram.com/ripssociety/" target="_blank" rel="noopener">Instagram — @ripssociety</a></li>
       </ul>
     </div>
@@ -768,104 +193,32 @@
   </div>
 </footer>
 
+<script src="assets/js/shop.js"></script>
 <script>
 (function(){
-  var reduced = window.matchMedia('(prefers-reduced-motion: reduce)').matches;
+  // marquee
+  var items = ['Break Spots','Sealed Wax','Pokémon','$1 Singles','Mystery Boxes','Free Shipping $100+','Live Every Week'];
+  var el = document.getElementById('mq1');
+  var chunk = items.map(function(t){return '<span>'+t+'</span><span class="dot">◆</span>';}).join('');
+  el.innerHTML = chunk + chunk;
 
-  /* ---------- marquee content ---------- */
-  var items1 = ['PYT Breaks','Random Team Spin','$1 Singles','Baseball','Basketball','Football','Soccer','Pokémon','Live Every Week'];
-  var items2 = ['Whatnot','Fanatics Live','TikTok','Instagram','Las Vegas','Rips Society'];
-  function fillMarquee(id, items){
-    var el = document.getElementById(id);
-    if(!el) return;
-    var chunk = items.map(function(t){return '<span>'+t+'</span><span class="dot">◆</span>';}).join('');
-    /* duplicate so the -50% translate loops seamlessly */
-    el.innerHTML = chunk + chunk;
-  }
-  fillMarquee('mq1', items1);
-  fillMarquee('mq2', items2);
+  Shop.loadCatalog().then(function(catalog){
+    // featured products
+    var featured = catalog.products.filter(function(p){ return p.featured; }).slice(0, 8);
+    var grid = document.getElementById('featured-grid');
+    grid.innerHTML = featured.map(function(p){ return Shop.productCardHTML(catalog, p); }).join('');
+    Shop.bindAddButtons(grid);
 
-  /* ---------- nav + progress ---------- */
-  var nav = document.getElementById('nav');
-  var bar = document.getElementById('progress');
-  var cracks = document.getElementById('cracks');
-  function onScroll(){
-    var y = window.scrollY || document.documentElement.scrollTop;
-    nav.classList.toggle('scrolled', y > 40);
-    var h = document.documentElement.scrollHeight - window.innerHeight;
-    bar.style.width = (h > 0 ? (y/h*100) : 0) + '%';
-    if(!reduced && cracks){ cracks.style.transform = 'translateY(' + (y * -0.06) + 'px)'; }
-    litWords();
-  }
-  window.addEventListener('scroll', onScroll, {passive:true});
-
-  /* ---------- reveal on scroll ---------- */
-  var io = new IntersectionObserver(function(entries){
-    entries.forEach(function(e){
-      if(e.isIntersecting){ e.target.classList.add('in'); io.unobserve(e.target); }
-    });
-  }, {threshold: 0.12, rootMargin: '0px 0px -40px 0px'});
-  document.querySelectorAll('.reveal').forEach(function(el){ io.observe(el); });
-
-  /* ---------- manifesto word-by-word scroll reveal ---------- */
-  var man = document.getElementById('manifesto');
-  var words = [];
-  if(man){
-    var redWords = ['rip','rips','rush','hits,'];
-    var goldWords = ['vegas'];
-    var text = man.textContent.replace(/\s+/g,' ').trim().split(' ');
-    man.innerHTML = text.map(function(w){
-      var lw = w.toLowerCase().replace(/[^a-z$1,]/g,'');
-      var cls = 'w';
-      if(redWords.indexOf(lw) > -1 || /pokémon|dollar/i.test(w)) cls += ' red';
-      if(goldWords.indexOf(lw.replace(',','')) > -1) cls += ' gold';
-      return '<span class="'+cls+'">'+w+'</span>';
-    }).join(' ');
-    words = man.querySelectorAll('.w');
-  }
-  function litWords(){
-    if(!man || !words.length) return;
-    var r = man.getBoundingClientRect();
-    var vh = window.innerHeight;
-    /* progress: 0 when top of manifesto hits 85% of viewport, 1 when bottom passes 35% */
-    var start = vh * 0.85, end = vh * 0.35;
-    var p = (start - r.top) / ((r.height + (start - end)));
-    p = Math.max(0, Math.min(1, p));
-    var lit = Math.floor(p * words.length);
-    for(var i=0;i<words.length;i++){
-      words[i].classList.toggle('lit', i < lit || (reduced));
-    }
-  }
-
-  /* ---------- count-up stats ---------- */
-  var counted = false;
-  var statIO = new IntersectionObserver(function(entries){
-    entries.forEach(function(e){
-      if(e.isIntersecting && !counted){
-        counted = true;
-        document.querySelectorAll('.count').forEach(function(el){
-          var to = parseInt(el.getAttribute('data-to'),10) || 0;
-          if(reduced){ el.textContent = to; return; }
-          var t0 = null;
-          function step(ts){
-            if(!t0) t0 = ts;
-            var p = Math.min(1,(ts - t0)/900);
-            el.textContent = Math.round(to * (1 - Math.pow(1-p,3)));
-            if(p < 1) requestAnimationFrame(step);
-          }
-          requestAnimationFrame(step);
-        });
-        statIO.disconnect();
-      }
-    });
-  }, {threshold:.4});
-  var stats = document.querySelector('.stats');
-  if(stats) statIO.observe(stats);
-
-  /* ---------- footer year ---------- */
-  document.getElementById('yr').textContent = new Date().getFullYear();
-
-  onScroll();
+    // category tiles
+    var tiles = document.getElementById('cat-tiles');
+    var emojis = { breaks:'🎰', wax:'📦', pokemon:'⚡', singles:'🃏', supplies:'🛡️', merch:'🧢' };
+    tiles.innerHTML = catalog.categories.map(function(c){
+      return '<a class="cat-tile" href="catalog.html?cat=' + c.id + '">' +
+        '<div class="em">' + (emojis[c.id] || '🎴') + '</div>' +
+        '<h4>' + c.label + '</h4><p>' + c.blurb + '</p>' +
+        '<span class="arrow">→</span></a>';
+    }).join('');
+  }).catch(function(e){ console.error(e); });
 })();
 </script>
 </body>

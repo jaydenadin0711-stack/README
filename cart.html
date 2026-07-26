@@ -1,0 +1,290 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Cart &amp; Checkout — Rips Society</title>
+<meta name="description" content="Your Rips Society cart — secure checkout with instant email and text order confirmations.">
+<link rel="preload" href="assets/fonts/anton-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/fonts/archivo-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%230b0b0d'/><text x='50' y='72' font-size='62' font-family='Arial Black,sans-serif' font-weight='900' fill='%23f4f1ec' text-anchor='middle'>R</text></svg>">
+<link rel="stylesheet" href="assets/css/site.css">
+</head>
+<body>
+
+<div class="announce">Free shipping on orders <span class="gold">$100+</span> &nbsp;◆&nbsp; Order confirmations by email &amp; text &nbsp;◆&nbsp; Live breaks weekly</div>
+
+<nav class="site-nav">
+  <a class="nav-logo" href="index.html" aria-label="Rips Society home">
+    <svg class="mark" viewBox="0 0 300 100" role="img" aria-label="Rips Society logo">
+      <text x="8" y="62" font-family="Anton, Impact, sans-serif" font-size="58" fill="#f4f1ec" letter-spacing="2">RIPS</text>
+      <text x="10" y="90" font-family="Archivo, sans-serif" font-weight="800" font-size="19" fill="#f4f1ec" letter-spacing="10">SOCIETY</text>
+    </svg>
+  </a>
+  <div class="nav-links">
+    <a href="index.html">Home</a>
+    <a href="catalog.html">Catalog</a>
+    <a href="breaks.html">Live Breaks</a>
+    <a href="contact.html">Contact</a>
+  </div>
+  <div class="nav-actions">
+    <a class="cart-link" href="cart.html">Cart <span class="cart-count empty">0</span></a>
+    <button class="menu-btn" aria-label="Open menu">☰</button>
+  </div>
+</nav>
+<div class="menu-scrim"></div>
+<aside class="mobile-menu" aria-label="Mobile menu">
+  <button class="close-menu" aria-label="Close menu">×</button>
+  <a href="index.html">Home</a>
+  <a href="catalog.html">Catalog</a>
+  <a href="breaks.html">Live Breaks</a>
+  <a href="contact.html">Contact</a>
+  <a href="cart.html">Cart</a>
+</aside>
+
+<main>
+<div class="wrap">
+  <div class="page-head">
+    <div class="kicker">Your Cart</div>
+    <h1 class="giant">Cash in your <span class="accent">chips.</span></h1>
+  </div>
+
+  <div class="cart-layout">
+    <div>
+      <div id="cart-lines"></div>
+    </div>
+
+    <div>
+      <div class="panel" id="summary-panel">
+        <h3>Order Summary</h3>
+        <div class="sum-row"><span>Subtotal</span><b id="sum-sub">$0.00</b></div>
+        <div class="sum-row"><span>Shipping</span><b id="sum-ship">—</b></div>
+        <div class="sum-row total"><span>Total</span><span id="sum-total">$0.00</span></div>
+        <div class="free-ship-note" id="ship-note"></div>
+      </div>
+
+      <div class="panel" style="margin-top:1.5rem" id="checkout-panel">
+        <h3>Checkout</h3>
+        <form id="checkout-form" novalidate>
+          <div class="field">
+            <label for="c-name">Full Name</label>
+            <input id="c-name" name="name" autocomplete="name" required>
+          </div>
+          <div class="two-col">
+            <div class="field">
+              <label for="c-email">Email</label>
+              <input id="c-email" name="email" type="email" autocomplete="email" required>
+              <div class="hint">Your order confirmation lands here.</div>
+            </div>
+            <div class="field">
+              <label for="c-phone">Mobile Number</label>
+              <input id="c-phone" name="phone" type="tel" autocomplete="tel" placeholder="(702) 555-0123">
+              <div class="hint">Optional — get your confirmation by text too.</div>
+            </div>
+          </div>
+          <div class="field">
+            <label for="c-addr">Street Address</label>
+            <input id="c-addr" name="address" autocomplete="street-address" required>
+          </div>
+          <div class="two-col">
+            <div class="field">
+              <label for="c-city">City</label>
+              <input id="c-city" name="city" autocomplete="address-level2" required>
+            </div>
+            <div class="field">
+              <label for="c-state">State</label>
+              <input id="c-state" name="state" autocomplete="address-level1" required>
+            </div>
+          </div>
+          <div class="two-col">
+            <div class="field">
+              <label for="c-zip">ZIP Code</label>
+              <input id="c-zip" name="zip" autocomplete="postal-code" required>
+            </div>
+            <div class="field">
+              <label for="c-notes">Order Notes</label>
+              <input id="c-notes" name="notes" placeholder="Team pick, shirt size…">
+            </div>
+          </div>
+          <button class="btn wide" type="submit" id="pay-btn">🔒 Pay Securely</button>
+          <div class="form-msg" id="checkout-msg"></div>
+          <div class="secure-note">
+            <span class="lock">🔒</span>
+            <span>You'll enter your card on <b>Stripe's secure payment page</b> — the processor used by millions of businesses. Rips Society never sees or stores your card number.</span>
+          </div>
+        </form>
+      </div>
+    </div>
+  </div>
+</div>
+</main>
+
+<footer class="site-footer">
+  <div class="foot">
+    <div>
+      <svg class="mark" viewBox="0 0 300 100" role="img" aria-label="Rips Society logo">
+        <text x="8" y="62" font-family="Anton, Impact, sans-serif" font-size="58" fill="#f4f1ec" letter-spacing="2">RIPS</text>
+        <text x="10" y="90" font-family="Archivo, sans-serif" font-weight="800" font-size="19" fill="#f4f1ec" letter-spacing="10">SOCIETY</text>
+      </svg>
+    </div>
+    <div>
+      <h5>Shop</h5>
+      <ul>
+        <li><a href="catalog.html">Full Catalog</a></li>
+        <li><a href="catalog.html?cat=breaks">Break Spots</a></li>
+        <li><a href="catalog.html?cat=wax">Sports Wax</a></li>
+        <li><a href="catalog.html?cat=pokemon">Pokémon</a></li>
+      </ul>
+    </div>
+    <div>
+      <h5>Watch Live</h5>
+      <ul>
+        <li><a href="https://www.whatnot.com/user/ripssociety" target="_blank" rel="noopener">Whatnot — @ripssociety</a></li>
+        <li><a href="https://www.whatnot.com/user/ripssocietylive" target="_blank" rel="noopener">Whatnot — @ripssocietylive</a></li>
+        <li><a href="https://www.fanatics.live/shows/4794c551-7fbc-4ebb-a386-7c6cc098f395" target="_blank" rel="noopener">Fanatics Live</a></li>
+        <li><a href="https://www.tiktok.com/@rips.society" target="_blank" rel="noopener">TikTok Live</a></li>
+      </ul>
+    </div>
+    <div>
+      <h5>Support</h5>
+      <ul>
+        <li><a href="contact.html">Contact Us</a></li>
+        <li><a href="breaks.html">About The Society</a></li>
+        <li><a href="https://www.instagram.com/ripssociety/" target="_blank" rel="noopener">Instagram — @ripssociety</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="foot-bottom">
+    <span>© <span id="yr"></span> Rips Society. All rights reserved.</span>
+    <span>Made in <span class="vegas">Las Vegas, NV</span> ♦ Rip responsibly.</span>
+  </div>
+</footer>
+
+<script src="assets/js/shop.js"></script>
+<script>
+(function(){
+  var catalog = null;
+
+  function renderCart(){
+    var box = document.getElementById('cart-lines');
+    var t = Shop.cartTotals(catalog);
+
+    if (!t.items.length) {
+      box.innerHTML = '<div class="cart-empty"><div class="big-ico">🃏</div>' +
+        'Your cart is empty — the table\'s waiting.<br><br>' +
+        '<a class="btn" href="catalog.html">Shop The Catalog</a></div>';
+      document.getElementById('checkout-panel').style.display = 'none';
+    } else {
+      document.getElementById('checkout-panel').style.display = '';
+      box.innerHTML = '<div class="cart-lines">' + t.items.map(function(line){
+        var p = line.product;
+        return '<div class="cart-line" data-id="' + p.id + '">' +
+          '<a class="thumb" href="product.html?id=' + encodeURIComponent(p.id) + '">' + Shop.artFor(p) + '</a>' +
+          '<div>' +
+            '<h4><a href="product.html?id=' + encodeURIComponent(p.id) + '">' + p.name + '</a></h4>' +
+            '<div class="unit">' + Shop.money(p.price) + ' each</div>' +
+            '<div class="qty" style="margin-top:.6rem">' +
+              '<button type="button" data-dec aria-label="Decrease quantity">−</button>' +
+              '<input type="number" min="0" max="99" value="' + line.qty + '" aria-label="Quantity">' +
+              '<button type="button" data-inc aria-label="Increase quantity">+</button>' +
+            '</div>' +
+          '</div>' +
+          '<div class="right">' +
+            '<div class="line-total">' + Shop.money(line.line) + '</div>' +
+            '<button class="rm" type="button" data-rm>Remove</button>' +
+          '</div>' +
+        '</div>';
+      }).join('') + '</div>';
+
+      box.querySelectorAll('.cart-line').forEach(function(row){
+        var id = row.getAttribute('data-id');
+        var input = row.querySelector('input');
+        row.querySelector('[data-dec]').addEventListener('click', function(){ Shop.setQty(id, (parseInt(input.value,10)||1) - 1); renderCart(); });
+        row.querySelector('[data-inc]').addEventListener('click', function(){ Shop.setQty(id, (parseInt(input.value,10)||0) + 1); renderCart(); });
+        input.addEventListener('change', function(){ Shop.setQty(id, parseInt(input.value,10) || 0); renderCart(); });
+        row.querySelector('[data-rm]').addEventListener('click', function(){ Shop.setQty(id, 0); renderCart(); });
+      });
+    }
+
+    document.getElementById('sum-sub').textContent = Shop.money(t.subtotal);
+    document.getElementById('sum-ship').textContent = t.items.length ? (t.shipping === 0 ? 'FREE' : Shop.money(t.shipping)) : '—';
+    document.getElementById('sum-total').textContent = Shop.money(t.total);
+    var note = document.getElementById('ship-note');
+    if (t.items.length && t.shipping > 0) {
+      note.textContent = 'Add ' + Shop.money(t.freeShipAt - t.subtotal) + ' more for free shipping';
+    } else if (t.items.length) {
+      note.textContent = '♦ Free shipping unlocked';
+    } else {
+      note.textContent = '';
+    }
+  }
+
+  function showMsg(kind, text){
+    var el = document.getElementById('checkout-msg');
+    el.className = 'form-msg ' + kind;
+    el.textContent = text;
+  }
+
+  function handleCheckout(e){
+    e.preventDefault();
+    var t = Shop.cartTotals(catalog);
+    if (!t.items.length) return;
+
+    var f = document.getElementById('checkout-form');
+    var name = f.name.value.trim(), email = f.email.value.trim(), phone = f.phone.value.trim();
+    var address = f.address.value.trim(), city = f.city.value.trim(), state = f.state.value.trim(), zip = f.zip.value.trim();
+    if (!name || !email || !address || !city || !state || !zip) {
+      showMsg('err', 'Please fill in your name, email, and full shipping address.');
+      return;
+    }
+    if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
+      showMsg('err', 'That email doesn\'t look right — double-check it so your confirmation can reach you.');
+      return;
+    }
+
+    var payload = {
+      items: t.items.map(function(l){ return { id: l.product.id, qty: l.qty }; }),
+      customer: {
+        name: name, email: email, phone: phone,
+        address: address, city: city, state: state, zip: zip,
+        notes: f.notes.value.trim()
+      }
+    };
+
+    var btn = document.getElementById('pay-btn');
+    btn.disabled = true;
+    btn.textContent = 'Preparing secure checkout…';
+    showMsg('', '');
+    document.getElementById('checkout-msg').className = 'form-msg';
+
+    Shop.apiCheckout(payload).then(function(data){
+      // server returns the Stripe (or demo) payment URL
+      window.location.href = data.url;
+    }).catch(function(err){
+      // No backend available (e.g. static preview hosting) → demo order flow
+      var order = {
+        id: 'RS-DEMO-' + Date.now().toString(36).toUpperCase(),
+        demo: true,
+        created: new Date().toISOString(),
+        items: t.items.map(function(l){ return { id: l.product.id, name: l.product.name, qty: l.qty, price: l.product.price, line: l.line }; }),
+        subtotal: t.subtotal, shipping: t.shipping, total: t.total,
+        customer: { name: name, email: email, phone: phone }
+      };
+      try { localStorage.setItem('rips_last_order', JSON.stringify(order)); } catch (e2) {}
+      Shop.clearCart();
+      window.location.href = 'success.html?demo=local';
+    });
+  }
+
+  Shop.loadCatalog().then(function(data){
+    catalog = data;
+    renderCart();
+    document.getElementById('checkout-form').addEventListener('submit', handleCheckout);
+  }).catch(function(e){
+    document.getElementById('cart-lines').innerHTML = '<div class="cart-empty">Could not load your cart. Refresh to try again.</div>';
+    console.error(e);
+  });
+})();
+</script>
+</body>
+</html>

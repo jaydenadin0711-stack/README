@@ -1,0 +1,229 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Catalog — Rips Society | Sports Cards, Pokémon &amp; Breaks</title>
+<meta name="description" content="Browse the full Rips Society catalog — break spots, sealed sports wax, Pokémon product, singles, mystery boxes, supplies, and merch.">
+<link rel="preload" href="assets/fonts/anton-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="preload" href="assets/fonts/archivo-latin.woff2" as="font" type="font/woff2" crossorigin>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><rect width='100' height='100' fill='%230b0b0d'/><text x='50' y='72' font-size='62' font-family='Arial Black,sans-serif' font-weight='900' fill='%23f4f1ec' text-anchor='middle'>R</text></svg>">
+<link rel="stylesheet" href="assets/css/site.css">
+</head>
+<body>
+
+<div class="announce">Free shipping on orders <span class="gold">$100+</span> &nbsp;◆&nbsp; Order confirmations by email &amp; text &nbsp;◆&nbsp; Live breaks weekly</div>
+
+<nav class="site-nav">
+  <a class="nav-logo" href="index.html" aria-label="Rips Society home">
+    <svg class="mark" viewBox="0 0 300 100" role="img" aria-label="Rips Society logo">
+      <text x="8" y="62" font-family="Anton, Impact, sans-serif" font-size="58" fill="#f4f1ec" letter-spacing="2">RIPS</text>
+      <text x="10" y="90" font-family="Archivo, sans-serif" font-weight="800" font-size="19" fill="#f4f1ec" letter-spacing="10">SOCIETY</text>
+    </svg>
+  </a>
+  <div class="nav-links">
+    <a href="index.html">Home</a>
+    <a href="catalog.html">Catalog</a>
+    <a href="breaks.html">Live Breaks</a>
+    <a href="contact.html">Contact</a>
+  </div>
+  <div class="nav-actions">
+    <a class="cart-link" href="cart.html">Cart <span class="cart-count empty">0</span></a>
+    <button class="menu-btn" aria-label="Open menu">☰</button>
+  </div>
+</nav>
+<div class="menu-scrim"></div>
+<aside class="mobile-menu" aria-label="Mobile menu">
+  <button class="close-menu" aria-label="Close menu">×</button>
+  <a href="index.html">Home</a>
+  <a href="catalog.html">Catalog</a>
+  <a href="breaks.html">Live Breaks</a>
+  <a href="contact.html">Contact</a>
+  <a href="cart.html">Cart</a>
+</aside>
+
+<main>
+<div class="wrap">
+  <div class="page-head">
+    <div class="kicker">The Catalog</div>
+    <h1 class="giant">Every card.<br><span class="accent">Every table.</span></h1>
+    <p class="sub">Break spots, sealed wax, Pokémon, singles, supplies, and merch — everything the Society sells, all in one place. <strong>Add to cart and check out securely in minutes.</strong></p>
+  </div>
+
+  <div class="toolbar">
+    <div class="chips-row" id="cat-chips"></div>
+    <input class="search-box" id="search" type="search" placeholder="Search products…" aria-label="Search products">
+    <select class="sort-box" id="sort" aria-label="Sort products">
+      <option value="featured">Sort: Featured</option>
+      <option value="price-asc">Price: Low → High</option>
+      <option value="price-desc">Price: High → Low</option>
+      <option value="name">Name: A → Z</option>
+    </select>
+  </div>
+
+  <div class="result-note" id="result-note"></div>
+  <div class="grid-products" id="grid"></div>
+  <div class="pagination" id="pagination"></div>
+</div>
+</main>
+
+<footer class="site-footer">
+  <div class="foot">
+    <div>
+      <svg class="mark" viewBox="0 0 300 100" role="img" aria-label="Rips Society logo">
+        <text x="8" y="62" font-family="Anton, Impact, sans-serif" font-size="58" fill="#f4f1ec" letter-spacing="2">RIPS</text>
+        <text x="10" y="90" font-family="Archivo, sans-serif" font-weight="800" font-size="19" fill="#f4f1ec" letter-spacing="10">SOCIETY</text>
+      </svg>
+    </div>
+    <div>
+      <h5>Shop</h5>
+      <ul>
+        <li><a href="catalog.html">Full Catalog</a></li>
+        <li><a href="catalog.html?cat=breaks">Break Spots</a></li>
+        <li><a href="catalog.html?cat=wax">Sports Wax</a></li>
+        <li><a href="catalog.html?cat=pokemon">Pokémon</a></li>
+        <li><a href="catalog.html?cat=singles">Singles &amp; Mystery</a></li>
+      </ul>
+    </div>
+    <div>
+      <h5>Watch Live</h5>
+      <ul>
+        <li><a href="https://www.whatnot.com/user/ripssociety" target="_blank" rel="noopener">Whatnot — @ripssociety</a></li>
+        <li><a href="https://www.whatnot.com/user/ripssocietylive" target="_blank" rel="noopener">Whatnot — @ripssocietylive</a></li>
+        <li><a href="https://www.fanatics.live/shows/4794c551-7fbc-4ebb-a386-7c6cc098f395" target="_blank" rel="noopener">Fanatics Live</a></li>
+        <li><a href="https://www.tiktok.com/@rips.society" target="_blank" rel="noopener">TikTok Live</a></li>
+      </ul>
+    </div>
+    <div>
+      <h5>Support</h5>
+      <ul>
+        <li><a href="contact.html">Contact Us</a></li>
+        <li><a href="breaks.html">About The Society</a></li>
+        <li><a href="https://www.instagram.com/ripssociety/" target="_blank" rel="noopener">Instagram — @ripssociety</a></li>
+      </ul>
+    </div>
+  </div>
+  <div class="foot-bottom">
+    <span>© <span id="yr"></span> Rips Society. All rights reserved.</span>
+    <span>Made in <span class="vegas">Las Vegas, NV</span> ♦ Rip responsibly.</span>
+  </div>
+</footer>
+
+<script src="assets/js/shop.js"></script>
+<script>
+(function(){
+  var PER_PAGE = 12;
+  var state = { cat: 'all', q: '', sort: 'featured', page: 1 };
+
+  // read initial state from URL (?cat=&q=&page=)
+  var params = new URLSearchParams(location.search);
+  if (params.get('cat')) state.cat = params.get('cat');
+  if (params.get('q')) state.q = params.get('q');
+  if (params.get('page')) state.page = Math.max(1, parseInt(params.get('page'), 10) || 1);
+
+  var catalog = null;
+
+  function syncURL(){
+    var p = new URLSearchParams();
+    if (state.cat !== 'all') p.set('cat', state.cat);
+    if (state.q) p.set('q', state.q);
+    if (state.page > 1) p.set('page', state.page);
+    var qs = p.toString();
+    history.replaceState(null, '', 'catalog.html' + (qs ? '?' + qs : ''));
+  }
+
+  function filtered(){
+    var list = catalog.products.slice();
+    if (state.cat !== 'all') list = list.filter(function(p){ return p.category === state.cat; });
+    if (state.q) {
+      var q = state.q.toLowerCase();
+      list = list.filter(function(p){
+        return (p.name + ' ' + p.desc + ' ' + p.category).toLowerCase().indexOf(q) > -1;
+      });
+    }
+    switch (state.sort) {
+      case 'price-asc': list.sort(function(a,b){ return a.price - b.price; }); break;
+      case 'price-desc': list.sort(function(a,b){ return b.price - a.price; }); break;
+      case 'name': list.sort(function(a,b){ return a.name.localeCompare(b.name); }); break;
+      default: list.sort(function(a,b){ return (b.featured?1:0) - (a.featured?1:0); });
+    }
+    return list;
+  }
+
+  function render(){
+    var list = filtered();
+    var pages = Math.max(1, Math.ceil(list.length / PER_PAGE));
+    if (state.page > pages) state.page = pages;
+    var start = (state.page - 1) * PER_PAGE;
+    var slice = list.slice(start, start + PER_PAGE);
+
+    var note = document.getElementById('result-note');
+    note.textContent = list.length + ' product' + (list.length === 1 ? '' : 's') +
+      (state.cat !== 'all' ? ' — ' + Shop.categoryLabel(catalog, state.cat) : '') +
+      (list.length ? ' · Page ' + state.page + ' of ' + pages : '');
+
+    var grid = document.getElementById('grid');
+    grid.innerHTML = slice.length
+      ? slice.map(function(p){ return Shop.productCardHTML(catalog, p); }).join('')
+      : '<div class="cart-empty" style="grid-column:1/-1"><div class="big-ico">🃏</div>No products match that search. Try another table.</div>';
+    Shop.bindAddButtons(grid);
+
+    // pagination
+    var pag = document.getElementById('pagination');
+    if (pages <= 1) { pag.innerHTML = ''; }
+    else {
+      var html = '<button class="page-btn" data-page="' + (state.page - 1) + '"' + (state.page === 1 ? ' disabled' : '') + '>‹</button>';
+      for (var i = 1; i <= pages; i++) {
+        html += '<button class="page-btn' + (i === state.page ? ' on' : '') + '" data-page="' + i + '">' + i + '</button>';
+      }
+      html += '<button class="page-btn" data-page="' + (state.page + 1) + '"' + (state.page === pages ? ' disabled' : '') + '>›</button>';
+      pag.innerHTML = html;
+      pag.querySelectorAll('.page-btn').forEach(function(b){
+        b.addEventListener('click', function(){
+          if (b.disabled) return;
+          state.page = parseInt(b.getAttribute('data-page'), 10);
+          syncURL(); render();
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        });
+      });
+    }
+    syncURL();
+  }
+
+  function renderChips(){
+    var chips = document.getElementById('cat-chips');
+    var all = [{ id: 'all', label: 'All' }].concat(catalog.categories);
+    chips.innerHTML = all.map(function(c){
+      return '<button class="f-chip' + (state.cat === c.id ? ' on' : '') + '" data-cat="' + c.id + '">' + c.label + '</button>';
+    }).join('');
+    chips.querySelectorAll('.f-chip').forEach(function(b){
+      b.addEventListener('click', function(){
+        state.cat = b.getAttribute('data-cat');
+        state.page = 1;
+        renderChips(); render();
+      });
+    });
+  }
+
+  Shop.loadCatalog().then(function(data){
+    catalog = data;
+    renderChips();
+    var search = document.getElementById('search');
+    search.value = state.q;
+    var deb = null;
+    search.addEventListener('input', function(){
+      clearTimeout(deb);
+      deb = setTimeout(function(){ state.q = search.value.trim(); state.page = 1; render(); }, 200);
+    });
+    document.getElementById('sort').addEventListener('change', function(e){
+      state.sort = e.target.value; state.page = 1; render();
+    });
+    render();
+  }).catch(function(e){
+    document.getElementById('grid').innerHTML = '<div class="cart-empty" style="grid-column:1/-1">Could not load the catalog. Refresh to try again.</div>';
+    console.error(e);
+  });
+})();
+</script>
+</body>
+</html>
