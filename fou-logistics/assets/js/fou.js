@@ -157,7 +157,9 @@
         layer.style.transform = 'translate3d(' + (-span * p).toFixed(1) + 'px,0,0)';
       });
 
-      var deg = (16 * 360 * p).toFixed(1);
+      // Negative to match the CSS `roll` keyframe: the rig is mirrored, so
+      // a negative rotation is the one that renders as forward roll.
+      var deg = (-16 * 360 * p).toFixed(1);
       wheels.forEach(function (w) { w.style.transform = 'rotate(' + deg + 'deg)'; });
 
       if (dusk)  dusk.style.opacity  = clamp((p - 0.38) / 0.32, 0, 1).toFixed(3);
