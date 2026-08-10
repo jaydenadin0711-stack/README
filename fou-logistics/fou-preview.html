@@ -1,0 +1,3270 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>FOU Logistics — site preview</title>
+<meta name="description" content="FOU Logistics moves freight across the country: pickup, warehousing, line haul, cross-dock and last mile. Scroll the journey a shipment actually takes.">
+<meta name="theme-color" content="#08090c">
+<meta property="og:title" content="FOU Logistics">
+<meta property="og:description" content="Freight that arrives when it said it would. Follow a shipment from the shipper's dock to the front door.">
+<meta property="og:type" content="website">
+<link rel="icon" href="data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%20viewBox%3D%220%200%2048%2048%22%20role%3D%22img%22%20aria-label%3D%22FOU%20Logistics%22%3E%0A%20%20%3C!--%20PLACEHOLDER%20MARK%20%E2%80%94%20replace%20this%20file%20with%20the%20real%20FOU%20logo.%0A%20%20%20%20%20%20%20Reads%20as%20an%20%22F%22%20built%20from%20motion%20lines.%20Keep%20the%2048%C3%9748%20viewBox%20and%0A%20%20%20%20%20%20%20it%20will%20drop%20straight%20into%20the%20header%2C%20footer%20and%20trailer%20livery.%20--%3E%0A%20%20%3Cdefs%3E%0A%20%20%20%20%3ClinearGradient%20id%3D%22fou-mark%22%20x1%3D%220%22%20y1%3D%220%22%20x2%3D%221%22%20y2%3D%221%22%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%220%22%20stop-color%3D%22%23ff8a3d%22%2F%3E%0A%20%20%20%20%20%20%3Cstop%20offset%3D%221%22%20stop-color%3D%22%23d9500e%22%2F%3E%0A%20%20%20%20%3C%2FlinearGradient%3E%0A%20%20%3C%2Fdefs%3E%0A%20%20%3Crect%20width%3D%2248%22%20height%3D%2248%22%20rx%3D%2212%22%20fill%3D%22url(%23fou-mark)%22%2F%3E%0A%20%20%3Cg%20fill%3D%22%23fff%22%3E%0A%20%20%20%20%3Crect%20x%3D%2211%22%20y%3D%2212%22%20width%3D%226%22%20height%3D%2224%22%20rx%3D%222%22%2F%3E%0A%20%20%20%20%3Crect%20x%3D%2211%22%20y%3D%2212%22%20width%3D%2225%22%20height%3D%226%22%20rx%3D%222%22%2F%3E%0A%20%20%20%20%3Crect%20x%3D%2211%22%20y%3D%2221%22%20width%3D%2217%22%20height%3D%226%22%20rx%3D%222%22%2F%3E%0A%20%20%20%20%3Crect%20x%3D%2221%22%20y%3D%2230%22%20width%3D%2213%22%20height%3D%226%22%20rx%3D%222%22%20opacity%3D%22.5%22%2F%3E%0A%20%20%3C%2Fg%3E%0A%3C%2Fsvg%3E%0A" type="image/svg+xml">
+<style>
+/* ==========================================================================
+   FOU LOGISTICS — design system + site styles
+   --------------------------------------------------------------------------
+   Motion follows two references vendored in .claude/skills:
+     • emil-design-eng  — easing curves, durations, physicality, interruptibility
+     • apple-design     — materials/depth, type tracking, reduced-motion tiers
+   Rules held throughout:
+     - Only transform / opacity / clip-path / filter animate (compositor-safe).
+     - Custom easing curves only; never `ease-in` on UI; never `transition: all`.
+     - UI feedback < 300ms. Marketing/scroll motion may run longer.
+     - Nothing enters from scale(0). Pressables respond on :active.
+   ========================================================================== */
+
+/* --------------------------------------------------------------------------
+   1. Tokens
+   -------------------------------------------------------------------------- */
+:root{
+  /* Surfaces — night asphalt */
+  --ink:        #08090c;
+  --ink-2:      #0d1015;
+  --ink-3:      #14181f;
+  --ink-4:      #1c222b;
+
+  /* Foreground */
+  --bone:       #eef2f7;
+  --dim:        #98a2b1;
+  --dimmer:     #6d7684;
+
+  /* Accents — safety orange is the brand signal, amber is road marking,
+     steel is atmospheric depth. Three, deliberately, and no more. */
+  --hi-vis:     #ff6a1f;
+  --hi-vis-lo:  #c8480c;
+  --amber:      #ffb020;
+  --steel:      #4d7fa8;
+  --steel-lo:   #26415a;
+  --go:         #35d07f;
+
+  --line:       rgba(238,242,247,.11);
+  --line-soft:  rgba(238,242,247,.06);
+  --glass:      rgba(13,16,21,.72);
+
+  /* Easing — strong curves. The CSS built-ins are too weak to read as
+     intentional (emil-design-eng: "Easing"). */
+  --ease-out:    cubic-bezier(.23,1,.32,1);
+  --ease-in-out: cubic-bezier(.77,0,.175,1);
+  --ease-drawer: cubic-bezier(.32,.72,0,1);
+
+  /* Durations — UI stays under 300ms. */
+  --t-press:  140ms;
+  --t-hover:  180ms;
+  --t-pop:    200ms;
+  --t-panel:  260ms;
+  --t-reveal: 720ms;   /* scroll reveal — explanatory, may run long */
+
+  --wrap: 1180px;
+  --gut: clamp(1.1rem, 4vw, 2.25rem);
+
+  /* Type: platform system face first (apple-design §15). Tracking is
+     size-specific — tight on display, near zero on body. */
+  --sans: ui-sans-serif, system-ui, -apple-system, "Segoe UI", Roboto,
+          "Helvetica Neue", Arial, sans-serif;
+  --mono: ui-monospace, SFMono-Regular, "SF Mono", Menlo, Consolas, monospace;
+
+  --radius: 14px;
+  --radius-lg: 22px;
+
+  color-scheme: dark;
+}
+
+/* --------------------------------------------------------------------------
+   2. Reset / base
+   -------------------------------------------------------------------------- */
+*,*::before,*::after{ box-sizing:border-box; margin:0; padding:0 }
+
+html{
+  -webkit-text-size-adjust:100%;
+  scroll-behavior:smooth;
+}
+@media (prefers-reduced-motion: reduce){ html{ scroll-behavior:auto } }
+
+body{
+  background:var(--ink);
+  color:var(--bone);
+  font-family:var(--sans);
+  font-size:clamp(1rem, .96rem + .18vw, 1.075rem);
+  line-height:1.6;
+  -webkit-font-smoothing:antialiased;
+  text-rendering:optimizeLegibility;
+  overflow-x:clip;
+  min-height:100vh;
+  min-height:100svh;
+  display:flex;
+  flex-direction:column;
+}
+main{ flex:1 1 auto }
+
+img,svg,video{ display:block; max-width:100% }
+a{ color:inherit; text-decoration:none }
+button,input,select,textarea{ font:inherit; color:inherit }
+::selection{ background:var(--hi-vis); color:#fff }
+
+/* We provide our own press feedback (scale 0.97), so suppress the grey
+   rectangle iOS paints over tapped elements — the two together read as a
+   flicker rather than a press. */
+a,button,summary,input,select,textarea,label{ -webkit-tap-highlight-color:transparent }
+
+:focus-visible{
+  outline:2px solid var(--hi-vis);
+  outline-offset:3px;
+  border-radius:4px;
+}
+
+.wrap{ width:100%; max-width:var(--wrap); margin-inline:auto; padding-inline:var(--gut) }
+.wrap-narrow{ max-width:840px }
+
+.skip{
+  position:absolute; left:1rem; top:-4rem; z-index:1000;
+  background:var(--hi-vis); color:#fff; font-weight:650;
+  padding:.65rem 1rem; border-radius:10px;
+  transition:top var(--t-pop) var(--ease-out);
+}
+.skip:focus{ top:1rem }
+
+.sr-only{
+  position:absolute; width:1px; height:1px; padding:0; margin:-1px;
+  overflow:hidden; clip-path:inset(50%); white-space:nowrap; border:0;
+}
+
+/* --------------------------------------------------------------------------
+   3. Typography scale
+   Tracking tightens as size grows; leading loosens as size shrinks.
+   -------------------------------------------------------------------------- */
+.display{
+  font-size:clamp(2.6rem, 1.2rem + 6.4vw, 6.5rem);
+  line-height:.94;
+  letter-spacing:-.035em;
+  font-weight:800;
+  text-wrap:balance;
+}
+.h1{
+  font-size:clamp(2rem, 1.2rem + 3.4vw, 3.6rem);
+  line-height:1.04;
+  letter-spacing:-.028em;
+  font-weight:750;
+  text-wrap:balance;
+}
+.h2{
+  font-size:clamp(1.35rem, 1.05rem + 1.3vw, 1.9rem);
+  line-height:1.18;
+  letter-spacing:-.018em;
+  font-weight:700;
+}
+.h3{
+  font-size:1.06rem;
+  line-height:1.3;
+  letter-spacing:-.008em;
+  font-weight:670;
+}
+.lede{
+  font-size:clamp(1.05rem, .98rem + .5vw, 1.32rem);
+  line-height:1.5;
+  letter-spacing:-.006em;
+  color:var(--dim);
+  text-wrap:pretty;
+  max-width:62ch;
+}
+.eyebrow{
+  display:inline-flex; align-items:center; gap:.6rem;
+  font-size:.7rem; font-weight:700;
+  letter-spacing:.2em;            /* small text wants positive tracking */
+  text-transform:uppercase;
+  color:var(--hi-vis);
+}
+.eyebrow::before{
+  content:""; width:26px; height:2px; border-radius:2px;
+  background:currentColor; opacity:.75;
+}
+p + p{ margin-top:.9em }
+.muted{ color:var(--dim) }
+.num{ font-family:var(--mono); font-variant-numeric:tabular-nums }
+
+/* --------------------------------------------------------------------------
+   4. Buttons — instant, physical press feedback
+   -------------------------------------------------------------------------- */
+.btn{
+  --btn-bg:var(--ink-3);
+  --btn-fg:var(--bone);
+  --btn-bd:var(--line);
+  position:relative;
+  display:inline-flex; align-items:center; justify-content:center; gap:.55rem;
+  padding:.82rem 1.35rem;
+  border:1px solid var(--btn-bd);
+  border-radius:999px;
+  background:var(--btn-bg);
+  color:var(--btn-fg);
+  font-weight:640;
+  font-size:.94rem;
+  letter-spacing:-.005em;
+  cursor:pointer;
+  isolation:isolate;
+  transition:
+    transform var(--t-press) var(--ease-out),
+    background-color var(--t-hover) ease,
+    border-color var(--t-hover) ease,
+    color var(--t-hover) ease;
+}
+/* Touch devices fire :hover on tap — gate it (emil-design-eng checklist). */
+@media (hover:hover) and (pointer:fine){
+  .btn:hover{ background:var(--ink-4); border-color:rgba(238,242,247,.2) }
+  .btn-primary:hover{ background:#ff7c3a }
+  .btn-ghost:hover{ background:rgba(238,242,247,.07) }
+}
+.btn:active{ transform:scale(.97) }   /* respond on press, not release */
+.btn-primary{
+  --btn-bg:var(--hi-vis); --btn-fg:#fff; --btn-bd:transparent;
+  box-shadow:0 1px 0 rgba(255,255,255,.22) inset, 0 8px 24px -12px var(--hi-vis);
+}
+.btn-ghost{ --btn-bg:transparent }
+.btn-lg{ padding:1rem 1.7rem; font-size:1rem }
+.btn .arrow{
+  transition:transform var(--t-hover) var(--ease-out);
+}
+@media (hover:hover) and (pointer:fine){
+  .btn:hover .arrow{ transform:translateX(3px) }
+}
+
+/* --------------------------------------------------------------------------
+   5. Header — translucent material, content scrolls under (apple-design §12)
+   -------------------------------------------------------------------------- */
+.site-header{
+  position:sticky; top:0; z-index:900;
+  background:transparent;
+  transition:background-color var(--t-panel) ease, backdrop-filter var(--t-panel) ease;
+}
+.site-header::after{
+  /* Scroll-edge fade instead of a hard 1px divider. */
+  content:""; position:absolute; left:0; right:0; top:100%; height:26px;
+  background:linear-gradient(var(--ink), transparent);
+  opacity:0; pointer-events:none;
+  transition:opacity var(--t-panel) ease;
+}
+.site-header[data-stuck="true"]{
+  background:var(--glass);
+  -webkit-backdrop-filter:blur(18px) saturate(170%);
+  backdrop-filter:blur(18px) saturate(170%);
+  border-bottom:1px solid var(--line-soft);
+}
+.site-header[data-stuck="true"]::after{ opacity:.55 }
+
+.nav{
+  display:flex; align-items:center; justify-content:space-between; gap:1rem;
+  min-height:68px;
+}
+.brand{ display:inline-flex; align-items:center; gap:.7rem; flex:0 0 auto }
+.brand svg{ height:34px; width:auto }
+.brand-name{
+  font-weight:800; font-size:1.02rem; letter-spacing:-.02em; line-height:1;
+}
+.brand-name small{
+  display:block; font-size:.58rem; font-weight:650; letter-spacing:.22em;
+  color:var(--dimmer); margin-top:.24rem;
+}
+
+.nav-links{ display:flex; align-items:center; gap:.35rem; list-style:none }
+.nav-links a{
+  position:relative;
+  display:inline-block;
+  padding:.5rem .8rem;
+  border-radius:9px;
+  font-size:.92rem; font-weight:560; color:var(--dim);
+  transition:color var(--t-hover) ease, background-color var(--t-hover) ease;
+}
+@media (hover:hover) and (pointer:fine){
+  .nav-links a:hover{ color:var(--bone); background:rgba(238,242,247,.06) }
+}
+.nav-links a[aria-current="page"]{ color:var(--bone) }
+.nav-links a[aria-current="page"]::after{
+  content:""; position:absolute; left:.8rem; right:.8rem; bottom:.24rem;
+  height:2px; border-radius:2px; background:var(--hi-vis);
+}
+.nav-cta{ display:flex; align-items:center; gap:.5rem }
+/* The in-list CTA exists for the mobile sheet only — the header already
+   carries one, and two identical buttons side by side is just noise. */
+@media (min-width: 881px){ .nav-links .btn{ display:none } }
+
+.nav-toggle{
+  display:none;
+  width:44px; height:44px;      /* 44px is the minimum comfortable tap target */
+  align-items:center; justify-content:center;
+  border:1px solid var(--line); border-radius:11px;
+  background:var(--ink-2); cursor:pointer;
+  transition:transform var(--t-press) var(--ease-out), background-color var(--t-hover) ease;
+}
+.nav-toggle:active{ transform:scale(.97) }
+.nav-toggle span{
+  display:block; width:17px; height:1.6px; border-radius:2px; background:var(--bone);
+  position:relative;
+  transition:transform var(--t-panel) var(--ease-out), opacity 120ms ease;
+}
+.nav-toggle span::before,.nav-toggle span::after{
+  content:""; position:absolute; left:0; width:17px; height:1.6px;
+  border-radius:2px; background:var(--bone);
+  transition:transform var(--t-panel) var(--ease-out);
+}
+.nav-toggle span::before{ top:-5.5px }
+.nav-toggle span::after{ top:5.5px }
+.nav-toggle[aria-expanded="true"] span{ transform:rotate(45deg) }
+.nav-toggle[aria-expanded="true"] span::before{ transform:translateY(5.5px) rotate(-90deg) }
+.nav-toggle[aria-expanded="true"] span::after{ opacity:0; transform:translateY(-5.5px) }
+
+@media (max-width: 880px){
+  .nav-toggle{ display:inline-flex }
+  .nav-cta .btn:not(.nav-toggle){ display:none }
+  .nav-links{
+    position:absolute; left:var(--gut); right:var(--gut); top:calc(100% + .5rem);
+    flex-direction:column; align-items:stretch; gap:.15rem;
+    padding:.6rem;
+    background:var(--glass);
+    -webkit-backdrop-filter:blur(20px) saturate(170%);
+    backdrop-filter:blur(20px) saturate(170%);
+    border:1px solid var(--line); border-radius:var(--radius);
+    box-shadow:0 30px 60px -24px rgba(0,0,0,.8);
+    /* Origin-aware: the sheet grows out of the toggle that opened it. */
+    transform-origin:top right;
+    transform:scale(.97) translateY(-6px);
+    opacity:0; visibility:hidden;
+    transition:
+      transform var(--t-panel) var(--ease-out),
+      opacity var(--t-panel) var(--ease-out),
+      visibility 0s linear var(--t-panel);
+  }
+  .nav-links[data-open="true"]{
+    transform:none; opacity:1; visibility:visible;
+    transition-delay:0s;
+  }
+  .nav-links a{ padding:.72rem .9rem; font-size:1rem }
+  .nav-links a[aria-current="page"]::after{ left:.9rem; right:auto; width:14px; bottom:.5rem }
+  .nav-links .btn{ margin-top:.35rem }
+}
+
+/* --------------------------------------------------------------------------
+   6. Scroll reveal — clip-path wipe + lift, once per element
+   -------------------------------------------------------------------------- */
+[data-reveal]{
+  opacity:0;
+  transform:translateY(14px);
+  clip-path:inset(0 0 12% 0);
+  transition:
+    opacity var(--t-reveal) var(--ease-out),
+    transform var(--t-reveal) var(--ease-out),
+    clip-path var(--t-reveal) var(--ease-out);
+  transition-delay:var(--reveal-delay, 0ms);
+}
+[data-reveal].is-in{
+  opacity:1; transform:none; clip-path:inset(0 0 0 0);
+}
+
+/* --------------------------------------------------------------------------
+   7. Hero
+   -------------------------------------------------------------------------- */
+.hero{
+  position:relative;
+  min-height:100vh;
+  min-height:100svh;
+  display:grid;
+  align-items:center;
+  padding:clamp(6rem,14vh,9rem) 0 clamp(4rem,10vh,6rem);
+  overflow:clip;
+  isolation:isolate;
+}
+.hero-bg{
+  position:absolute; inset:0; z-index:-2;
+  background:
+    radial-gradient(120% 70% at 50% 106%, rgba(255,106,31,.20), transparent 62%),
+    radial-gradient(90% 60% at 82% 8%, rgba(77,127,168,.20), transparent 60%),
+    linear-gradient(var(--ink-2), var(--ink) 72%);
+}
+.hero-grid{
+  position:absolute; inset:0; z-index:-1;
+  background-image:
+    linear-gradient(var(--line-soft) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line-soft) 1px, transparent 1px);
+  background-size:64px 64px;
+  mask-image:radial-gradient(90% 62% at 50% 46%, #000 8%, transparent 78%);
+  -webkit-mask-image:radial-gradient(90% 62% at 50% 46%, #000 8%, transparent 78%);
+}
+.hero-inner{ display:grid; gap:1.5rem; justify-items:start; max-width:min(100%, 920px) }
+.hero .display{ max-width:15ch }
+.hero .lede{ max-width:54ch }
+.hero-actions{ display:flex; flex-wrap:wrap; gap:.7rem; margin-top:.3rem }
+
+.hero-badge{
+  display:inline-flex; align-items:center; gap:.6rem;
+  padding:.42rem .8rem .42rem .5rem;
+  border:1px solid var(--line); border-radius:999px;
+  background:rgba(13,16,21,.62);
+  -webkit-backdrop-filter:blur(12px); backdrop-filter:blur(12px);
+  font-size:.79rem; color:var(--dim);
+  will-change:transform;
+}
+.hero-badge .pill{
+  padding:.16rem .55rem; border-radius:999px;
+  background:rgba(255,106,31,.14); border:1px solid rgba(255,106,31,.3);
+  font-family:var(--mono); font-size:.7rem; font-weight:700; color:var(--hi-vis);
+  letter-spacing:.04em;
+}
+
+.hero-meta{
+  display:flex; flex-wrap:wrap; gap:.5rem 2rem;
+  margin-top:1.4rem; padding-top:1.4rem;
+  border-top:1px solid var(--line);
+  width:min(100%, 720px);
+  font-size:.86rem; color:var(--dim);
+}
+.hero-meta b{ color:var(--bone); font-weight:660 }
+
+.scroll-cue{
+  position:absolute; left:50%; bottom:clamp(1.2rem,4vh,2.4rem);
+  translate:-50% 0;
+  display:grid; justify-items:center; gap:.55rem;
+  font-size:.66rem; font-weight:700; letter-spacing:.22em;
+  text-transform:uppercase; color:var(--dimmer);
+  pointer-events:none;
+}
+.scroll-cue .rail{
+  width:1.5px; height:44px; border-radius:2px;
+  background:linear-gradient(var(--line), transparent);
+  position:relative; overflow:hidden;
+}
+.scroll-cue .rail::after{
+  content:""; position:absolute; left:0; width:100%; height:16px;
+  background:linear-gradient(var(--hi-vis), transparent);
+  animation:cue 2.4s var(--ease-in-out) infinite;
+}
+@keyframes cue{
+  0%   { transform:translateY(-16px); opacity:0 }
+  35%  { opacity:1 }
+  100% { transform:translateY(44px); opacity:0 }
+}
+
+/* --------------------------------------------------------------------------
+   8. THE JOURNEY — pinned, scroll-driven side-scrolling scene
+   The track is tall; the stage sticks inside it. Progress across the track's
+   `contain` range maps 1:1 to the pinned window, so `contain 0% → 100%` is
+   exactly "while the stage is pinned".
+   -------------------------------------------------------------------------- */
+.journey{
+  position:relative;
+  background:var(--ink);
+}
+.journey-track{
+  position:relative;
+  height:560svh;                       /* 5 acts of runway */
+  view-timeline-name:--journey;
+  view-timeline-axis:block;
+}
+.journey-stage{
+  position:sticky; top:0;
+  height:100vh;
+  height:100svh;
+  overflow:clip;
+  isolation:isolate;
+  background:var(--ink);
+}
+
+/* --- sky: two gradients cross-fading day → dusk --- */
+.sky{ position:absolute; inset:0; z-index:0 }
+.sky-day,.sky-dusk{ position:absolute; inset:0 }
+.sky-day{
+  background:linear-gradient(#182333 0%, #22303f 42%, #2b3a49 100%);
+}
+.sky-dusk{
+  opacity:0;
+  background:linear-gradient(#0a0d14 0%, #1b1626 38%, #4a2413 78%, #7a3a12 100%);
+}
+.stars{
+  position:absolute; inset:0; opacity:0;
+  background-image:
+    radial-gradient(1.4px 1.4px at 12% 22%, rgba(255,255,255,.9), transparent),
+    radial-gradient(1.2px 1.2px at 34% 12%, rgba(255,255,255,.75), transparent),
+    radial-gradient(1.6px 1.6px at 58% 28%, rgba(255,255,255,.85), transparent),
+    radial-gradient(1.2px 1.2px at 74% 15%, rgba(255,255,255,.7), transparent),
+    radial-gradient(1.4px 1.4px at 88% 32%, rgba(255,255,255,.8), transparent),
+    radial-gradient(1.1px 1.1px at 22% 38%, rgba(255,255,255,.6), transparent);
+}
+
+/* --- parallax layers ---
+   Each layer is exactly as wide as its own artwork (`width: max-content`),
+   and every layer travels its full width over the same scroll. Depth
+   therefore falls out of the art itself: the short, distant hill layer
+   covers less ground than the long foreground layer, with no per-layer
+   speed constants to keep in sync. --------------------------------------- */
+.layer{
+  position:absolute; top:0; bottom:0; left:0;
+  width:max-content;
+  will-change:transform;
+}
+.layer svg{ height:100%; width:auto; max-width:none }
+.layer-far   { z-index:1; opacity:.5 }
+.layer-mid   { z-index:2; opacity:.82 }
+.layer-world { z-index:3 }
+/* Foreground objects pass close to the camera, so they read as
+   out-of-focus rather than as hard silhouettes. Blur stays small — it is
+   expensive, especially in Safari. */
+.layer-near  { z-index:5; opacity:.72; filter:blur(3px) }
+
+/* --- the rig: fixed at stage centre while the world slides past --- */
+/* Sized from stage height, not viewport width, so the rig keeps the same
+   scale relative to the scene (a trailer stays a dock door tall) at every
+   aspect ratio. The vw cap only bites on very narrow screens. */
+.rig{
+  position:absolute; z-index:4;
+  left:50%; bottom:16%;            /* the scene's ground line */
+  width:min(62vh, 90vw);
+  width:min(62svh, 90vw);
+  translate:-50% 0;
+  opacity:0;
+  will-change:transform, opacity;
+}
+.rig-van{
+  width:min(26vh, 56vw);
+  width:min(26svh, 56vw);
+  bottom:16.2%;
+}
+/* The world pans left, so the rig is the thing travelling right and must
+   face right. The artwork is drawn cab-left, so mirror it here rather than
+   rewriting every coordinate — the livery text is counter-mirrored inside
+   the SVG so it still reads the right way round. Applied to the <svg>, not
+   to .rig, because .rig's transform belongs to the scroll animation. */
+.rig > svg{ transform:scaleX(-1) }
+
+.wheel{ transform-box:fill-box; transform-origin:center }
+
+/* Darkens the road under the captions so type stays legible over a moving
+   scene, and keeps the scene from ending on a hard cut line. */
+.stage-haze{
+  position:absolute; inset:auto 0 0 0; height:24%; z-index:6;
+  background:linear-gradient(transparent, rgba(8,9,12,.5) 46%, rgba(8,9,12,.9) 84%, var(--ink));
+  pointer-events:none;
+}
+.stage-vignette{
+  position:absolute; inset:0; z-index:7; pointer-events:none;
+  background:
+    /* top scrim: keeps caption type legible over a moving scene */
+    linear-gradient(rgba(8,9,12,.88) 0%, rgba(8,9,12,.55) 24%, transparent 48%),
+    radial-gradient(120% 90% at 50% 45%, transparent 52%, rgba(8,9,12,.7));
+}
+
+/* --- captions ---
+   Type sits in the upper band and the scene plays out beneath it, so the
+   rig never has to share space with a paragraph. --------------------- */
+.captions{
+  position:absolute; inset:0; z-index:8;
+  display:grid; align-content:start;
+  padding:clamp(5.5rem, 15vh, 8rem) var(--gut) 0;
+  pointer-events:none;
+}
+.cap{
+  grid-area:1/1;
+  max-width:min(100%, 560px);
+  opacity:0;
+  will-change:transform, opacity;
+}
+.cap-index{
+  display:inline-flex; align-items:baseline; gap:.5rem;
+  font-family:var(--mono); font-size:.72rem; font-weight:600;
+  letter-spacing:.16em; color:var(--hi-vis); margin-bottom:.7rem;
+}
+.cap-index i{ font-style:normal; color:var(--dimmer) }
+.cap h2{
+  font-size:clamp(1.7rem, 1.1rem + 2.6vw, 3rem);
+  line-height:1.02; letter-spacing:-.03em; font-weight:780;
+  margin-bottom:.6rem;
+}
+.cap p{
+  color:var(--dim); font-size:clamp(.95rem,.9rem + .3vw,1.08rem);
+  max-width:48ch; text-wrap:pretty;
+}
+.cap-stat{
+  display:inline-flex; align-items:center; gap:.5rem;
+  margin-top:1rem; padding:.42rem .8rem;
+  border:1px solid var(--line); border-radius:999px;
+  background:rgba(13,16,21,.6);
+  -webkit-backdrop-filter:blur(10px); backdrop-filter:blur(10px);
+  font-size:.78rem; color:var(--bone);
+}
+.cap-stat b{ color:var(--hi-vis); font-family:var(--mono); font-weight:700 }
+
+/* --- act rail (progress) --- */
+.act-rail{
+  position:absolute; z-index:9;
+  right:var(--gut); top:50%; translate:0 -50%;
+  display:grid; gap:.75rem; justify-items:end;
+  pointer-events:none;
+}
+.act-rail li{ list-style:none; display:flex; align-items:center; gap:.55rem }
+.act-rail .label{
+  font-size:.66rem; font-weight:700; letter-spacing:.14em; text-transform:uppercase;
+  color:var(--dimmer);
+  opacity:0; transform:translateX(4px);
+  transition:opacity var(--t-panel) var(--ease-out), transform var(--t-panel) var(--ease-out), color var(--t-panel) ease;
+}
+.act-rail .dot{
+  width:7px; height:7px; border-radius:50%;
+  background:rgba(238,242,247,.22);
+  transition:background-color var(--t-panel) ease, transform var(--t-panel) var(--ease-out);
+}
+.act-rail li[data-on="true"] .dot{ background:var(--hi-vis); transform:scale(1.45) }
+.act-rail li[data-on="true"] .label{ opacity:1; transform:none; color:var(--bone) }
+@media (max-width: 720px){ .act-rail{ display:none } }
+
+/* Landscape phones have almost no vertical room — roughly 360-390px of
+   stage. Caption-above-scene cannot fit, so separate them horizontally
+   instead: copy to the left, rig moved right and clear of it. */
+@media (orientation: landscape) and (max-height: 560px){
+  .captions{ padding-top:clamp(4.9rem, 13vh, 5.6rem) }   /* clear the 68px sticky header */
+  .cap{ max-width:min(46vw, 440px) }
+  .cap h2{ font-size:clamp(1.3rem, 1rem + 1.4vw, 1.75rem) }
+  .cap p{ font-size:.86rem }
+  .cap-stat{ margin-top:.6rem; font-size:.72rem }
+  .rig{ left:70% }
+  .rig-van{ left:72% }
+}
+
+/* Shorter still (an SE on its side is 375px tall). Widen the column so the
+   copy needs fewer lines, shrink the type, and drop the metadata chip —
+   the headline carries the act on a screen this size. */
+@media (orientation: landscape) and (max-height: 420px){
+  .captions{ padding-top:4.9rem }                        /* clear the 68px sticky header */
+  .cap{ max-width:min(52vw, 420px) }
+  .cap h2{ font-size:1.2rem; line-height:1.06; margin-bottom:.45rem }
+  .cap p{ font-size:.8rem; line-height:1.42 }
+  .cap-index{ margin-bottom:.45rem }
+  .cap-stat{ display:none }
+  .rig{ left:76%; width:min(46vh, 46vw) }
+  .rig-van{ left:78%; width:min(21vh, 30vw) }
+}
+
+/* Small screens: tighten the caption block so five lines of copy still
+   clear the horizon. The rig scales itself from stage height already. */
+@media (max-width: 720px){
+  .captions{ padding-top:clamp(4.5rem, 12vh, 6rem) }
+  .cap p{ font-size:.92rem }
+  .cap-stat{ margin-top:.7rem }
+}
+
+/* --- scroll-driven bindings ------------------------------------------------
+   Descendants of .journey-track read its view-timeline directly.
+   Everything below is a pure CSS scroll animation: it runs off the main
+   thread, so it stays smooth while the page is still loading work. -------- */
+@supports (animation-timeline: view()){
+  .layer, .rig, .sky-dusk, .stars, .wheel, .cap, .act-rail .dot, .act-rail .label{
+    animation-timeline:--journey;
+    animation-range:contain 0% contain 100%;
+    animation-fill-mode:both;
+    animation-timing-function:linear;
+    animation-duration:auto;
+  }
+  .layer       { animation-name:pan }
+  .sky-dusk    { animation-name:dusk }
+  .stars       { animation-name:starfield }
+  .rig-truck   { animation-name:truck-in }
+  .rig-van     { animation-name:van-in }
+  .wheel       { animation-name:roll }
+
+  /* Each caption and rail marker owns a slice of the same timeline, set
+     per element as --from/--to, so one keyframe set serves all of them. */
+  .cap{ animation-name:cap-cycle }
+  .cap, .act-rail .dot, .act-rail .label{
+    animation-range:contain var(--from) contain var(--to);
+  }
+  .act-rail .dot  { animation-name:rail-dot }
+  .act-rail .label{ animation-name:rail-label }
+}
+
+/* Travel the layer's own width, less one viewport, so the artwork starts
+   flush at the left edge and finishes flush at the right at any aspect. */
+@keyframes pan{
+  from{ transform:translate3d(0,0,0) }
+  to  { transform:translate3d(calc(-100% + 100vw),0,0) }
+}
+
+/* Wheels are geared to the world, not to a clock: they turn because the
+   scene moves. Stop scrolling and they stop, like a real wheel. */
+/* Negative because the rig is mirrored: inside a scaleX(-1) parent a
+   negative rotation is what renders as clockwise, which is the direction a
+   wheel turns when the vehicle is moving right. */
+@keyframes roll{ from{ transform:rotate(0turn) } to{ transform:rotate(-16turn) } }
+
+@keyframes dusk{
+  0%,38%   { opacity:0 }
+  70%      { opacity:.85 }
+  100%     { opacity:1 }
+}
+@keyframes starfield{
+  0%,52%   { opacity:0 }
+  82%,100% { opacity:.75 }
+}
+/* The tractor unit is on stage for pickup, line haul and the hub — and
+   off it while the camera is inside the fulfilment centre. */
+@keyframes truck-in{
+  0%       { opacity:0; transform:translate3d(-3%,10px,0) }
+  4%,15%   { opacity:1; transform:none }
+  19%,37%  { opacity:0; transform:translate3d(0,10px,0) }
+  42%,78%  { opacity:1; transform:none }
+  83%,100% { opacity:0; transform:translate3d(3%,8px,0) }
+}
+/* The last-mile van takes over at the end. */
+@keyframes van-in{
+  0%,78%   { opacity:0; transform:translate3d(-3%,10px,0) }
+  84%,100% { opacity:1; transform:none }
+}
+/* One shared cycle; each caption sets its own slice via --from/--to. */
+@keyframes cap-cycle{
+  0%       { opacity:0; transform:translate3d(0,16px,0) }
+  14%,86%  { opacity:1; transform:none }
+  100%     { opacity:0; transform:translate3d(0,-14px,0) }
+}
+/* Rail markers hold their "off" state outside their own range, because
+   fill-mode:both freezes the first/last keyframe on either side of it. */
+@keyframes rail-dot{
+  0%      { background-color:rgba(238,242,247,.22); transform:scale(1) }
+  8%,92%  { background-color:var(--hi-vis);         transform:scale(1.45) }
+  100%    { background-color:rgba(238,242,247,.22); transform:scale(1) }
+}
+@keyframes rail-label{
+  0%      { opacity:0; transform:translate3d(4px,0,0); color:var(--dimmer) }
+  8%,92%  { opacity:1; transform:none;                 color:var(--bone) }
+  100%    { opacity:0; transform:translate3d(4px,0,0); color:var(--dimmer) }
+}
+
+/* Fallback for engines without scroll-driven animations: fou.js writes the
+   same transforms from a rAF loop and toggles .is-on for captions. */
+.no-sda .cap{
+  transition:opacity var(--t-panel) var(--ease-out), transform var(--t-panel) var(--ease-out);
+  transform:translateY(14px);
+}
+.no-sda .cap.is-on{ opacity:1; transform:none }
+.no-sda .rig{
+  transition:opacity var(--t-panel) var(--ease-out);
+}
+.no-sda .rig.is-on{ opacity:1 }
+
+/* --------------------------------------------------------------------------
+   9. Sections
+   -------------------------------------------------------------------------- */
+.section{ padding:clamp(4.5rem, 11vh, 8rem) 0; position:relative }
+.section-head{ display:grid; gap:1rem; max-width:70ch; margin-bottom:clamp(2.2rem,5vh,3.4rem) }
+.section-alt{ background:var(--ink-2); border-block:1px solid var(--line-soft) }
+
+/* --- how it works: the chain --- */
+.chain{ display:grid; gap:0 }
+.step{
+  display:grid;
+  grid-template-columns:auto minmax(0,1fr);
+  gap:clamp(1.2rem,3vw,2.4rem);
+  padding:clamp(1.6rem,3.4vh,2.4rem) 0;
+  border-top:1px solid var(--line);
+}
+.step:last-child{ border-bottom:1px solid var(--line) }
+.step-rail{ display:grid; justify-items:center; gap:.6rem }
+.step-num{
+  width:44px; height:44px; border-radius:12px;
+  display:grid; place-items:center;
+  background:var(--ink-3); border:1px solid var(--line);
+  font-family:var(--mono); font-size:.9rem; font-weight:700; color:var(--hi-vis);
+  transition:background-color var(--t-panel) ease, border-color var(--t-panel) ease;
+}
+.step-rail .tie{ width:1px; flex:1; min-height:100%; background:var(--line); justify-self:center }
+.step-body{ display:grid; gap:.55rem; align-content:start }
+.step-body h3{ font-size:clamp(1.1rem,1rem + .5vw,1.35rem); letter-spacing:-.018em; font-weight:700 }
+.step-body p{ color:var(--dim); max-width:64ch; text-wrap:pretty }
+.step-tags{ display:flex; flex-wrap:wrap; gap:.4rem; margin-top:.35rem }
+.tag{
+  font-size:.72rem; font-weight:620; letter-spacing:.02em;
+  padding:.26rem .62rem; border-radius:999px;
+  border:1px solid var(--line); color:var(--dim); background:var(--ink-3);
+}
+@media (hover:hover) and (pointer:fine){
+  .step:hover .step-num{ background:var(--ink-4); border-color:rgba(255,106,31,.4) }
+}
+
+/* --- mode comparison table --- */
+.modes{ overflow-x:auto; border:1px solid var(--line); border-radius:var(--radius); background:var(--ink-2) }
+.modes table{ width:100%; border-collapse:collapse; min-width:640px; font-size:.92rem }
+.modes th,.modes td{ text-align:left; padding:.85rem 1.1rem; border-bottom:1px solid var(--line-soft) }
+.modes thead th{
+  font-size:.7rem; letter-spacing:.16em; text-transform:uppercase;
+  color:var(--dimmer); font-weight:700; background:var(--ink-3);
+  position:sticky; top:0;
+}
+.modes tbody tr:last-child td{ border-bottom:0 }
+.modes td:first-child{ color:var(--bone); font-weight:650 }
+.modes .dot-scale{ display:inline-flex; gap:3px; vertical-align:middle }
+.modes .dot-scale i{ width:6px; height:6px; border-radius:50%; background:rgba(238,242,247,.16) }
+.modes .dot-scale i.on{ background:var(--hi-vis) }
+
+/* --- cards --- */
+.grid{ display:grid; gap:clamp(.9rem,2vw,1.2rem) }
+.grid-3{ grid-template-columns:repeat(auto-fit, minmax(min(100%,270px), 1fr)) }
+.grid-2{ grid-template-columns:repeat(auto-fit, minmax(min(100%,340px), 1fr)) }
+
+.card{
+  position:relative;
+  padding:clamp(1.3rem,2.6vw,1.7rem);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  background:linear-gradient(var(--ink-2), var(--ink-3));
+  display:grid; gap:.6rem; align-content:start;
+  transition:transform var(--t-panel) var(--ease-out), border-color var(--t-panel) ease;
+}
+@media (hover:hover) and (pointer:fine){
+  .card:hover{ transform:translateY(-3px); border-color:rgba(238,242,247,.2) }
+}
+.card .icon{
+  width:38px; height:38px; border-radius:10px;
+  display:grid; place-items:center; margin-bottom:.3rem;
+  background:rgba(255,106,31,.12); color:var(--hi-vis);
+  border:1px solid rgba(255,106,31,.22);
+}
+.card h3{ font-size:1.06rem; letter-spacing:-.012em; font-weight:690 }
+.card p{ color:var(--dim); font-size:.94rem; text-wrap:pretty }
+
+/* --- stats band --- */
+.stats{
+  display:grid; gap:1px;
+  grid-template-columns:repeat(auto-fit, minmax(min(100%,190px), 1fr));
+  background:var(--line);
+  border:1px solid var(--line);
+  border-radius:var(--radius);
+  overflow:hidden;
+}
+.stat{ background:var(--ink-2); padding:clamp(1.2rem,2.6vw,1.7rem); display:grid; gap:.3rem }
+.stat b{
+  font-family:var(--mono); font-size:clamp(1.7rem,1.2rem + 1.8vw,2.5rem);
+  font-weight:700; letter-spacing:-.03em; line-height:1;
+  font-variant-numeric:tabular-nums;
+}
+.stat span{ font-size:.82rem; color:var(--dim) }
+.stat .unit{ color:var(--hi-vis) }
+
+/* --- CTA --- */
+.cta{
+  position:relative; overflow:clip;
+  border:1px solid var(--line); border-radius:var(--radius-lg);
+  padding:clamp(2rem,5vw,3.4rem);
+  background:
+    radial-gradient(90% 140% at 12% 0%, rgba(255,106,31,.16), transparent 60%),
+    linear-gradient(var(--ink-3), var(--ink-2));
+  display:grid; gap:1.1rem; justify-items:start;
+}
+.cta .h1{ max-width:18ch }
+.cta-actions{ display:flex; flex-wrap:wrap; gap:.65rem; margin-top:.3rem }
+
+/* --------------------------------------------------------------------------
+   10. Forms
+   -------------------------------------------------------------------------- */
+.form{ display:grid; gap:1rem }
+.field{ display:grid; gap:.42rem }
+.field label{ font-size:.85rem; font-weight:640; letter-spacing:-.004em }
+.field label .req{ color:var(--hi-vis) }
+.field .hint{ font-size:.78rem; color:var(--dimmer) }
+.field input,.field select,.field textarea{
+  width:100%;
+  padding:.8rem .95rem;
+  background:var(--ink-2);
+  border:1px solid var(--line);
+  border-radius:11px;
+  /* Exactly 16px. Anything smaller makes iOS Safari zoom the page in when
+     the field takes focus, which then leaves the visitor scrolled sideways
+     in the middle of filling out a form. */
+  font-size:1rem;
+  transition:border-color var(--t-hover) ease, background-color var(--t-hover) ease;
+}
+.field textarea{ min-height:130px; resize:vertical }
+.field input::placeholder,.field textarea::placeholder{ color:var(--dimmer) }
+.field input:focus,.field select:focus,.field textarea:focus{
+  outline:none; border-color:var(--hi-vis); background:var(--ink-3);
+}
+.field-row{ display:grid; gap:1rem; grid-template-columns:repeat(auto-fit,minmax(min(100%,220px),1fr)) }
+/* Inline validation — surfaced as the user leaves a field, never only on
+   submit (apple-design §16: validate inline). */
+.field .error{
+  font-size:.79rem; color:#ff8f6b;
+  display:none;
+}
+.field[data-invalid="true"] input,
+.field[data-invalid="true"] select,
+.field[data-invalid="true"] textarea{ border-color:#ff8f6b }
+.field[data-invalid="true"] .error{ display:block }
+
+.form-note{ font-size:.82rem; color:var(--dimmer); max-width:56ch }
+.form-status{
+  display:none; align-items:flex-start; gap:.65rem;
+  padding:.9rem 1.05rem; border-radius:12px;
+  border:1px solid rgba(53,208,127,.32); background:rgba(53,208,127,.1);
+  font-size:.9rem;
+}
+.form-status[data-show="true"]{ display:flex }
+.form-status svg{ flex:0 0 auto; color:var(--go); margin-top:.15rem }
+
+/* --------------------------------------------------------------------------
+   11. Roles accordion (hiring)
+   -------------------------------------------------------------------------- */
+.roles{ display:grid; gap:.7rem }
+.role{
+  border:1px solid var(--line); border-radius:var(--radius);
+  background:var(--ink-2); overflow:hidden;
+  transition:border-color var(--t-panel) ease, background-color var(--t-panel) ease;
+}
+.role[open]{ border-color:rgba(255,106,31,.32); background:var(--ink-3) }
+.role summary{
+  display:grid;
+  grid-template-columns:minmax(0,1fr) auto;
+  align-items:center; gap:1rem;
+  padding:1.05rem clamp(1rem,2.4vw,1.4rem);
+  cursor:pointer; list-style:none;
+  transition:transform var(--t-press) var(--ease-out), background-color var(--t-hover) ease;
+}
+.role summary::-webkit-details-marker{ display:none }
+.role summary:active{ transform:scale(.995) }
+@media (hover:hover) and (pointer:fine){
+  .role summary:hover{ background:rgba(238,242,247,.04) }
+}
+.role-title{ display:grid; gap:.28rem; min-width:0 }
+.role-title strong{ font-size:1.03rem; font-weight:690; letter-spacing:-.014em }
+.role-meta{ display:flex; flex-wrap:wrap; gap:.35rem .8rem; font-size:.8rem; color:var(--dim) }
+.role-meta span{ display:inline-flex; align-items:center; gap:.34rem }
+.role-chev{
+  width:30px; height:30px; border-radius:50%; display:grid; place-items:center;
+  border:1px solid var(--line); color:var(--dim); flex:0 0 auto;
+  transition:transform var(--t-panel) var(--ease-out), color var(--t-panel) ease, border-color var(--t-panel) ease;
+}
+.role[open] .role-chev{ transform:rotate(180deg); color:var(--hi-vis); border-color:rgba(255,106,31,.36) }
+.role-body{
+  padding:0 clamp(1rem,2.4vw,1.4rem) 1.3rem;
+  display:grid; gap:1rem;
+  border-top:1px solid var(--line-soft);
+  margin-top:-1px; padding-top:1.2rem;
+}
+.role-body h4{ font-size:.76rem; letter-spacing:.16em; text-transform:uppercase; color:var(--dimmer); font-weight:700 }
+.role-body ul{ display:grid; gap:.42rem; padding-left:1.1rem; color:var(--dim); font-size:.94rem }
+.role-body li::marker{ color:var(--hi-vis) }
+.role-pay{
+  display:inline-flex; align-items:baseline; gap:.4rem;
+  font-family:var(--mono); font-size:1.05rem; font-weight:700; color:var(--bone);
+}
+.role-pay small{ font-family:var(--sans); font-size:.78rem; color:var(--dim); font-weight:500 }
+
+/* --------------------------------------------------------------------------
+   12. Hiring process timeline
+   -------------------------------------------------------------------------- */
+.timeline{ display:grid; gap:0; counter-reset:tl }
+.tl-item{
+  display:grid; grid-template-columns:auto minmax(0,1fr); gap:1.1rem;
+  padding-bottom:1.6rem; position:relative;
+}
+.tl-item:not(:last-child)::before{
+  content:""; position:absolute; left:15px; top:34px; bottom:0;
+  width:1px; background:var(--line);
+}
+.tl-dot{
+  width:31px; height:31px; border-radius:50%;
+  display:grid; place-items:center;
+  background:var(--ink-3); border:1px solid var(--line);
+  font-family:var(--mono); font-size:.76rem; font-weight:700; color:var(--hi-vis);
+  position:relative; z-index:1;
+}
+.tl-body{ display:grid; gap:.3rem; padding-top:.24rem }
+.tl-body strong{ font-size:1rem; font-weight:680; letter-spacing:-.012em }
+.tl-body p{ color:var(--dim); font-size:.93rem }
+.tl-when{ font-size:.76rem; color:var(--dimmer); font-family:var(--mono) }
+
+/* --------------------------------------------------------------------------
+   13. Page hero (interior pages)
+   -------------------------------------------------------------------------- */
+.page-hero{
+  position:relative; overflow:clip;
+  padding:clamp(7rem,16vh,10rem) 0 clamp(3rem,7vh,4.5rem);
+  background:
+    radial-gradient(80% 100% at 8% 0%, rgba(255,106,31,.15), transparent 58%),
+    radial-gradient(70% 90% at 92% 12%, rgba(77,127,168,.16), transparent 60%),
+    linear-gradient(var(--ink-2), var(--ink));
+  border-bottom:1px solid var(--line-soft);
+}
+.page-hero .wrap{ display:grid; gap:1.1rem; justify-items:start }
+.crumbs{ font-size:.8rem; color:var(--dimmer); display:flex; gap:.5rem; align-items:center }
+.crumbs a{ color:var(--dim); transition:color var(--t-hover) ease }
+@media (hover:hover) and (pointer:fine){ .crumbs a:hover{ color:var(--bone) } }
+
+/* --------------------------------------------------------------------------
+   14. Contact specifics
+   -------------------------------------------------------------------------- */
+.contact-layout{
+  display:grid; gap:clamp(1.4rem,3.5vw,2.6rem);
+  grid-template-columns:minmax(0,1.25fr) minmax(0,.85fr);
+  align-items:start;
+}
+@media (max-width: 900px){ .contact-layout{ grid-template-columns:minmax(0,1fr) } }
+
+.info-list{ display:grid; gap:.1rem }
+.info-item{
+  display:grid; grid-template-columns:auto minmax(0,1fr); gap:.9rem;
+  padding:1rem 0; border-bottom:1px solid var(--line);
+}
+.info-item:last-child{ border-bottom:0 }
+.info-item .icon{
+  width:34px; height:34px; border-radius:9px; display:grid; place-items:center;
+  background:var(--ink-3); border:1px solid var(--line); color:var(--hi-vis);
+}
+.info-item div{ display:grid; gap:.16rem; min-width:0 }
+.info-item strong{ font-size:.82rem; letter-spacing:.02em; color:var(--dim); font-weight:620 }
+.info-item a,.info-item p{ font-size:.98rem; color:var(--bone); word-break:break-word }
+.info-item a{ transition:color var(--t-hover) ease }
+@media (hover:hover) and (pointer:fine){ .info-item a:hover{ color:var(--hi-vis) } }
+
+.hours{ display:grid; gap:.45rem; font-size:.92rem }
+.hours div{ display:flex; justify-content:space-between; gap:1rem; color:var(--dim) }
+.hours div b{ color:var(--bone); font-weight:620 }
+.hours .now{
+  display:inline-flex; align-items:center; gap:.45rem;
+  font-size:.8rem; color:var(--go); margin-top:.4rem;
+}
+.hours .now::before{
+  content:""; width:7px; height:7px; border-radius:50%; background:var(--go);
+  box-shadow:0 0 0 3px rgba(53,208,127,.16);
+}
+
+/* --------------------------------------------------------------------------
+   15. Footer
+   -------------------------------------------------------------------------- */
+.site-footer{
+  border-top:1px solid var(--line);
+  background:var(--ink-2);
+  padding:clamp(2.6rem,6vh,4rem) 0 2rem;
+  margin-top:auto;
+}
+.footer-grid{
+  display:grid; gap:2rem;
+  grid-template-columns:minmax(0,1.4fr) repeat(auto-fit,minmax(150px,1fr));
+}
+.footer-brand{ display:grid; gap:.9rem; align-content:start; max-width:34ch }
+.footer-brand p{ color:var(--dim); font-size:.92rem }
+.footer-col{ display:grid; gap:.55rem; align-content:start }
+.footer-col h4{
+  font-size:.7rem; letter-spacing:.18em; text-transform:uppercase;
+  color:var(--dimmer); font-weight:700; margin-bottom:.2rem;
+}
+.footer-col a{ font-size:.92rem; color:var(--dim); transition:color var(--t-hover) ease }
+@media (hover:hover) and (pointer:fine){ .footer-col a:hover{ color:var(--bone) } }
+.footer-base{
+  margin-top:clamp(2rem,5vh,3rem); padding-top:1.4rem;
+  border-top:1px solid var(--line-soft);
+  display:flex; flex-wrap:wrap; gap:.6rem 1.4rem; justify-content:space-between;
+  font-size:.82rem; color:var(--dimmer);
+}
+
+/* --------------------------------------------------------------------------
+   16. Accessibility tiers (apple-design §14)
+   Reduced motion ≠ no feedback. Cross-fade instead of travel; drop the pin.
+   -------------------------------------------------------------------------- */
+@media (prefers-reduced-motion: reduce){
+  *,*::before,*::after{
+    animation-duration:.01ms !important;
+    animation-iteration-count:1 !important;
+    transition-duration:.14s !important;
+    scroll-behavior:auto !important;
+  }
+  [data-reveal]{ transform:none; clip-path:none; transition-property:opacity }
+  .scroll-cue .rail::after{ display:none }
+
+  /* Unpin the journey and stack the acts as plain, readable panels.
+     The scroll animations must be cancelled outright: with fill-mode:both
+     a paused scroll animation keeps applying its frozen keyframe, which
+     would otherwise hold every caption at opacity 0. */
+  .cap, .act-rail .dot, .act-rail .label,
+  .rig, .sky-dusk, .stars, .layer, .wheel{ animation:none !important }
+
+  .journey-track{ height:auto; view-timeline-name:none }
+  .journey-stage{ position:static; height:auto; overflow:visible; padding-block:3rem }
+  .layer,.rig,.stage-haze,.stage-vignette,.act-rail{ display:none }
+  .sky{ position:absolute; inset:0 }
+  .sky-dusk{ opacity:.6 }
+  .captions{
+    position:relative; inset:auto; padding:0 var(--gut);
+    display:grid; gap:2.4rem; grid-auto-flow:row;
+  }
+  .cap{ grid-area:auto; opacity:1; transform:none; max-width:60ch }
+  .card:hover,.step:hover .step-num{ transform:none }
+}
+
+@media (prefers-reduced-transparency: reduce){
+  .site-header[data-stuck="true"],
+  .nav-links,
+  .cap-stat{
+    background:var(--ink);
+    -webkit-backdrop-filter:none;
+    backdrop-filter:none;
+  }
+}
+
+@media (prefers-contrast: more){
+  :root{ --dim:#c3cad4; --dimmer:#a4adb9; --line:rgba(238,242,247,.3) }
+  .card,.role,.modes,.stat{ border-color:rgba(238,242,247,.34) }
+  .btn{ border-color:rgba(238,242,247,.4) }
+}
+
+@media print{
+  .site-header,.act-rail,.scroll-cue,.stage-haze,.stage-vignette,.layer,.rig{ display:none }
+  body{ background:#fff; color:#000 }
+}
+
+</style>
+</head>
+<body>
+<a class="skip" href="#main">Skip to content</a>
+
+<!-- ======================================================================
+     HEADER
+     ====================================================================== -->
+<header class="site-header">
+  <div class="wrap">
+    <nav class="nav" aria-label="Primary">
+      <a class="brand" href="index.html" aria-label="FOU Logistics — home">
+        <!-- PLACEHOLDER MARK: mirror of assets/img/logo.svg. Swap both when
+             the real logo lands (see README.md → "Dropping in the logo"). -->
+        <svg viewBox="0 0 48 48" aria-hidden="true" focusable="false">
+          <defs>
+            <linearGradient id="mark-a" x1="0" y1="0" x2="1" y2="1">
+              <stop offset="0" stop-color="#ff8a3d"/><stop offset="1" stop-color="#d9500e"/>
+            </linearGradient>
+          </defs>
+          <rect width="48" height="48" rx="12" fill="url(#mark-a)"/>
+          <g fill="#fff">
+            <rect x="11" y="12" width="6" height="24" rx="2"/>
+            <rect x="11" y="12" width="25" height="6" rx="2"/>
+            <rect x="11" y="21" width="17" height="6" rx="2"/>
+            <rect x="21" y="30" width="13" height="6" rx="2" opacity=".5"/>
+          </g>
+        </svg>
+        <span class="brand-name">FOU<small>LOGISTICS</small></span>
+      </a>
+
+      <ul class="nav-links" id="nav-links">
+        <li><a href="index.html" aria-current="page">Home</a></li>
+        <li><a href="index.html#how">How logistics works</a></li>
+        <li><a href="index.html#services">Services</a></li>
+        <li><a href="careers.html">Careers</a></li>
+        <li><a href="contact.html">Contact</a></li>
+        <li><a class="btn btn-primary" href="contact.html#quote">Get a quote</a></li>
+      </ul>
+
+      <div class="nav-cta">
+        <a class="btn btn-primary" href="contact.html#quote">Get a quote <span class="arrow" aria-hidden="true">→</span></a>
+        <button class="nav-toggle" type="button" aria-expanded="false" aria-controls="nav-links" aria-label="Menu">
+          <span></span>
+        </button>
+      </div>
+    </nav>
+  </div>
+</header>
+
+<main id="main-index" data-route="index">
+
+<!-- ======================================================================
+     HERO
+     ====================================================================== -->
+<section class="hero">
+  <div class="hero-bg" aria-hidden="true"></div>
+  <div class="hero-grid" aria-hidden="true"></div>
+
+  <div class="wrap">
+    <div class="hero-inner">
+      <span class="hero-badge" data-tilt>
+        <span class="pill">FOU</span> Dock to door, one chain of custody
+      </span>
+
+      <h1 class="display" data-reveal>Freight that arrives when it said it would.</h1>
+
+      <p class="lede" data-reveal style="--reveal-delay:70ms">
+        FOU Logistics plans, hauls and hands off shipments across the lower 48 —
+        pickup, warehousing, line haul, cross-dock and last mile, run as one
+        chain instead of five hand-offs that blame each other.
+      </p>
+
+      <div class="hero-actions" data-reveal style="--reveal-delay:130ms">
+        <a class="btn btn-primary btn-lg" href="contact.html#quote">Get a quote <span class="arrow" aria-hidden="true">→</span></a>
+        <a class="btn btn-ghost btn-lg" href="#journey">See how a load moves</a>
+      </div>
+
+      <div class="hero-meta" data-reveal style="--reveal-delay:190ms">
+        <span><b>FTL &amp; LTL</b> · dry van, reefer, flatbed</span>
+        <span><b>Warehousing</b> · receive, slot, pick, pack</span>
+        <span><b>Final mile</b> · appointment &amp; POD</span>
+      </div>
+    </div>
+  </div>
+
+  <div class="scroll-cue" aria-hidden="true">
+    <span>Scroll</span>
+    <span class="rail"></span>
+  </div>
+</section>
+
+<!-- ======================================================================
+     THE JOURNEY — pinned, scroll-driven side-scrolling scene.
+     Five acts follow one load from the shipper's dock to a front door.
+     ====================================================================== -->
+<section class="journey" id="journey" aria-labelledby="journey-title">
+  <h2 id="journey-title" class="sr-only">The journey a shipment takes</h2>
+
+  <div class="journey-track">
+    <div class="journey-stage">
+
+      <!-- sky ---------------------------------------------------------- -->
+      <div class="sky" aria-hidden="true">
+        <div class="sky-day"></div>
+        <div class="sky-dusk"></div>
+        <div class="stars"></div>
+      </div>
+
+      <!-- far parallax: hills and a distant skyline --------------------- -->
+      <div class="layer layer-far" aria-hidden="true">
+        <svg viewBox="0 -600 3400 1600" fill="none">
+          <path d="M0 740V620q190-64 390-14t400 6q220-58 420 4t420 2q210-52 400 8t400-2q180-42 390 16h180v100Z" fill="#18212d"/>
+          <g fill="#1b2532">
+            <rect x="620" y="600" width="34" height="140"/><rect x="666" y="560" width="46" height="180"/>
+            <rect x="724" y="592" width="30" height="148"/><rect x="762" y="530" width="52" height="210"/>
+            <rect x="824" y="586" width="38" height="154"/>
+            <rect x="2250" y="592" width="40" height="148"/><rect x="2300" y="548" width="54" height="192"/>
+            <rect x="2364" y="602" width="32" height="138"/>
+          </g>
+          <g fill="#1b2532">
+            <rect x="1500" y="520" width="10" height="220"/><ellipse cx="1505" cy="512" rx="52" ry="26"/>
+            <rect x="3010" y="540" width="9" height="200"/><ellipse cx="3014" cy="532" rx="44" ry="22"/>
+          </g>
+        </svg>
+      </div>
+
+      <!-- mid parallax: silos, turbines, tree line ---------------------- -->
+      <div class="layer layer-mid" aria-hidden="true">
+        <svg viewBox="0 -600 5200 1600" fill="none">
+          <g fill="#212b38">
+            <rect x="300" y="540" width="70" height="200" rx="34"/>
+            <rect x="380" y="560" width="70" height="180" rx="34"/>
+            <rect x="460" y="530" width="70" height="210" rx="34"/>
+            <rect x="290" y="700" width="250" height="40"/>
+          </g>
+          <g stroke="#242f3d" stroke-width="7" fill="none">
+            <path d="M1400 740V560M1400 560l-90-52M1400 560l90-52M1400 560v-104"/>
+            <path d="M1720 740V590M1720 590l-76-44M1720 590l76-44M1720 590v-88"/>
+          </g>
+          <g fill="#1f2836">
+            <path d="M2300 740v-96l40-64 40 64v96Z"/><path d="M2400 740v-120l46-72 46 72v120Z"/>
+            <path d="M2520 740v-84l36-56 36 56v84Z"/>
+          </g>
+          <g fill="#222c3a">
+            <rect x="3200" y="600" width="420" height="140"/><path d="M3180 600 3410 526 3640 600Z"/>
+            <rect x="3700" y="632" width="300" height="108"/><path d="M3684 632 3850 578 4016 632Z"/>
+          </g>
+          <g fill="#1f2836">
+            <path d="M4500 740v-104l44-70 44 70v104Z"/><path d="M4620 740v-76l32-52 32 52v76Z"/>
+            <path d="M4980 740v-92l38-60 38 60v92Z"/>
+          </g>
+        </svg>
+      </div>
+
+      <!-- ============================================================
+           THE WORLD — the story layer.
+           x 0–1300 shipper dock · 1300–3000 fulfilment centre cutaway
+           3000–5000 highway · 5000–6400 cross-dock hub · 6400–8000 street
+           ============================================================ -->
+      <div class="layer layer-world" aria-hidden="true">
+        <svg viewBox="0 -600 10600 1600" fill="none">
+          <defs>
+            <linearGradient id="glow" x1="0" y1="0" x2="0" y2="1">
+              <stop offset="0" stop-color="#ffb020" stop-opacity=".5"/>
+              <stop offset="1" stop-color="#ffb020" stop-opacity="0"/>
+            </linearGradient>
+
+            <g id="dockDoor">
+              <rect width="180" height="180" rx="4" fill="#12181f"/>
+              <rect x="8" y="8" width="164" height="164" fill="#1b232d"/>
+              <g fill="#232d39">
+                <rect x="8" y="24" width="164" height="6"/><rect x="8" y="56" width="164" height="6"/>
+                <rect x="8" y="88" width="164" height="6"/><rect x="8" y="120" width="164" height="6"/>
+                <rect x="8" y="152" width="164" height="6"/>
+              </g>
+              <rect y="176" width="180" height="8" fill="#ff6a1f" opacity=".55"/>
+            </g>
+
+            <g id="rackBay">
+              <g fill="#2f3b4a">
+                <rect width="12" height="210"/><rect x="248" width="12" height="210"/>
+                <rect y="0" width="260" height="10"/><rect y="66" width="260" height="10"/>
+                <rect y="132" width="260" height="10"/><rect y="200" width="260" height="10"/>
+              </g>
+              <g fill="#8a6740">
+                <rect x="22" y="18" width="66" height="48" rx="3"/><rect x="98" y="26" width="58" height="40" rx="3"/>
+                <rect x="166" y="14" width="72" height="52" rx="3"/>
+                <rect x="22" y="90" width="58" height="42" rx="3"/><rect x="92" y="84" width="70" height="48" rx="3"/>
+                <rect x="172" y="94" width="62" height="38" rx="3"/>
+              </g>
+              <g fill="#6d5231">
+                <rect x="22" y="152" width="74" height="48" rx="3"/><rect x="106" y="160" width="60" height="40" rx="3"/>
+                <rect x="176" y="148" width="62" height="52" rx="3"/>
+              </g>
+            </g>
+
+            <g id="crate">
+              <rect width="70" height="54" rx="3" fill="#8a6740"/>
+              <rect y="24" width="70" height="6" fill="#a07c4d"/>
+              <rect x="31" width="8" height="54" fill="#a07c4d"/>
+            </g>
+
+            <g id="pendant">
+              <rect x="14" width="4" height="52" fill="#2b3644"/>
+              <path d="M0 52h32l-6 22H6Z" fill="#3a4757"/>
+              <rect x="4" y="72" width="24" height="5" rx="2" fill="#ffd98a"/>
+              <path d="M-24 77h80l40 180h-160Z" fill="url(#glow)" opacity=".42"/>
+            </g>
+
+            <g id="dash"><rect width="120" height="11" rx="5" fill="#ffb020" opacity=".62"/></g>
+
+            <g id="pole">
+              <rect width="9" height="230" fill="#2b3644"/>
+              <rect x="-46" y="-8" width="100" height="14" rx="6" fill="#333f4e"/>
+              <rect x="-38" y="4" width="84" height="8" rx="4" fill="#ffb020" opacity=".85"/>
+              <path d="M-70 12h150l70 240h-290Z" fill="url(#glow)" opacity=".5"/>
+            </g>
+
+            <g id="conifer">
+              <path d="M40 0 78 96H2Z" fill="#1c2a24"/><path d="M40 44 84 156H-4Z" fill="#22332b"/>
+              <rect x="32" y="150" width="16" height="34" fill="#2a2119"/>
+            </g>
+          </defs>
+
+          <!-- ---------- ground ---------- -->
+          <rect y="740" width="10600" height="260" fill="#11151b"/>
+          <rect y="740" width="10600" height="5" fill="#2b3644"/>
+
+          <!-- Everything below is shifted right by one lead-in, so the first
+               and last acts can reach the centre of the frame instead of
+               only ever appearing at its edges. -->
+          <g transform="translate(1300,0)">
+
+          <!-- =========== A · SHIPPER DOCK (0–1300) =========== -->
+          <g>
+            <rect x="60" y="386" width="1170" height="354" fill="#1c242f"/>
+            <rect x="40" y="360" width="1210" height="30" rx="4" fill="#2a3543"/>
+            <rect x="60" y="386" width="1170" height="10" fill="#232d39"/>
+            <!-- clerestory windows -->
+            <g fill="#2f4459">
+              <rect x="120" y="416" width="90" height="42" rx="3"/><rect x="240" y="416" width="90" height="42" rx="3"/>
+              <rect x="360" y="416" width="90" height="42" rx="3"/><rect x="480" y="416" width="90" height="42" rx="3"/>
+              <rect x="600" y="416" width="90" height="42" rx="3"/><rect x="720" y="416" width="90" height="42" rx="3"/>
+            </g>
+            <!-- dock doors + apron -->
+            <use href="#dockDoor" x="130" y="556"/><use href="#dockDoor" x="360" y="556"/>
+            <use href="#dockDoor" x="590" y="556"/><use href="#dockDoor" x="820" y="556"/>
+            <rect x="60" y="726" width="1170" height="16" fill="#1a222c"/>
+            <!-- signage -->
+            <rect x="1010" y="440" width="196" height="62" rx="9" fill="#ff6a1f"/>
+            <text x="1108" y="481" text-anchor="middle" font-family="system-ui,sans-serif" font-size="30" font-weight="800" fill="#fff">FOU</text>
+            <text x="1108" y="536" text-anchor="middle" font-family="system-ui,sans-serif" font-size="22" font-weight="700" fill="#7c8896" letter-spacing="3">SHIPPER</text>
+            <!-- yard clutter -->
+            <use href="#crate" x="1290" y="686"/><use href="#crate" x="1290" y="632"/><use href="#crate" x="1366" y="686"/>
+            <use href="#pole" x="1268" y="510"/>
+            <!-- forklift -->
+            <g transform="translate(300 660)">
+              <rect x="10" y="18" width="86" height="46" rx="6" fill="#ffb020"/>
+              <rect x="26" y="0" width="8" height="22" fill="#2b3644"/><rect x="86" y="-34" width="7" height="56" fill="#38465a"/>
+              <rect x="93" y="46" width="46" height="8" fill="#38465a"/>
+              <circle cx="30" cy="68" r="14" fill="#161c24"/><circle cx="84" cy="68" r="12" fill="#161c24"/>
+            </g>
+          </g>
+
+          <!-- =========== B · FULFILMENT CENTRE, FRONT WALL CUT AWAY (1300–3000) =========== -->
+          <g>
+            <rect x="1420" y="250" width="1560" height="490" fill="#141a22"/>
+            <rect x="1400" y="222" width="1600" height="32" rx="4" fill="#2d3846"/>
+            <rect x="1420" y="254" width="1560" height="8" fill="#212a35"/>
+            <!-- roof lights -->
+            <g fill="#ffb020" opacity=".22">
+              <rect x="1520" y="262" width="180" height="14" rx="7"/><rect x="1800" y="262" width="180" height="14" rx="7"/>
+              <rect x="2080" y="262" width="180" height="14" rx="7"/><rect x="2360" y="262" width="180" height="14" rx="7"/>
+              <rect x="2640" y="262" width="180" height="14" rx="7"/>
+            </g>
+            <!-- mezzanine -->
+            <rect x="1440" y="512" width="1520" height="12" fill="#2a3543"/>
+            <g fill="#232d39">
+              <rect x="1470" y="524" width="10" height="216"/><rect x="1980" y="524" width="10" height="216"/>
+              <rect x="2490" y="524" width="10" height="216"/><rect x="2930" y="524" width="10" height="216"/>
+            </g>
+            <!-- lower racking -->
+            <use href="#rackBay" x="1460" y="530"/><use href="#rackBay" x="1760" y="530"/>
+            <use href="#rackBay" x="2060" y="530"/><use href="#rackBay" x="2360" y="530"/>
+            <use href="#rackBay" x="2660" y="530"/>
+            <!-- open volume above the racking, lit from the roof, so the
+                 building reads as a space rather than a wall of cartons -->
+            <use href="#pendant" x="1620" y="286"/><use href="#pendant" x="2040" y="286"/>
+            <use href="#pendant" x="2460" y="286"/><use href="#pendant" x="2860" y="286"/>
+            <!-- conveyor + totes -->
+            <g>
+              <rect x="1440" y="470" width="1520" height="16" rx="8" fill="#333f4e"/>
+              <g fill="#2b3644">
+                <rect x="1560" y="486" width="10" height="26"/><rect x="1960" y="486" width="10" height="26"/>
+                <rect x="2360" y="486" width="10" height="26"/><rect x="2760" y="486" width="10" height="26"/>
+              </g>
+              <g fill="#ff6a1f">
+                <rect x="1520" y="440" width="52" height="30" rx="4"/><rect x="1760" y="440" width="52" height="30" rx="4"/>
+                <rect x="2110" y="440" width="52" height="30" rx="4"/><rect x="2480" y="440" width="52" height="30" rx="4"/>
+                <rect x="2820" y="440" width="52" height="30" rx="4"/>
+              </g>
+            </g>
+            <!-- pick faces / staged pallets on the floor -->
+            <g>
+              <use href="#crate" x="1500" y="686"/><use href="#crate" x="1576" y="686"/>
+              <use href="#crate" x="2200" y="686"/><use href="#crate" x="2276" y="686"/><use href="#crate" x="2238" y="632"/>
+              <use href="#crate" x="2820" y="686"/>
+            </g>
+            <!-- two associates, for scale -->
+            <g fill="#3d4a5c">
+              <circle cx="1700" cy="666" r="13"/><rect x="1688" y="682" width="24" height="58" rx="10"/>
+              <circle cx="2560" cy="666" r="13"/><rect x="2548" y="682" width="24" height="58" rx="10"/>
+            </g>
+            <text x="2200" y="404" text-anchor="middle" font-family="system-ui,sans-serif" font-size="30" font-weight="800" fill="#41505f" letter-spacing="12">FULFILMENT CENTRE</text>
+          </g>
+
+          <!-- =========== C · HIGHWAY (3000–5000) =========== -->
+          <g>
+            <!-- road body + shoulder -->
+            <rect x="3000" y="740" width="2000" height="260" fill="#131820"/>
+            <rect x="3000" y="742" width="2000" height="4" fill="#33404f"/>
+            <rect x="3000" y="806" width="2000" height="4" fill="#e8eef5" opacity=".18"/>
+            <g>
+              <use href="#dash" x="3040" y="792"/><use href="#dash" x="3280" y="792"/><use href="#dash" x="3520" y="792"/>
+              <use href="#dash" x="3760" y="792"/><use href="#dash" x="4000" y="792"/><use href="#dash" x="4240" y="792"/>
+              <use href="#dash" x="4480" y="792"/><use href="#dash" x="4720" y="792"/><use href="#dash" x="4960" y="792"/>
+            </g>
+            <!-- guardrail -->
+            <g>
+              <rect x="3000" y="700" width="2000" height="12" rx="6" fill="#39465a"/>
+              <g fill="#2b3644">
+                <rect x="3060" y="712" width="10" height="30"/><rect x="3300" y="712" width="10" height="30"/>
+                <rect x="3540" y="712" width="10" height="30"/><rect x="3780" y="712" width="10" height="30"/>
+                <rect x="4020" y="712" width="10" height="30"/><rect x="4260" y="712" width="10" height="30"/>
+                <rect x="4500" y="712" width="10" height="30"/><rect x="4740" y="712" width="10" height="30"/>
+              </g>
+            </g>
+            <!-- overpass -->
+            <g>
+              <rect x="3760" y="404" width="560" height="34" fill="#2d3846"/>
+              <rect x="3760" y="438" width="560" height="14" fill="#222b37"/>
+              <rect x="3806" y="452" width="42" height="288" fill="#28323f"/>
+              <rect x="4232" y="452" width="42" height="288" fill="#28323f"/>
+              <g fill="#39465a">
+                <rect x="3760" y="382" width="560" height="8"/>
+                <rect x="3800" y="366" width="8" height="20"/><rect x="4000" y="366" width="8" height="20"/><rect x="4272" y="366" width="8" height="20"/>
+              </g>
+            </g>
+            <!-- interstate shield -->
+            <g transform="translate(3380 520)">
+              <rect x="18" y="106" width="10" height="120" fill="#2b3644"/>
+              <path d="M0 8a8 8 0 0 1 8-8h30a8 8 0 0 1 8 8v72c0 16-23 26-23 26S0 96 0 80Z" fill="#1d3a2a"/>
+              <text x="23" y="52" text-anchor="middle" font-family="system-ui,sans-serif" font-size="26" font-weight="800" fill="#dfe7ef">80</text>
+            </g>
+            <!-- green guide sign -->
+            <g transform="translate(4460 494)">
+              <rect x="10" y="120" width="12" height="126" fill="#2b3644"/><rect x="150" y="120" width="12" height="126" fill="#2b3644"/>
+              <rect width="172" height="120" rx="8" fill="#1d3a2a" stroke="#3f6a52" stroke-width="4"/>
+              <text x="86" y="50" text-anchor="middle" font-family="system-ui,sans-serif" font-size="26" font-weight="700" fill="#dfe7ef">HUB 12</text>
+              <text x="86" y="90" text-anchor="middle" font-family="system-ui,sans-serif" font-size="26" font-weight="700" fill="#dfe7ef">MILES</text>
+            </g>
+            <use href="#pole" x="3160" y="510"/><use href="#pole" x="4900" y="510"/>
+            <use href="#conifer" x="3620" y="556"/><use href="#conifer" x="4640" y="566"/>
+          </g>
+
+          <!-- =========== D · CROSS-DOCK HUB (5000–6400) =========== -->
+          <g>
+            <rect x="5080" y="470" width="1240" height="270" fill="#1c242f"/>
+            <rect x="5060" y="444" width="1280" height="30" rx="4" fill="#2a3543"/>
+            <g fill="#2f4459">
+              <rect x="5120" y="492" width="70" height="34" rx="3"/><rect x="5220" y="492" width="70" height="34" rx="3"/>
+              <rect x="5320" y="492" width="70" height="34" rx="3"/><rect x="5420" y="492" width="70" height="34" rx="3"/>
+            </g>
+            <use href="#dockDoor" x="5110" y="560"/><use href="#dockDoor" x="5320" y="560"/>
+            <use href="#dockDoor" x="5530" y="560"/><use href="#dockDoor" x="5740" y="560"/>
+            <use href="#dockDoor" x="5950" y="560"/>
+            <rect x="5080" y="726" width="1240" height="16" fill="#1a222c"/>
+            <text x="5700" y="418" text-anchor="middle" font-family="system-ui,sans-serif" font-size="30" font-weight="800" fill="#3a4757" letter-spacing="8">REGIONAL CROSS-DOCK</text>
+            <!-- trailers parked in the yard, nose-out -->
+            <g>
+              <rect x="6180" y="590" width="330" height="130" rx="6" fill="#e6ebf1"/>
+              <rect x="6180" y="590" width="330" height="14" rx="6" fill="#c9d2dc"/>
+              <rect x="6210" y="628" width="120" height="46" rx="5" fill="#ff6a1f"/>
+              <text x="6270" y="662" text-anchor="middle" font-family="system-ui,sans-serif" font-size="30" font-weight="800" fill="#fff">FOU</text>
+              <circle cx="6280" cy="726" r="20" fill="#12171e"/><circle cx="6340" cy="726" r="20" fill="#12171e"/>
+              <rect x="6170" y="600" width="16" height="110" rx="4" fill="#aab5c1"/>
+            </g>
+            <use href="#pole" x="6096" y="510"/>
+          </g>
+
+          <!-- =========== E · THE STREET (6400–8000) =========== -->
+          <g>
+            <rect x="6400" y="740" width="1600" height="260" fill="#11151b"/>
+            <rect x="6400" y="756" width="1600" height="6" fill="#2b3644"/>
+            <!-- houses -->
+            <g>
+              <rect x="6560" y="580" width="300" height="160" fill="#1f2836"/>
+              <path d="M6536 580 6710 486 6884 580Z" fill="#2a3543"/>
+              <rect x="6600" y="620" width="58" height="52" rx="4" fill="#ffb020" opacity=".8"/>
+              <rect x="6690" y="620" width="58" height="52" rx="4" fill="#2f4459"/>
+              <rect x="6780" y="640" width="44" height="100" rx="4" fill="#2b3644"/>
+            </g>
+            <g>
+              <rect x="6980" y="606" width="270" height="134" fill="#1c242f"/>
+              <path d="M6958 606 7115 522 7272 606Z" fill="#27313f"/>
+              <rect x="7020" y="640" width="52" height="46" rx="4" fill="#2f4459"/>
+              <rect x="7100" y="640" width="52" height="46" rx="4" fill="#ffb020" opacity=".65"/>
+              <rect x="7186" y="656" width="42" height="84" rx="4" fill="#2b3644"/>
+            </g>
+            <g>
+              <rect x="7420" y="586" width="320" height="154" fill="#1f2836"/>
+              <path d="M7396 586 7580 492 7764 586Z" fill="#2a3543"/>
+              <rect x="7460" y="626" width="60" height="52" rx="4" fill="#2f4459"/>
+              <rect x="7556" y="626" width="60" height="52" rx="4" fill="#ffb020" opacity=".8"/>
+              <rect x="7660" y="644" width="46" height="96" rx="4" fill="#2b3644"/>
+              <!-- the parcel, at the door -->
+              <rect x="7716" y="700" width="46" height="40" rx="3" fill="#c98a4a"/>
+              <rect x="7716" y="716" width="46" height="5" fill="#e0a463"/>
+            </g>
+            <use href="#conifer" x="6900" y="556"/><use href="#conifer" x="7300" y="566"/><use href="#conifer" x="7860" y="556"/>
+            <!-- picket fence -->
+            <g fill="#242e3b">
+              <rect x="6400" y="700" width="1600" height="7"/>
+              <rect x="6440" y="694" width="8" height="46"/><rect x="6520" y="694" width="8" height="46"/>
+              <rect x="6600" y="694" width="8" height="46"/><rect x="6680" y="694" width="8" height="46"/>
+              <rect x="6760" y="694" width="8" height="46"/><rect x="6840" y="694" width="8" height="46"/>
+              <rect x="6920" y="694" width="8" height="46"/><rect x="7000" y="694" width="8" height="46"/>
+              <rect x="7080" y="694" width="8" height="46"/><rect x="7160" y="694" width="8" height="46"/>
+              <rect x="7240" y="694" width="8" height="46"/><rect x="7320" y="694" width="8" height="46"/>
+              <rect x="7400" y="694" width="8" height="46"/><rect x="7480" y="694" width="8" height="46"/>
+              <rect x="7560" y="694" width="8" height="46"/><rect x="7640" y="694" width="8" height="46"/>
+              <rect x="7720" y="694" width="8" height="46"/><rect x="7800" y="694" width="8" height="46"/>
+              <rect x="7880" y="694" width="8" height="46"/><rect x="7960" y="694" width="8" height="46"/>
+            </g>
+            <use href="#pole" x="7240" y="510"/>
+          </g>
+          </g>
+        </svg>
+      </div>
+
+      <!-- ============================================================
+           THE RIG — held at stage centre while the world slides past,
+           so the truck reads as driving rather than sliding.
+           ============================================================ -->
+      <div class="rig rig-truck" aria-hidden="true">
+        <svg viewBox="0 0 900 320" fill="none">
+          <!-- trailer -->
+          <rect x="196" y="66" width="574" height="164" rx="8" fill="#e9eef4"/>
+          <rect x="196" y="66" width="574" height="16" rx="8" fill="#ccd5df"/>
+          <rect x="196" y="214" width="574" height="16" fill="#b9c4d0"/>
+          <g fill="#d5dde6">
+            <rect x="236" y="92" width="6" height="112"/><rect x="330" y="92" width="6" height="112"/>
+            <rect x="424" y="92" width="6" height="112"/><rect x="612" y="92" width="6" height="112"/>
+            <rect x="706" y="92" width="6" height="112"/>
+          </g>
+          <!-- livery: swap for the real logo lockup.
+               Counter-mirrored about its own centre (x=523) so the wordmark
+               reads correctly inside the mirrored rig. -->
+          <g transform="translate(1046,0) scale(-1,1)">
+            <rect x="452" y="112" width="142" height="72" rx="8" fill="#ff6a1f"/>
+            <text x="523" y="164" text-anchor="middle" font-family="system-ui,sans-serif" font-size="46" font-weight="800" fill="#fff">FOU</text>
+            <text x="523" y="204" text-anchor="middle" font-family="system-ui,sans-serif" font-size="15" font-weight="700" fill="#8c98a6" letter-spacing="5">LOGISTICS</text>
+          </g>
+          <!-- landing gear + mudflaps -->
+          <rect x="470" y="230" width="12" height="34" fill="#39465a"/>
+          <rect x="756" y="230" width="18" height="46" rx="3" fill="#1a222c"/>
+          <!-- tractor — carries the brand colour so the cab reads against a
+               night sky instead of dissolving into it -->
+          <path d="M40 230V128c0-9 7-16 16-16h52l34-46h72c9 0 16 7 16 16v148Z" fill="#ff6a1f"/>
+          <path d="M40 196h190v34H40Z" fill="#d9500e"/>
+          <path d="M116 74h58c8 0 14 6 14 14v34h-96Z" fill="#26405a"/>
+          <path d="M116 74h20l-14 48h-14Z" fill="#3f6486" opacity=".8"/>
+          <rect x="108" y="66" width="84" height="9" rx="4" fill="#c9d2dc"/>
+          <rect x="46" y="138" width="58" height="36" rx="6" fill="#c9d2dc"/>
+          <g fill="#8d99a6">
+            <rect x="52" y="144" width="46" height="4"/><rect x="52" y="153" width="46" height="4"/>
+            <rect x="52" y="162" width="46" height="4"/>
+          </g>
+          <rect x="24" y="178" width="32" height="19" rx="5" fill="#ffe9b0"/>
+          <rect x="24" y="202" width="16" height="11" rx="4" fill="#ffb020"/>
+          <rect x="188" y="46" width="15" height="88" rx="6" fill="#aab5c1"/>
+          <rect x="188" y="46" width="6" height="88" rx="3" fill="#d7dee6"/>
+          <rect x="30" y="222" width="200" height="18" rx="6" fill="#161d26"/>
+          <rect x="18" y="228" width="26" height="38" rx="4" fill="#8d99a6"/>
+          <!-- wheels: geared to scroll, not to a clock -->
+          <g>
+            <circle cx="122" cy="252" r="52" fill="#0e1319"/>
+            <circle cx="122" cy="252" r="52" fill="none" stroke="#252f3b" stroke-width="6"/>
+            <g class="wheel">
+              <circle cx="122" cy="252" r="26" fill="#4a5765"/>
+              <g stroke="#2b3644" stroke-width="6" stroke-linecap="round">
+                <path d="M122 232v40M102 252h40M108 238l28 28M136 238l-28 28"/>
+              </g>
+            </g>
+          </g>
+          <g>
+            <circle cx="592" cy="252" r="52" fill="#0e1319"/>
+            <circle cx="592" cy="252" r="52" fill="none" stroke="#252f3b" stroke-width="6"/>
+            <g class="wheel">
+              <circle cx="592" cy="252" r="26" fill="#4a5765"/>
+              <g stroke="#2b3644" stroke-width="6" stroke-linecap="round">
+                <path d="M592 232v40M572 252h40M578 238l28 28M606 238l-28 28"/>
+              </g>
+            </g>
+          </g>
+          <g>
+            <circle cx="702" cy="252" r="52" fill="#0e1319"/>
+            <circle cx="702" cy="252" r="52" fill="none" stroke="#252f3b" stroke-width="6"/>
+            <g class="wheel">
+              <circle cx="702" cy="252" r="26" fill="#4a5765"/>
+              <g stroke="#2b3644" stroke-width="6" stroke-linecap="round">
+                <path d="M702 232v40M682 252h40M688 238l28 28M716 238l-28 28"/>
+              </g>
+            </g>
+          </g>
+        </svg>
+      </div>
+
+      <div class="rig rig-van" aria-hidden="true">
+        <svg viewBox="0 0 560 300" fill="none">
+          <path d="M30 212V96c0-9 7-16 16-16h404c9 0 16 7 16 16v116Z" fill="#e9eef4"/>
+          <path d="M30 212V96c0-9 7-16 16-16h60v132Z" fill="#ff6a1f"/>
+          <path d="M46 178h60v34H46Z" fill="#d9500e"/>
+          <path d="M52 92h48v40H46v-32a8 8 0 0 1 6-8Z" fill="#26405a"/>
+          <rect x="20" y="158" width="26" height="18" rx="5" fill="#ffe9b0"/>
+          <g transform="translate(478,0) scale(-1,1)">
+            <rect x="180" y="112" width="118" height="60" rx="8" fill="#ff6a1f"/>
+            <text x="239" y="156" text-anchor="middle" font-family="system-ui,sans-serif" font-size="38" font-weight="800" fill="#fff">FOU</text>
+          </g>
+          <rect x="330" y="112" width="118" height="86" rx="4" fill="#dbe3ea"/>
+          <rect x="30" y="204" width="436" height="14" rx="5" fill="#1a222c"/>
+          <g>
+            <circle cx="120" cy="228" r="42" fill="#0e1319"/>
+            <circle cx="120" cy="228" r="42" fill="none" stroke="#252f3b" stroke-width="5"/>
+            <g class="wheel">
+              <circle cx="120" cy="228" r="20" fill="#4a5765"/>
+              <g stroke="#2b3644" stroke-width="5" stroke-linecap="round">
+                <path d="M120 212v32M104 228h32M109 217l22 22M131 217l-22 22"/>
+              </g>
+            </g>
+          </g>
+          <g>
+            <circle cx="392" cy="228" r="42" fill="#0e1319"/>
+            <circle cx="392" cy="228" r="42" fill="none" stroke="#252f3b" stroke-width="5"/>
+            <g class="wheel">
+              <circle cx="392" cy="228" r="20" fill="#4a5765"/>
+              <g stroke="#2b3644" stroke-width="5" stroke-linecap="round">
+                <path d="M392 212v32M376 228h32M381 217l22 22M403 217l-22 22"/>
+              </g>
+            </g>
+          </g>
+        </svg>
+      </div>
+
+      <!-- near parallax: things that whip past the camera ---------------- -->
+      <div class="layer layer-near" aria-hidden="true">
+        <svg viewBox="0 -600 11000 1600" fill="none">
+          <g fill="#0b0f14">
+            <rect x="700" y="640" width="26" height="360" rx="6"/>
+            <rect x="2400" y="600" width="30" height="400" rx="6"/>
+            <rect x="4100" y="660" width="24" height="340" rx="6"/>
+            <rect x="5800" y="620" width="28" height="380" rx="6"/>
+            <rect x="7500" y="650" width="26" height="350" rx="6"/>
+            <rect x="9300" y="610" width="30" height="390" rx="6"/>
+          </g>
+          <g fill="#0d1218">
+            <path d="M1500 1000v-90l70-40 70 40v90Z"/><path d="M3200 1000v-70l60-34 60 34v70Z"/>
+            <path d="M6600 1000v-80l64-38 64 38v80Z"/><path d="M8800 1000v-64l56-32 56 32v64Z"/>
+          </g>
+        </svg>
+      </div>
+
+      <div class="stage-haze" aria-hidden="true"></div>
+      <div class="stage-vignette" aria-hidden="true"></div>
+
+      <!-- ---------- captions: each owns a slice of the timeline ---------- -->
+      <div class="captions">
+        <figure class="cap" style="--from:0%; --to:16%">
+          <figcaption class="cap-index">01 <i>/ 05</i> &nbsp;PICKUP</figcaption>
+          <h2>It starts at a door, not on a road.</h2>
+          <p>A load begins moving the moment someone commits to a date. The order is tendered, a trailer is spotted at the shipper's dock, and a bill of lading fixes what's inside, who owns it, and when it's due.</p>
+          <span class="cap-stat"><b>BOL</b> issued · chain of custody opens</span>
+        </figure>
+
+        <figure class="cap" style="--from:17%; --to:37%">
+          <figcaption class="cap-index">02 <i>/ 05</i> &nbsp;THE WAREHOUSE</figcaption>
+          <h2>Freight almost never goes straight from A to B.</h2>
+          <p>It lands in a fulfilment centre, is received against an advance ship notice, and gets put away in a slot chosen by how fast that item moves — not by wherever there happens to be room.</p>
+          <span class="cap-stat"><b>Slotting</b> by velocity, not convenience</span>
+        </figure>
+
+        <figure class="cap" style="--from:38%; --to:61%">
+          <figcaption class="cap-index">03 <i>/ 05</i> &nbsp;LINE HAUL</figcaption>
+          <h2>The long middle, where the cost lives.</h2>
+          <p>Fuel, driver hours and empty miles. Planning a trailer that's full in both directions is the whole game — a truck running back empty is paid for by the load that went out.</p>
+          <span class="cap-stat"><b>500–2,000 mi</b> typical line-haul leg</span>
+        </figure>
+
+        <figure class="cap" style="--from:62%; --to:79%">
+          <figcaption class="cap-index">04 <i>/ 05</i> &nbsp;CROSS-DOCK</figcaption>
+          <h2>Unloaded and reloaded, never stored.</h2>
+          <p>At the hub, inbound trailers are broken down and pushed straight onto outbound routes. Freight touches the floor for hours instead of days, and the network re-sorts itself around wherever demand actually showed up.</p>
+          <span class="cap-stat"><b>Dwell</b> measured in hours</span>
+        </figure>
+
+        <figure class="cap" style="--from:80%; --to:100%">
+          <figcaption class="cap-index">05 <i>/ 05</i> &nbsp;LAST MILE</figcaption>
+          <h2>The shortest leg. The most expensive one.</h2>
+          <p>Density decides everything here: twenty stops on one street beats twenty stops across a county. And it ends the way it began — with a signature and a timestamp.</p>
+          <span class="cap-stat"><b>POD</b> captured · chain of custody closes</span>
+        </figure>
+      </div>
+
+      <!-- ---------- act rail ---------- -->
+      <ul class="act-rail" aria-hidden="true">
+        <li style="--from:0%;  --to:16%"><span class="label">Pickup</span><span class="dot"></span></li>
+        <li style="--from:17%; --to:37%"><span class="label">Warehouse</span><span class="dot"></span></li>
+        <li style="--from:38%; --to:61%"><span class="label">Line haul</span><span class="dot"></span></li>
+        <li style="--from:62%; --to:79%"><span class="label">Cross-dock</span><span class="dot"></span></li>
+        <li style="--from:80%; --to:100%"><span class="label">Last mile</span><span class="dot"></span></li>
+      </ul>
+
+    </div>
+  </div>
+</section>
+
+<!-- ======================================================================
+     HOW LOGISTICS WORKS
+     ====================================================================== -->
+<section class="section" id="how">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow" data-reveal>How logistics works</span>
+      <h2 class="h1" data-reveal style="--reveal-delay:60ms">Nine links. Break one and the customer feels it.</h2>
+      <p class="lede" data-reveal style="--reveal-delay:110ms">
+        People picture logistics as trucks. Trucks are one link. What actually
+        determines whether a shipment lands on the promised day is the chain
+        around them — and every link has its own failure mode.
+      </p>
+    </div>
+
+    <div class="chain" data-stagger>
+      <article class="step" data-reveal>
+        <div class="step-rail"><span class="step-num">01</span></div>
+        <div class="step-body">
+          <h3>Demand &amp; procurement</h3>
+          <p>Someone forecasts what will sell, then buys it. Purchase orders go out with a lead time attached — the gap between "we ordered it" and "it can physically be here." Get the forecast wrong and every downstream link is either starved or drowning.</p>
+          <div class="step-tags"><span class="tag">Forecast</span><span class="tag">PO</span><span class="tag">Lead time</span></div>
+        </div>
+      </article>
+
+      <article class="step" data-reveal>
+        <div class="step-rail"><span class="step-num">02</span></div>
+        <div class="step-body">
+          <h3>Inbound freight</h3>
+          <p>Goods travel from the supplier to your building — often by ocean container, then drayage from the port, then a domestic leg. This is the longest and least controllable stretch, which is why inbound is where buffers get built.</p>
+          <div class="step-tags"><span class="tag">Drayage</span><span class="tag">Container</span><span class="tag">Customs</span></div>
+        </div>
+      </article>
+
+      <article class="step" data-reveal>
+        <div class="step-rail"><span class="step-num">03</span></div>
+        <div class="step-body">
+          <h3>Receiving &amp; put-away</h3>
+          <p>The trailer backs in and the count begins. Received quantities are checked against the advance ship notice, damage is recorded before it becomes an argument, and each pallet gets a home. A shipment that isn't received correctly is invisible inventory — it exists, but nothing can sell it.</p>
+          <div class="step-tags"><span class="tag">ASN</span><span class="tag">Cycle count</span><span class="tag">Put-away</span></div>
+        </div>
+      </article>
+
+      <article class="step" data-reveal>
+        <div class="step-rail"><span class="step-num">04</span></div>
+        <div class="step-body">
+          <h3>Inventory, slotting &amp; safety stock</h3>
+          <p>Fast-moving items sit at waist height near the pack line; slow ones go up and back. Safety stock covers the variance between forecast and reality. Slotting is the single cheapest lever in a warehouse: it costs a weekend of relabelling and pays back in every pick, forever.</p>
+          <div class="step-tags"><span class="tag">ABC velocity</span><span class="tag">Safety stock</span><span class="tag">Slotting</span></div>
+        </div>
+      </article>
+
+      <article class="step" data-reveal>
+        <div class="step-rail"><span class="step-num">05</span></div>
+        <div class="step-body">
+          <h3>Order management &amp; wave planning</h3>
+          <p>Orders are allocated against real stock and released to the floor in waves grouped by carrier cut-off, service level and pick path. Releasing everything at once looks efficient and isn't — it just moves the queue from the screen to the floor.</p>
+          <div class="step-tags"><span class="tag">Allocation</span><span class="tag">Waves</span><span class="tag">Cut-off</span></div>
+        </div>
+      </article>
+
+      <article class="step" data-reveal>
+        <div class="step-rail"><span class="step-num">06</span></div>
+        <div class="step-body">
+          <h3>Pick, pack &amp; manifest</h3>
+          <p>A picker walks a route designed to minimise steps, not to match the order on the screen. Packing chooses the smallest box that protects the goods, because you pay to ship air. The label is the moment the shipment enters the carrier's system and becomes trackable.</p>
+          <div class="step-tags"><span class="tag">Pick path</span><span class="tag">Cartonisation</span><span class="tag">Manifest</span></div>
+        </div>
+      </article>
+
+      <article class="step" data-reveal>
+        <div class="step-rail"><span class="step-num">07</span></div>
+        <div class="step-body">
+          <h3>Mode selection &amp; line haul</h3>
+          <p>Parcel, LTL, full truckload, intermodal or air — chosen by weight, cube, distance and how badly the date matters. The right mode is rarely the cheapest one on the rate sheet; it's the cheapest one that still hits the promised delivery date.</p>
+          <div class="step-tags"><span class="tag">FTL / LTL</span><span class="tag">Intermodal</span><span class="tag">Deadhead</span></div>
+        </div>
+      </article>
+
+      <article class="step" data-reveal>
+        <div class="step-rail"><span class="step-num">08</span></div>
+        <div class="step-body">
+          <h3>Cross-dock &amp; last mile</h3>
+          <p>Regional hubs break long-haul trailers down and rebuild them into local routes. Then the final leg: the shortest distance and the highest cost per mile, decided almost entirely by how many stops fit on one run.</p>
+          <div class="step-tags"><span class="tag">Cross-dock</span><span class="tag">Route density</span><span class="tag">POD</span></div>
+        </div>
+      </article>
+
+      <article class="step" data-reveal>
+        <div class="step-rail"><span class="step-num">09</span></div>
+        <div class="step-body">
+          <h3>Reverse logistics</h3>
+          <p>A percentage is coming back — that is not a failure, it is a line item. Returns need their own lane: inspect, restock, refurbish or scrap. Businesses that treat returns as an afterthought lose the margin they made on the outbound leg.</p>
+          <div class="step-tags"><span class="tag">RMA</span><span class="tag">Restock</span><span class="tag">Disposition</span></div>
+        </div>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ======================================================================
+     MODE COMPARISON
+     ====================================================================== -->
+<section class="section section-alt">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow" data-reveal>Choosing a mode</span>
+      <h2 class="h1" data-reveal style="--reveal-delay:60ms">Cheap, fast, flexible — pick the two that matter today.</h2>
+      <p class="lede" data-reveal style="--reveal-delay:110ms">
+        Mode selection is the decision that moves your freight bill most. Here is
+        the trade-off, without the sales gloss.
+      </p>
+    </div>
+
+    <div class="modes" data-reveal>
+      <table>
+        <caption class="sr-only">Comparison of freight modes by typical load, transit time, relative cost per pound, and best use</caption>
+        <thead>
+          <tr><th scope="col">Mode</th><th scope="col">Typical load</th><th scope="col">Transit</th><th scope="col">Cost per lb</th><th scope="col">Best when</th></tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Parcel</td><td>Under 150 lb, single cartons</td><td>1–5 days</td>
+            <td><span class="dot-scale" aria-label="highest cost"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span></td>
+            <td>Small, frequent, going to many addresses</td>
+          </tr>
+          <tr>
+            <td>LTL</td><td>1–6 pallets, 150–15,000 lb</td><td>2–7 days</td>
+            <td><span class="dot-scale" aria-label="moderately high cost"><i class="on"></i><i class="on"></i><i class="on"></i><i></i><i></i></span></td>
+            <td>Too big for parcel, too small to fill a trailer</td>
+          </tr>
+          <tr>
+            <td>FTL</td><td>Full trailer, up to ~45,000 lb</td><td>1–5 days</td>
+            <td><span class="dot-scale" aria-label="low cost"><i class="on"></i><i class="on"></i><i></i><i></i><i></i></span></td>
+            <td>You can fill it, or the freight can't be handled twice</td>
+          </tr>
+          <tr>
+            <td>Intermodal</td><td>Containers on rail, then drayage</td><td>4–10 days</td>
+            <td><span class="dot-scale" aria-label="lowest cost"><i class="on"></i><i></i><i></i><i></i><i></i></span></td>
+            <td>Long haul, heavy, and the date has slack in it</td>
+          </tr>
+          <tr>
+            <td>Air</td><td>Under 5,000 lb, high value</td><td>1–3 days</td>
+            <td><span class="dot-scale" aria-label="highest cost"><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i><i class="on"></i></span></td>
+            <td>The cost of being late exceeds the cost of flying it</td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</section>
+
+<!-- ======================================================================
+     WHAT ACTUALLY DRIVES THE BILL
+     ====================================================================== -->
+<section class="section">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow" data-reveal>The four levers</span>
+      <h2 class="h1" data-reveal style="--reveal-delay:60ms">What actually moves your freight bill.</h2>
+    </div>
+
+    <div class="grid grid-2" data-stagger>
+      <article class="card" data-reveal>
+        <span class="icon" aria-hidden="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M21 16V8l-9-5-9 5v8l9 5 9-5Z"/><path d="m3.3 7.3 8.7 5 8.7-5M12 22V12.3"/></svg>
+        </span>
+        <h3>Density, not weight</h3>
+        <p>Carriers price the space you occupy as much as the pounds you ship. A light, bulky pallet is billed at a dimensional weight far above what the scale says. Packing tighter is often a bigger saving than renegotiating a rate.</p>
+      </article>
+
+      <article class="card" data-reveal>
+        <span class="icon" aria-hidden="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+        </span>
+        <h3>Dwell time</h3>
+        <p>Every hour a trailer sits at a dock is an hour it isn't earning, and after the free window it starts billing you as detention. Fast, predictable loading is worth more to a carrier than a slightly better rate — and they price accordingly.</p>
+      </article>
+
+      <article class="card" data-reveal>
+        <span class="icon" aria-hidden="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg>
+        </span>
+        <h3>On-time in-full</h3>
+        <p>OTIF measures the only thing a receiver cares about: did everything arrive, on the day it was promised. Partial deliveries and reschedules generate chargebacks that dwarf the freight cost you saved by cutting a corner upstream.</p>
+      </article>
+
+      <article class="card" data-reveal>
+        <span class="icon" aria-hidden="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17h2l2-7h9l3 7h2"/><circle cx="7.5" cy="19" r="1.6"/><circle cx="17.5" cy="19" r="1.6"/></svg>
+        </span>
+        <h3>Empty miles</h3>
+        <p>A truck that runs back empty still burns fuel and hours, and that cost is recovered from the load that went out. Matching a backhaul to your outbound lane is the difference between a rate that holds and one that creeps up every quarter.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ======================================================================
+     SERVICES
+     ====================================================================== -->
+<section class="section section-alt" id="services">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow" data-reveal>What we run</span>
+      <h2 class="h1" data-reveal style="--reveal-delay:60ms">Five services, one chain of custody.</h2>
+      <p class="lede" data-reveal style="--reveal-delay:110ms">
+        You can hand us one leg or the whole chain. Either way there is one
+        team accountable for the date on the paperwork.
+      </p>
+    </div>
+
+    <div class="grid grid-3" data-stagger>
+      <article class="card" data-reveal>
+        <h3>Full truckload (FTL)</h3>
+        <p>Dedicated dry van, reefer and flatbed capacity. Your freight is the only freight on the trailer — sealed at origin, opened at destination.</p>
+      </article>
+      <article class="card" data-reveal>
+        <h3>Less-than-truckload (LTL)</h3>
+        <p>Pallet-level shipping with class and NMFC handled for you, so a reclassification doesn't turn into an invoice surprise three weeks later.</p>
+      </article>
+      <article class="card" data-reveal>
+        <h3>Warehousing &amp; fulfilment</h3>
+        <p>Receiving, slotting, pick and pack, and same-day cut-offs. Inventory counts you can trust because they're cycle-counted, not counted once a year.</p>
+      </article>
+      <article class="card" data-reveal>
+        <h3>Cross-dock &amp; transload</h3>
+        <p>Break bulk, re-palletise and push straight back out. Container to trailer without paying for storage you don't need.</p>
+      </article>
+      <article class="card" data-reveal>
+        <h3>Final mile &amp; white glove</h3>
+        <p>Appointment scheduling, liftgate, inside delivery and proof of delivery captured at the door — including the awkward, heavy and fragile.</p>
+      </article>
+      <article class="card" data-reveal>
+        <h3>Managed transport</h3>
+        <p>We plan the modes, tender the loads, chase the exceptions and audit the invoices. You get one point of contact instead of six carrier portals.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ======================================================================
+     STATS
+     PLACEHOLDER FIGURES — replace with FOU's real numbers before launch.
+     Tracked in fou-logistics/README.md → "Numbers to replace".
+     ====================================================================== -->
+<section class="section">
+  <div class="wrap">
+    <div class="stats" data-reveal>
+      <div class="stat"><b><span data-count="48">48</span></b><span>States in the coverage map</span></div>
+      <div class="stat"><b><span data-count="24" data-suffix="/7">24/7</span></b><span>Dispatch &amp; exception desk</span></div>
+      <div class="stat"><b><span data-count="98.6" data-decimals="1" data-suffix="%">98.6%</span></b><span>On-time in-full, trailing 90 days</span></div>
+      <div class="stat"><b><span data-count="4" data-suffix="h">4h</span></b><span>Median cross-dock dwell</span></div>
+    </div>
+  </div>
+</section>
+
+<!-- ======================================================================
+     CTA
+     ====================================================================== -->
+<section class="section">
+  <div class="wrap">
+    <div class="cta" data-reveal>
+      <span class="eyebrow">Next step</span>
+      <h2 class="h1">Tell us the lane. We'll tell you what it really costs.</h2>
+      <p class="lede">Origin, destination, weight and the date that matters. That's
+        enough for a real quote — not a range designed to be revised later.</p>
+      <div class="cta-actions">
+        <a class="btn btn-primary btn-lg" href="contact.html#quote">Get a quote <span class="arrow" aria-hidden="true">→</span></a>
+        <a class="btn btn-ghost btn-lg" href="careers.html">We're hiring drivers</a>
+      </div>
+    </div>
+  </div>
+</section>
+
+</main>
+<main id="main-contact" data-route="contact">
+
+<section class="page-hero">
+  <div class="wrap">
+    <nav class="crumbs" aria-label="Breadcrumb"><a href="index.html">Home</a> <span aria-hidden="true">/</span> <span>Contact</span></nav>
+    <h1 class="h1" data-reveal>Tell us the lane.</h1>
+    <p class="lede" data-reveal style="--reveal-delay:70ms">
+      Origin, destination, weight and the date that matters. That's enough to
+      price a lane properly — no discovery call required first.
+    </p>
+  </div>
+</section>
+
+<section class="section">
+  <div class="wrap">
+    <div class="contact-layout">
+
+      <!-- ------------------------------------------------------------
+           QUOTE FORM
+           No backend yet: submitting composes a real, pre-filled email
+           and hands it to the visitor's mail client. See README.md →
+           "Wiring the forms to a real endpoint".
+           ------------------------------------------------------------ -->
+      <div id="quote">
+        <div class="section-head" style="margin-bottom:1.6rem">
+          <span class="eyebrow">Request a quote</span>
+          <h2 class="h2">Nine fields. One real number back.</h2>
+        </div>
+
+        <form class="form" novalidate
+              data-mailto="quotes@foulogistics.com"
+              data-subject="Quote request from foulogistics.com">
+
+          <div class="field-row">
+            <div class="field">
+              <label for="q-name">Your name <span class="req" aria-hidden="true">*</span></label>
+              <input id="q-name" name="name" type="text" autocomplete="name" required placeholder="Jordan Reyes">
+              <span class="error" aria-live="polite"></span>
+            </div>
+            <div class="field">
+              <label for="q-company">Company</label>
+              <input id="q-company" name="company" type="text" autocomplete="organization" placeholder="Northline Supply Co.">
+              <span class="error" aria-live="polite"></span>
+            </div>
+          </div>
+
+          <div class="field-row">
+            <div class="field">
+              <label for="q-email">Email <span class="req" aria-hidden="true">*</span></label>
+              <input id="q-email" name="email" type="email" autocomplete="email" required placeholder="jordan@northline.com">
+              <span class="error" aria-live="polite"></span>
+            </div>
+            <div class="field">
+              <label for="q-phone">Phone</label>
+              <input id="q-phone" name="phone" type="tel" autocomplete="tel" placeholder="(555) 010-0142">
+              <span class="error" aria-live="polite"></span>
+            </div>
+          </div>
+
+          <div class="field-row">
+            <div class="field">
+              <label for="q-origin">Origin ZIP or city <span class="req" aria-hidden="true">*</span></label>
+              <input id="q-origin" name="origin" type="text" required placeholder="60609 — Chicago, IL">
+              <span class="error" aria-live="polite"></span>
+            </div>
+            <div class="field">
+              <label for="q-dest">Destination ZIP or city <span class="req" aria-hidden="true">*</span></label>
+              <input id="q-dest" name="destination" type="text" required placeholder="30336 — Atlanta, GA">
+              <span class="error" aria-live="polite"></span>
+            </div>
+          </div>
+
+          <div class="field-row">
+            <div class="field">
+              <label for="q-mode">Mode</label>
+              <select id="q-mode" name="mode">
+                <option value="Not sure — recommend one">Not sure — recommend one</option>
+                <option>Full truckload (FTL)</option>
+                <option>Less-than-truckload (LTL)</option>
+                <option>Parcel</option>
+                <option>Intermodal</option>
+                <option>Final mile / white glove</option>
+                <option>Warehousing &amp; fulfilment</option>
+              </select>
+              <span class="hint">If you're not sure, leave this — it's our job.</span>
+            </div>
+            <div class="field">
+              <label for="q-weight">Total weight</label>
+              <input id="q-weight" name="weight" type="text" placeholder="6 pallets · 4,200 lb">
+              <span class="error" aria-live="polite"></span>
+            </div>
+          </div>
+
+          <div class="field-row">
+            <div class="field">
+              <label for="q-ready">Ready date</label>
+              <input id="q-ready" name="ready" type="date">
+              <span class="error" aria-live="polite"></span>
+            </div>
+            <div class="field">
+              <label for="q-due">Must deliver by</label>
+              <input id="q-due" name="due" type="date">
+              <span class="hint">The date that actually matters, not the hoped-for one.</span>
+            </div>
+          </div>
+
+          <div class="field">
+            <label for="q-notes">What are we moving? <span class="req" aria-hidden="true">*</span></label>
+            <textarea id="q-notes" name="notes" required minlength="12"
+              placeholder="Palletised dry goods, stackable, no liftgate at either end. Receiving takes appointments 07:00–14:00."></textarea>
+            <span class="hint">Dock access, liftgate, appointment windows and anything fragile — these are what change the price.</span>
+            <span class="error" aria-live="polite"></span>
+          </div>
+
+          <div class="form-status">
+            <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+            <span>Your email client is opening with the details filled in. Send it and we'll come back with a rate — same business day for lanes we already run.</span>
+          </div>
+
+          <div>
+            <button class="btn btn-primary btn-lg" type="submit">Send quote request <span class="arrow" aria-hidden="true">→</span></button>
+          </div>
+
+          <p class="form-note">
+            We reply to quote requests within one business day. Urgent or already
+            in transit? Call the dispatch desk instead — it is staffed around the clock.
+          </p>
+        </form>
+      </div>
+
+      <!-- ------------------------------------------------------------
+           CONTACT DETAILS
+           PLACEHOLDER CONTACT INFO — replace before launch.
+           Tracked in fou-logistics/README.md → "Details to replace".
+           ------------------------------------------------------------ -->
+      <aside id="dispatch">
+        <div class="card" style="gap:.2rem">
+          <div class="info-list">
+
+            <div class="info-item">
+              <span class="icon" aria-hidden="true">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2Z"/></svg>
+              </span>
+              <div>
+                <strong>Dispatch desk — 24/7</strong>
+                <a href="tel:+15550100142">+1 (555) 010-0142</a>
+              </div>
+            </div>
+
+            <div class="info-item">
+              <span class="icon" aria-hidden="true">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><rect x="2" y="4" width="20" height="16" rx="2"/><path d="m2 7 10 6 10-6"/></svg>
+              </span>
+              <div>
+                <strong>Quotes &amp; new lanes</strong>
+                <a href="mailto:quotes@foulogistics.com">quotes@foulogistics.com</a>
+              </div>
+            </div>
+
+            <div class="info-item">
+              <span class="icon" aria-hidden="true">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M10.3 3.6 1.8 18a2 2 0 0 0 1.7 3h17a2 2 0 0 0 1.7-3L13.7 3.6a2 2 0 0 0-3.4 0Z"/><path d="M12 9v4M12 17h.01"/></svg>
+              </span>
+              <div>
+                <strong>Claims &amp; exceptions</strong>
+                <a href="mailto:claims@foulogistics.com">claims@foulogistics.com</a>
+              </div>
+            </div>
+
+            <div class="info-item">
+              <span class="icon" aria-hidden="true">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>
+              </span>
+              <div>
+                <strong>Yard &amp; main office</strong>
+                <p>1200 Freight Way, Suite 200<br>Chicago, IL 60609</p>
+              </div>
+            </div>
+
+            <div class="info-item">
+              <span class="icon" aria-hidden="true">
+                <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>
+              </span>
+              <div>
+                <strong>Office hours</strong>
+                <div class="hours">
+                  <div><span>Monday – Friday</span><b>06:00 – 20:00</b></div>
+                  <div><span>Saturday</span><b>08:00 – 16:00</b></div>
+                  <div><span>Sunday</span><b>Dispatch line only</b></div>
+                  <span class="now" data-dispatch-status>Checking dispatch hours…</span>
+                </div>
+              </div>
+            </div>
+
+          </div>
+        </div>
+
+        <div class="card" style="margin-top:1rem">
+          <h3>Already shipped with us?</h3>
+          <p>Have your PRO or BOL number ready and call dispatch directly — they
+            can see the load without going through a ticket queue.</p>
+          <a class="btn" href="tel:+15550100142" style="justify-self:start;margin-top:.4rem">Call dispatch</a>
+        </div>
+      </aside>
+
+    </div>
+  </div>
+</section>
+
+<!-- ======================================================================
+     BEFORE YOU CALL
+     ====================================================================== -->
+<section class="section section-alt">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow" data-reveal>Before you call</span>
+      <h2 class="h1" data-reveal style="--reveal-delay:60ms">Four answers turn a callback into a quote.</h2>
+      <p class="lede" data-reveal style="--reveal-delay:110ms">
+        Most quote delays aren't pricing — they're waiting on details. If you have
+        these, we can usually price a lane while you're still on the phone.
+      </p>
+    </div>
+
+    <div class="grid grid-2" data-stagger>
+      <article class="card" data-reveal>
+        <h3>Dimensions, not just weight</h3>
+        <p>Pallet count, footprint and stacked height. Carriers bill the space you take up, so a light, tall pallet can price above a heavy, dense one.</p>
+      </article>
+      <article class="card" data-reveal>
+        <h3>What's at each end</h3>
+        <p>Dock, liftgate, or a residential kerb. Whether the receiver takes appointments, and the window they take them in. This is the most common cause of a re-quote.</p>
+      </article>
+      <article class="card" data-reveal>
+        <h3>The date that can't move</h3>
+        <p>Not the ideal date — the one with a consequence attached. It decides the mode, and the mode decides most of the price.</p>
+      </article>
+      <article class="card" data-reveal>
+        <h3>Anything unusual about the freight</h3>
+        <p>Temperature control, hazmat class, high value, awkward shape, or "do not stack." Told upfront it's a rate line. Found at the dock it's a delay.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+</main>
+<main id="main-careers" data-route="careers">
+
+<section class="page-hero">
+  <div class="wrap">
+    <nav class="crumbs" aria-label="Breadcrumb"><a href="index.html">Home</a> <span aria-hidden="true">/</span> <span>Careers</span></nav>
+    <h1 class="h1" data-reveal>Drive for a dispatcher who picks up.</h1>
+    <p class="lede" data-reveal style="--reveal-delay:70ms">
+      Every pay range on this page is the real range. Home time is written into
+      the lane, not promised in the interview. And the person who plans your week
+      answers the phone at 3am, because they're the one on shift.
+    </p>
+    <div class="hero-actions" data-reveal style="--reveal-delay:130ms">
+      <a class="btn btn-primary btn-lg" href="#roles">See open roles</a>
+      <a class="btn btn-ghost btn-lg" href="#apply">Apply directly</a>
+    </div>
+  </div>
+</section>
+
+<!-- ======================================================================
+     WHY
+     ====================================================================== -->
+<section class="section">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow" data-reveal>Why here</span>
+      <h2 class="h1" data-reveal style="--reveal-delay:60ms">Four things we put in writing.</h2>
+    </div>
+
+    <div class="grid grid-2" data-stagger>
+      <article class="card" data-reveal>
+        <span class="icon" aria-hidden="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 10.5 12 3l9 7.5"/><path d="M5 9.6V21h14V9.6"/><path d="M9.5 21v-6h5v6"/></svg>
+        </span>
+        <h3>Home time in the lane, not in the pitch</h3>
+        <p>Regional runs are built to get you home weekly, OTR on a set rotation. If a load would break that, it gets covered by someone else — you don't get asked to absorb it.</p>
+      </article>
+
+      <article class="card" data-reveal>
+        <span class="icon" aria-hidden="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M12 2v20"/><path d="M17 6.5c0-2-2.2-3-5-3s-5 1-5 3 2.2 2.8 5 3.4 5 1.4 5 3.6-2.2 3-5 3-5-1-5-3"/></svg>
+        </span>
+        <h3>Pay you can predict</h3>
+        <p>Detention, layover and stop pay are on the rate sheet, not discretionary. Settlements post on the same day each week, and you can see the math on every line.</p>
+      </article>
+
+      <article class="card" data-reveal>
+        <span class="icon" aria-hidden="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M3 17h2l2-7h9l3 7h2"/><circle cx="7.5" cy="19" r="1.6"/><circle cx="17.5" cy="19" r="1.6"/></svg>
+        </span>
+        <h3>Equipment that isn't a fight</h3>
+        <p>Tractors on a replacement cycle, inspected on schedule, with a shop that treats a defect report as information rather than an accusation. If it's unsafe it doesn't roll.</p>
+      </article>
+
+      <article class="card" data-reveal>
+        <span class="icon" aria-hidden="true">
+          <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M22 16.9v3a2 2 0 0 1-2.2 2 19.8 19.8 0 0 1-8.6-3.1 19.5 19.5 0 0 1-6-6A19.8 19.8 0 0 1 2.1 4.2 2 2 0 0 1 4.1 2h3a2 2 0 0 1 2 1.7c.1 1 .4 1.9.7 2.8a2 2 0 0 1-.5 2.1L8.1 9.9a16 16 0 0 0 6 6l1.3-1.3a2 2 0 0 1 2.1-.4c.9.3 1.8.6 2.8.7a2 2 0 0 1 1.7 2Z"/></svg>
+        </span>
+        <h3>A dispatcher, not a queue</h3>
+        <p>You get a named planner and their direct line. No ticket system between you and the person who can actually move your appointment.</p>
+      </article>
+    </div>
+  </div>
+</section>
+
+<!-- ======================================================================
+     OPEN ROLES
+     PLACEHOLDER PAY RANGES AND LOCATIONS — replace before launch.
+     Tracked in fou-logistics/README.md → "Details to replace".
+     ====================================================================== -->
+<section class="section section-alt" id="roles">
+  <div class="wrap">
+    <div class="section-head">
+      <span class="eyebrow" data-reveal>Open roles</span>
+      <h2 class="h1" data-reveal style="--reveal-delay:60ms">Six seats open right now.</h2>
+      <p class="lede" data-reveal style="--reveal-delay:110ms">
+        Open one to see the pay, the schedule and exactly what the job asks of you.
+        If none of them fit, apply anyway — we keep a list and we actually use it.
+      </p>
+    </div>
+
+    <div class="roles" data-stagger>
+
+      <details class="role" data-reveal>
+        <summary>
+          <span class="role-title">
+            <strong>CDL-A OTR Driver</strong>
+            <span class="role-meta">
+              <span>Over the road · 48 states</span>
+              <span>Full time</span>
+              <span>2 openings</span>
+            </span>
+          </span>
+          <span class="role-chev" aria-hidden="true">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+          </span>
+        </summary>
+        <div class="role-body">
+          <span class="role-pay">$0.62 – $0.74 <small>per mile · plus stop, detention and layover pay</small></span>
+          <div>
+            <h4>The run</h4>
+            <ul>
+              <li>Dry van, no-touch freight on scheduled lanes — you are not chasing loads on a board.</li>
+              <li>Three weeks out, one week home, on a rotation you can plan a year around.</li>
+              <li>Average 2,400–2,800 miles a week, with detention paid from hour two.</li>
+            </ul>
+          </div>
+          <div>
+            <h4>What you need</h4>
+            <ul>
+              <li>Valid Class A CDL and 12+ months verifiable OTR experience.</li>
+              <li>Clean MVR — no more than two moving violations in the last three years.</li>
+              <li>Current DOT medical card, and the right to work in the US.</li>
+            </ul>
+          </div>
+          <a class="btn btn-primary" href="#apply" style="justify-self:start">Apply for this role <span class="arrow" aria-hidden="true">→</span></a>
+        </div>
+      </details>
+
+      <details class="role" data-reveal>
+        <summary>
+          <span class="role-title">
+            <strong>CDL-A Regional Driver</strong>
+            <span class="role-meta">
+              <span>Midwest · home weekly</span>
+              <span>Full time</span>
+              <span>3 openings</span>
+            </span>
+          </span>
+          <span class="role-chev" aria-hidden="true">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+          </span>
+        </summary>
+        <div class="role-body">
+          <span class="role-pay">$1,350 – $1,600 <small>per week · guaranteed weekly minimum</small></span>
+          <div>
+            <h4>The run</h4>
+            <ul>
+              <li>Regional lanes inside a 500-mile radius, mostly drop-and-hook at our own hubs.</li>
+              <li>Home every weekend, and most weeknights on the shorter rotations.</li>
+              <li>Weekly minimum pays out even in a slow week — the risk sits with us, not you.</li>
+            </ul>
+          </div>
+          <div>
+            <h4>What you need</h4>
+            <ul>
+              <li>Class A CDL with 6+ months recent experience.</li>
+              <li>Comfortable backing into tight urban docks — the training yard is available before your first solo run.</li>
+              <li>Clean MVR and current DOT medical card.</li>
+            </ul>
+          </div>
+          <a class="btn btn-primary" href="#apply" style="justify-self:start">Apply for this role <span class="arrow" aria-hidden="true">→</span></a>
+        </div>
+      </details>
+
+      <details class="role" data-reveal>
+        <summary>
+          <span class="role-title">
+            <strong>Warehouse Associate — Inbound</strong>
+            <span class="role-meta">
+              <span>Chicago, IL · on site</span>
+              <span>Full time · 1st &amp; 2nd shift</span>
+              <span>4 openings</span>
+            </span>
+          </span>
+          <span class="role-chev" aria-hidden="true">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+          </span>
+        </summary>
+        <div class="role-body">
+          <span class="role-pay">$21 – $25 <small>per hour · $1.50 shift differential on 2nd</small></span>
+          <div>
+            <h4>The job</h4>
+            <ul>
+              <li>Receive inbound trailers against the ASN, flag discrepancies before they become claims.</li>
+              <li>Put away to slot, run cycle counts, and keep the receiving lane clear for the next door.</li>
+              <li>Forklift and reach truck — we certify you on site if you aren't already.</li>
+            </ul>
+          </div>
+          <div>
+            <h4>What you need</h4>
+            <ul>
+              <li>Able to lift 50 lb repeatedly and stay on your feet through a shift.</li>
+              <li>Comfortable with a handheld scanner and a WMS — we'll teach ours.</li>
+              <li>Reliability above everything: the shift after yours depends on the count being right.</li>
+            </ul>
+          </div>
+          <a class="btn btn-primary" href="#apply" style="justify-self:start">Apply for this role <span class="arrow" aria-hidden="true">→</span></a>
+        </div>
+      </details>
+
+      <details class="role" data-reveal>
+        <summary>
+          <span class="role-title">
+            <strong>Dispatcher / Load Planner</strong>
+            <span class="role-meta">
+              <span>Chicago, IL · hybrid</span>
+              <span>Full time</span>
+              <span>1 opening</span>
+            </span>
+          </span>
+          <span class="role-chev" aria-hidden="true">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+          </span>
+        </summary>
+        <div class="role-body">
+          <span class="role-pay">$58,000 – $72,000 <small>per year · plus on-call rotation premium</small></span>
+          <div>
+            <h4>The job</h4>
+            <ul>
+              <li>Plan lanes that keep trailers full in both directions and drivers home when promised.</li>
+              <li>Own the exceptions — a late appointment, a breakdown, a receiver that closed early — and communicate them before the customer notices.</li>
+              <li>You are the driver's named contact, not a shared inbox.</li>
+            </ul>
+          </div>
+          <div>
+            <h4>What you need</h4>
+            <ul>
+              <li>2+ years in dispatch, brokerage or transport planning.</li>
+              <li>Working knowledge of hours-of-service rules and what they mean for a plan.</li>
+              <li>The temperament to stay calm at 3am when something has gone wrong.</li>
+            </ul>
+          </div>
+          <a class="btn btn-primary" href="#apply" style="justify-self:start">Apply for this role <span class="arrow" aria-hidden="true">→</span></a>
+        </div>
+      </details>
+
+      <details class="role" data-reveal>
+        <summary>
+          <span class="role-title">
+            <strong>Diesel Technician</strong>
+            <span class="role-meta">
+              <span>Chicago, IL · shop</span>
+              <span>Full time</span>
+              <span>1 opening</span>
+            </span>
+          </span>
+          <span class="role-chev" aria-hidden="true">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+          </span>
+        </summary>
+        <div class="role-body">
+          <span class="role-pay">$32 – $42 <small>per hour · tool allowance and paid certifications</small></span>
+          <div>
+            <h4>The job</h4>
+            <ul>
+              <li>Preventive maintenance, DOT inspections and diagnostics on our own tractors and trailers.</li>
+              <li>Turn driver defect reports around fast — a truck sitting in the shop is a lane not running.</li>
+              <li>Keep the records straight, because the audit trail matters as much as the repair.</li>
+            </ul>
+          </div>
+          <div>
+            <h4>What you need</h4>
+            <ul>
+              <li>3+ years on heavy-duty diesel, or a completed technical program plus shop time.</li>
+              <li>Your own hand tools; we supply the specialty and diagnostic equipment.</li>
+              <li>ASE certification is a plus, and we pay for the ones you don't have yet.</li>
+            </ul>
+          </div>
+          <a class="btn btn-primary" href="#apply" style="justify-self:start">Apply for this role <span class="arrow" aria-hidden="true">→</span></a>
+        </div>
+      </details>
+
+      <details class="role" data-reveal>
+        <summary>
+          <span class="role-title">
+            <strong>Final Mile Driver — non-CDL</strong>
+            <span class="role-meta">
+              <span>Chicago metro</span>
+              <span>Full time</span>
+              <span>3 openings</span>
+            </span>
+          </span>
+          <span class="role-chev" aria-hidden="true">
+            <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="m6 9 6 6 6-6"/></svg>
+          </span>
+        </summary>
+        <div class="role-body">
+          <span class="role-pay">$23 – $27 <small>per hour · overtime after 40, home every night</small></span>
+          <div>
+            <h4>The job</h4>
+            <ul>
+              <li>Run a routed day of residential and commercial stops in a 26ft box truck.</li>
+              <li>Liftgate and inside delivery, with a second person on the heavy and awkward drops.</li>
+              <li>Capture proof of delivery properly — that signature closes the whole chain.</li>
+            </ul>
+          </div>
+          <div>
+            <h4>What you need</h4>
+            <ul>
+              <li>Valid driver's licence, clean record, 21 or over. No CDL required.</li>
+              <li>Comfortable with a handheld and talking to customers at the door.</li>
+              <li>Able to handle 75 lb with equipment and a partner.</li>
+            </ul>
+          </div>
+          <a class="btn btn-primary" href="#apply" style="justify-self:start">Apply for this role <span class="arrow" aria-hidden="true">→</span></a>
+        </div>
+      </details>
+
+    </div>
+  </div>
+</section>
+
+<!-- ======================================================================
+     PROCESS
+     ====================================================================== -->
+<section class="section">
+  <div class="wrap">
+    <div class="contact-layout">
+      <div>
+        <div class="section-head">
+          <span class="eyebrow" data-reveal>The process</span>
+          <h2 class="h1" data-reveal style="--reveal-delay:60ms">Days, not weeks.</h2>
+          <p class="lede" data-reveal style="--reveal-delay:110ms">
+            You will hear something from a person at every stage, including if the
+            answer is no. Nobody gets left waiting on silence.
+          </p>
+        </div>
+
+        <div class="timeline" data-reveal>
+          <div class="tl-item">
+            <span class="tl-dot">1</span>
+            <div class="tl-body">
+              <strong>You apply</strong>
+              <span class="tl-when">Day 0</span>
+              <p>The form below, or a call to the recruiting line. A résumé helps but isn't required for driving and warehouse roles.</p>
+            </div>
+          </div>
+          <div class="tl-item">
+            <span class="tl-dot">2</span>
+            <div class="tl-body">
+              <strong>A real phone call</strong>
+              <span class="tl-when">Within 2 business days</span>
+              <p>Fifteen minutes covering the schedule, the pay and what you're actually looking for. Ask us anything — this is the stage to find a mismatch.</p>
+            </div>
+          </div>
+          <div class="tl-item">
+            <span class="tl-dot">3</span>
+            <div class="tl-body">
+              <strong>In person, on site</strong>
+              <span class="tl-when">Within a week</span>
+              <p>Meet the planner or shift lead you'd actually work with, walk the yard, and for driving roles, a road test in the equipment you'd be assigned.</p>
+            </div>
+          </div>
+          <div class="tl-item">
+            <span class="tl-dot">4</span>
+            <div class="tl-body">
+              <strong>Checks and paperwork</strong>
+              <span class="tl-when">2–5 days</span>
+              <p>MVR, employment verification, DOT physical and drug screen where the role requires it. We tell you what we're checking before we check it.</p>
+            </div>
+          </div>
+          <div class="tl-item">
+            <span class="tl-dot">5</span>
+            <div class="tl-body">
+              <strong>Offer and start</strong>
+              <span class="tl-when">Same week</span>
+              <p>Written offer with the pay structure spelled out line by line. Orientation runs Mondays, and you're on a paid lane that week.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <aside>
+        <div class="card">
+          <h3>Benefits</h3>
+          <ul style="display:grid;gap:.5rem;padding-left:1.1rem;color:var(--dim);font-size:.94rem">
+            <li>Medical, dental and vision from day 31</li>
+            <li>401(k) with company match</li>
+            <li>Paid time off that accrues from your first week</li>
+            <li>Per diem on OTR runs</li>
+            <li>Referral bonus for drivers you bring with you</li>
+            <li>Paid orientation — you're on the clock from hour one</li>
+          </ul>
+        </div>
+
+        <div class="card" style="margin-top:1rem">
+          <h3>Recruiting line</h3>
+          <p>Prefer to talk it through before filling anything in? Call and ask for recruiting.</p>
+          <a class="btn" href="tel:+15550100143" style="justify-self:start;margin-top:.3rem">+1 (555) 010-0143</a>
+        </div>
+      </aside>
+    </div>
+  </div>
+</section>
+
+<!-- ======================================================================
+     APPLICATION FORM
+     ====================================================================== -->
+<section class="section section-alt" id="apply">
+  <div class="wrap wrap-narrow">
+    <div class="section-head">
+      <span class="eyebrow" data-reveal>Apply</span>
+      <h2 class="h1" data-reveal style="--reveal-delay:60ms">Start here.</h2>
+      <p class="lede" data-reveal style="--reveal-delay:110ms">
+        Nothing on this form is a trick question, and we read every one. If a
+        role is already filled we'll tell you rather than leave it up.
+      </p>
+    </div>
+
+    <form class="form" novalidate
+          data-mailto="careers@foulogistics.com"
+          data-subject="Job application from foulogistics.com">
+
+      <div class="field-row">
+        <div class="field">
+          <label for="a-name">Full name <span class="req" aria-hidden="true">*</span></label>
+          <input id="a-name" name="name" type="text" autocomplete="name" required placeholder="Alex Mercer">
+          <span class="error" aria-live="polite"></span>
+        </div>
+        <div class="field">
+          <label for="a-role">Role <span class="req" aria-hidden="true">*</span></label>
+          <select id="a-role" name="role" required>
+            <option value="">Choose a role…</option>
+            <option>CDL-A OTR Driver</option>
+            <option>CDL-A Regional Driver</option>
+            <option>Warehouse Associate — Inbound</option>
+            <option>Dispatcher / Load Planner</option>
+            <option>Diesel Technician</option>
+            <option>Final Mile Driver — non-CDL</option>
+            <option>None of these — keep me on file</option>
+          </select>
+          <span class="error" aria-live="polite"></span>
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="a-email">Email <span class="req" aria-hidden="true">*</span></label>
+          <input id="a-email" name="email" type="email" autocomplete="email" required placeholder="alex@example.com">
+          <span class="error" aria-live="polite"></span>
+        </div>
+        <div class="field">
+          <label for="a-phone">Phone <span class="req" aria-hidden="true">*</span></label>
+          <input id="a-phone" name="phone" type="tel" autocomplete="tel" required placeholder="(555) 010-0177">
+          <span class="error" aria-live="polite"></span>
+        </div>
+      </div>
+
+      <div class="field-row">
+        <div class="field">
+          <label for="a-licence">Licence class</label>
+          <select id="a-licence" name="licence">
+            <option>Not applicable</option>
+            <option>CDL Class A</option>
+            <option>CDL Class B</option>
+            <option>Standard driver's licence</option>
+          </select>
+        </div>
+        <div class="field">
+          <label for="a-years">Years of experience</label>
+          <input id="a-years" name="years" type="number" min="0" max="60" step="1" placeholder="4">
+          <span class="error" aria-live="polite"></span>
+        </div>
+      </div>
+
+      <div class="field">
+        <label for="a-endorsements">Endorsements &amp; certifications</label>
+        <input id="a-endorsements" name="endorsements" type="text" placeholder="Hazmat, Tanker, Doubles/Triples, forklift, ASE…">
+        <span class="hint">Leave blank if none — it isn't a requirement for most roles.</span>
+      </div>
+
+      <div class="field">
+        <label for="a-link">Link to a résumé or profile</label>
+        <input id="a-link" name="link" type="url" placeholder="https://…">
+        <span class="hint">Optional. Attach a file to the email instead if you prefer.</span>
+        <span class="error" aria-live="polite"></span>
+      </div>
+
+      <div class="field">
+        <label for="a-about">Anything we should know? <span class="req" aria-hidden="true">*</span></label>
+        <textarea id="a-about" name="about" required minlength="12"
+          placeholder="What you're driving now, the schedule you need, and what would make this a step up."></textarea>
+        <span class="error" aria-live="polite"></span>
+      </div>
+
+      <div class="form-status">
+        <svg width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round" aria-hidden="true"><path d="M20 6 9 17l-5-5"/></svg>
+        <span>Your email client is opening with your answers filled in. Attach a résumé if you have one, send it, and recruiting will call you within two business days.</span>
+      </div>
+
+      <div>
+        <button class="btn btn-primary btn-lg" type="submit">Send application <span class="arrow" aria-hidden="true">→</span></button>
+      </div>
+
+      <p class="form-note">
+        FOU Logistics is an equal opportunity employer. We consider every
+        qualified applicant without regard to race, colour, religion, sex, sexual
+        orientation, gender identity, national origin, disability, or veteran status.
+      </p>
+    </form>
+  </div>
+</section>
+
+</main>
+
+<!-- ======================================================================
+     FOOTER
+     ====================================================================== -->
+<footer class="site-footer">
+  <div class="wrap">
+    <div class="footer-grid">
+      <div class="footer-brand">
+        <a class="brand" href="index.html" aria-label="FOU Logistics — home">
+          <svg viewBox="0 0 48 48" aria-hidden="true" focusable="false">
+            <defs>
+              <linearGradient id="mark-b" x1="0" y1="0" x2="1" y2="1">
+                <stop offset="0" stop-color="#ff8a3d"/><stop offset="1" stop-color="#d9500e"/>
+              </linearGradient>
+            </defs>
+            <rect width="48" height="48" rx="12" fill="url(#mark-b)"/>
+            <g fill="#fff">
+              <rect x="11" y="12" width="6" height="24" rx="2"/>
+              <rect x="11" y="12" width="25" height="6" rx="2"/>
+              <rect x="11" y="21" width="17" height="6" rx="2"/>
+              <rect x="21" y="30" width="13" height="6" rx="2" opacity=".5"/>
+            </g>
+          </svg>
+          <span class="brand-name">FOU<small>LOGISTICS</small></span>
+        </a>
+        <p>Freight that arrives when it said it would. Pickup, warehousing, line
+          haul, cross-dock and last mile — run as one chain.</p>
+      </div>
+
+      <nav class="footer-col" aria-label="Services">
+        <h4>Services</h4>
+        <a href="index.html#services">Full truckload</a>
+        <a href="index.html#services">Less-than-truckload</a>
+        <a href="index.html#services">Warehousing</a>
+        <a href="index.html#services">Cross-dock</a>
+        <a href="index.html#services">Final mile</a>
+      </nav>
+
+      <nav class="footer-col" aria-label="Company">
+        <h4>Company</h4>
+        <a href="index.html#how">How logistics works</a>
+        <a href="index.html#journey">The journey</a>
+        <a href="careers.html">Careers</a>
+        <a href="contact.html">Contact</a>
+      </nav>
+
+      <nav class="footer-col" aria-label="Get in touch">
+        <h4>Get in touch</h4>
+        <a href="contact.html#quote">Request a quote</a>
+        <a href="careers.html#apply">Apply to drive</a>
+        <a href="contact.html#dispatch">Dispatch desk</a>
+      </nav>
+    </div>
+
+    <div class="footer-base">
+      <span>&copy; <span data-year>2026</span> FOU Logistics. All rights reserved.</span>
+      <span>Placeholder branding &amp; figures — pending final logo and audited numbers.</span>
+    </div>
+  </div>
+</footer>
+
+<script>
+/* ==========================================================================
+   FOU LOGISTICS — behaviour
+   --------------------------------------------------------------------------
+   Design notes (see .claude/skills/emil-design-eng, .claude/skills/apple-design):
+   • Where the browser supports scroll-driven animations, the journey runs
+     entirely in CSS — off the main thread, so it stays smooth while the rest
+     of the page is still doing work. JS only fills in for engines without it.
+   • The fallback writes `transform` straight onto a handful of layers rather
+     than updating a CSS custom property on a shared parent, which would
+     force a style recalc across every child on every frame.
+   • Nothing here blocks input, and every transition is interruptible.
+   ========================================================================== */
+(function () {
+  'use strict';
+
+  var root = document.documentElement;
+  var reduceMotion = window.matchMedia('(prefers-reduced-motion: reduce)');
+  var fine = window.matchMedia('(hover: hover) and (pointer: fine)');
+
+  var supportsScrollTimeline =
+    typeof CSS !== 'undefined' &&
+    CSS.supports &&
+    (CSS.supports('animation-timeline: view()') ||
+     CSS.supports('animation-timeline', 'view()'));
+
+  if (!supportsScrollTimeline) root.classList.add('no-sda');
+
+  var clamp = function (v, a, b) { return v < a ? a : v > b ? b : v; };
+  var $  = function (s, c) { return (c || document).querySelector(s); };
+  var $$ = function (s, c) { return Array.prototype.slice.call((c || document).querySelectorAll(s)); };
+
+  /* ------------------------------------------------------------------
+     Header: translucent material engages once content scrolls under it.
+     Driven by a sentinel + IntersectionObserver, not a scroll listener.
+     ------------------------------------------------------------------ */
+  (function header() {
+    var el = $('.site-header');
+    if (!el) return;
+
+    var sentinel = document.createElement('div');
+    sentinel.setAttribute('aria-hidden', 'true');
+    sentinel.style.cssText = 'position:absolute;top:0;left:0;width:1px;height:1px;pointer-events:none';
+    document.body.prepend(sentinel);
+
+    new IntersectionObserver(function (entries) {
+      el.setAttribute('data-stuck', String(!entries[0].isIntersecting));
+    }).observe(sentinel);
+  })();
+
+  /* ------------------------------------------------------------------
+     Mobile navigation — origin-aware sheet, dismissible the ways people
+     expect (Escape, outside click, choosing a link).
+     ------------------------------------------------------------------ */
+  (function nav() {
+    var toggle = $('.nav-toggle');
+    var list = $('.nav-links');
+    if (!toggle || !list) return;
+
+    var setOpen = function (open) {
+      toggle.setAttribute('aria-expanded', String(open));
+      list.setAttribute('data-open', String(open));
+    };
+
+    toggle.addEventListener('click', function () {
+      setOpen(toggle.getAttribute('aria-expanded') !== 'true');
+    });
+
+    document.addEventListener('keydown', function (e) {
+      if (e.key === 'Escape' && toggle.getAttribute('aria-expanded') === 'true') {
+        setOpen(false);
+        toggle.focus();
+      }
+    });
+
+    document.addEventListener('click', function (e) {
+      if (toggle.getAttribute('aria-expanded') !== 'true') return;
+      if (!list.contains(e.target) && !toggle.contains(e.target)) setOpen(false);
+    });
+
+    list.addEventListener('click', function (e) {
+      if (e.target.closest('a')) setOpen(false);
+    });
+  })();
+
+  /* ------------------------------------------------------------------
+     Scroll reveal — one-shot, and staggered 45ms within a group so a row
+     of cards cascades instead of snapping in as a block.
+     ------------------------------------------------------------------ */
+  (function reveal() {
+    var items = $$('[data-reveal]');
+    if (!items.length) return;
+
+    if (!('IntersectionObserver' in window)) {
+      items.forEach(function (el) { el.classList.add('is-in'); });
+      return;
+    }
+
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (!entry.isIntersecting) return;
+        entry.target.classList.add('is-in');
+        io.unobserve(entry.target);
+      });
+    }, { rootMargin: '0px 0px -12% 0px', threshold: 0.08 });
+
+    items.forEach(function (el) {
+      var group = el.closest('[data-stagger]');
+      if (group) {
+        var peers = $$('[data-reveal]', group);
+        var i = peers.indexOf(el);
+        if (i > 0) el.style.setProperty('--reveal-delay', Math.min(i, 6) * 45 + 'ms');
+      }
+      io.observe(el);
+    });
+  })();
+
+  /* ------------------------------------------------------------------
+     The journey — fallback only.
+     Progress maps to the window in which the sticky stage is pinned:
+       p = -trackTop / (trackHeight - viewportHeight)
+     which is exactly the CSS `contain 0% → contain 100%` range.
+     ------------------------------------------------------------------ */
+  (function journey() {
+    var track = $('.journey-track');
+    if (!track || supportsScrollTimeline || reduceMotion.matches) return;
+
+    var stage  = $('.journey-stage', track);
+    var layers = $$('.layer', track);
+    var wheels = $$('.wheel', track);
+    var caps   = $$('.cap', track);
+    var acts   = $$('.act-rail li', track);
+    var rigs   = $$('.rig', track);
+    var dusk   = $('.sky-dusk', track);
+    var stars  = $('.stars', track);
+
+    var visible = false;
+    var queued = false;
+
+    // Ranges match the CSS keyframes so both paths tell the same story.
+    var rigRange = { 'rig-truck': [[0.00, 0.17], [0.40, 0.80]], 'rig-van': [[0.80, 1.01]] };
+
+    var within = function (p, ranges) {
+      for (var i = 0; i < ranges.length; i++) {
+        if (p >= ranges[i][0] && p <= ranges[i][1]) return true;
+      }
+      return false;
+    };
+
+    var draw = function () {
+      queued = false;
+      var rect = track.getBoundingClientRect();
+      var travel = track.offsetHeight - window.innerHeight;
+      var p = travel > 0 ? clamp(-rect.top / travel, 0, 1) : 0;
+
+      layers.forEach(function (layer) {
+        var span = layer.offsetWidth - stage.clientWidth;
+        layer.style.transform = 'translate3d(' + (-span * p).toFixed(1) + 'px,0,0)';
+      });
+
+      // Negative to match the CSS `roll` keyframe: the rig is mirrored, so
+      // a negative rotation is the one that renders as forward roll.
+      var deg = (-16 * 360 * p).toFixed(1);
+      wheels.forEach(function (w) { w.style.transform = 'rotate(' + deg + 'deg)'; });
+
+      if (dusk)  dusk.style.opacity  = clamp((p - 0.38) / 0.32, 0, 1).toFixed(3);
+      if (stars) stars.style.opacity = (clamp((p - 0.52) / 0.30, 0, 1) * 0.75).toFixed(3);
+
+      rigs.forEach(function (rig) {
+        var key = rig.classList.contains('rig-van') ? 'rig-van' : 'rig-truck';
+        rig.classList.toggle('is-on', within(p, rigRange[key]));
+      });
+
+      caps.forEach(function (cap) {
+        var from = parseFloat(cap.style.getPropertyValue('--from')) / 100;
+        var to   = parseFloat(cap.style.getPropertyValue('--to')) / 100;
+        cap.classList.toggle('is-on', p >= from && p <= to);
+      });
+
+      acts.forEach(function (li) {
+        var from = parseFloat(li.style.getPropertyValue('--from')) / 100;
+        var to   = parseFloat(li.style.getPropertyValue('--to')) / 100;
+        li.setAttribute('data-on', String(p >= from && p <= to));
+      });
+    };
+
+    var request = function () {
+      if (queued || !visible) return;
+      queued = true;
+      requestAnimationFrame(draw);
+    };
+
+    new IntersectionObserver(function (entries) {
+      visible = entries[0].isIntersecting;
+      if (visible) request();
+    }, { rootMargin: '120px 0px' }).observe(track);
+
+    window.addEventListener('scroll', request, { passive: true });
+    window.addEventListener('resize', function () { visible = true; request(); }, { passive: true });
+    draw();
+  })();
+
+  /* ------------------------------------------------------------------
+     Act rail — fallback wiring only; the supported path is pure CSS.
+     ------------------------------------------------------------------ */
+
+  /* ------------------------------------------------------------------
+     Counters. A number that lands is more legible than one that ticks
+     forever: 900ms, strong ease-out, once.
+     ------------------------------------------------------------------ */
+  (function counters() {
+    var nodes = $$('[data-count]');
+    if (!nodes.length) return;
+
+    var settle = function (el) {
+      var target = parseFloat(el.getAttribute('data-count'));
+      var decimals = (el.getAttribute('data-decimals') | 0);
+      var prefix = el.getAttribute('data-prefix') || '';
+      var suffix = el.getAttribute('data-suffix') || '';
+      var render = function (v) {
+        el.textContent = prefix + v.toLocaleString(undefined, {
+          minimumFractionDigits: decimals, maximumFractionDigits: decimals
+        }) + suffix;
+      };
+
+      if (reduceMotion.matches) { render(target); return; }
+
+      var duration = 900;
+      var start = performance.now();
+      var step = function (now) {
+        var t = clamp((now - start) / duration, 0, 1);
+        // cubic-bezier(.23,1,.32,1) in spirit: fast out of the gate, soft landing
+        var eased = 1 - Math.pow(1 - t, 3);
+        render(target * eased);
+        if (t < 1) requestAnimationFrame(step); else render(target);
+      };
+      requestAnimationFrame(step);
+    };
+
+    if (!('IntersectionObserver' in window)) { nodes.forEach(settle); return; }
+
+    var io = new IntersectionObserver(function (entries) {
+      entries.forEach(function (entry) {
+        if (!entry.isIntersecting) return;
+        settle(entry.target);
+        io.unobserve(entry.target);
+      });
+    }, { threshold: 0.5 });
+    nodes.forEach(function (el) { io.observe(el); });
+  })();
+
+  /* ------------------------------------------------------------------
+     Forms.
+     There is no server behind this site yet, so rather than fake a
+     submission the form composes a real, pre-filled email and hands it to
+     the visitor's mail client. Swap in a POST endpoint via data-endpoint
+     when a backend exists (see fou-logistics/README.md).
+     ------------------------------------------------------------------ */
+  (function forms() {
+    var forms = $$('form[data-mailto]');
+    if (!forms.length) return;
+
+    var messageFor = function (input) {
+      if (input.validity.valueMissing) return 'This one is required.';
+      if (input.validity.typeMismatch) {
+        return input.type === 'email' ? 'That does not look like an email address.'
+                                      : 'Check the format of this field.';
+      }
+      if (input.validity.tooShort) return 'A little more detail, please.';
+      if (input.validity.patternMismatch) return input.getAttribute('data-pattern-hint') || 'Check the format of this field.';
+      return 'Please check this field.';
+    };
+
+    var validate = function (input) {
+      var field = input.closest('.field');
+      if (!field) return input.checkValidity();
+      var ok = input.checkValidity();
+      field.setAttribute('data-invalid', String(!ok));
+      var slot = $('.error', field);
+      if (slot) slot.textContent = ok ? '' : messageFor(input);
+      return ok;
+    };
+
+    forms.forEach(function (form) {
+      var controls = $$('input, select, textarea', form);
+
+      controls.forEach(function (input) {
+        // Validate as the visitor leaves a field, then keep it live once it
+        // has been flagged — never surprise them only at submit time.
+        input.addEventListener('blur', function () { validate(input); });
+        input.addEventListener('input', function () {
+          var field = input.closest('.field');
+          if (field && field.getAttribute('data-invalid') === 'true') validate(input);
+        });
+      });
+
+      form.addEventListener('submit', function (e) {
+        e.preventDefault();
+
+        var firstBad = null;
+        controls.forEach(function (input) {
+          if (!validate(input) && !firstBad) firstBad = input;
+        });
+        if (firstBad) {
+          firstBad.focus({ preventScroll: true });
+          firstBad.scrollIntoView({ block: 'center', behavior: reduceMotion.matches ? 'auto' : 'smooth' });
+          return;
+        }
+
+        var data = new FormData(form);
+        var lines = [];
+        controls.forEach(function (input) {
+          if (!input.name) return;
+          var label = $('label[for="' + input.id + '"]', form);
+          var name = label ? label.textContent.replace('*', '').trim() : input.name;
+          lines.push(name + ': ' + (data.get(input.name) || '—'));
+        });
+
+        var subject = form.getAttribute('data-subject') || 'Website enquiry';
+        var to = form.getAttribute('data-mailto');
+        var href = 'mailto:' + to +
+          '?subject=' + encodeURIComponent(subject) +
+          '&body=' + encodeURIComponent(lines.join('\n'));
+
+        var status = $('.form-status', form);
+        if (status) {
+          status.setAttribute('data-show', 'true');
+          status.setAttribute('role', 'status');
+        }
+        window.location.href = href;
+      });
+    });
+  })();
+
+  /* ------------------------------------------------------------------
+     Dispatch hours indicator — honest about the visitor's local clock.
+     ------------------------------------------------------------------ */
+  (function hours() {
+    var el = $('[data-dispatch-status]');
+    if (!el) return;
+    var now = new Date();
+    var day = now.getDay();            // 0 Sun … 6 Sat
+    var hour = now.getHours() + now.getMinutes() / 60;
+    var open = day >= 1 && day <= 5 ? hour >= 6 && hour < 20
+             : day === 6            ? hour >= 8 && hour < 16
+                                    : false;
+    el.textContent = open ? 'Dispatch desk is open now' : 'Dispatch desk is closed — 24/7 line below';
+    el.style.color = open ? 'var(--go)' : 'var(--dim)';
+  })();
+
+  /* ------------------------------------------------------------------
+     Footer year.
+     ------------------------------------------------------------------ */
+  $$('[data-year]').forEach(function (el) { el.textContent = String(new Date().getFullYear()); });
+
+  /* ------------------------------------------------------------------
+     Pointer-fine only: subtle tilt on the hero badge. Decorative, so it
+     is springy rather than pinned 1:1 to the cursor — and it is skipped
+     entirely on touch and under reduced motion.
+     ------------------------------------------------------------------ */
+  (function tilt() {
+    var el = $('[data-tilt]');
+    if (!el || !fine.matches || reduceMotion.matches) return;
+
+    var tx = 0, ty = 0, cx = 0, cy = 0, running = false;
+
+    var loop = function () {
+      // Critically-damped-ish approach: no overshoot, just an eased chase.
+      cx += (tx - cx) * 0.12;
+      cy += (ty - cy) * 0.12;
+      el.style.transform = 'perspective(700px) rotateX(' + (-cy).toFixed(2) + 'deg) rotateY(' + cx.toFixed(2) + 'deg)';
+      if (Math.abs(tx - cx) > 0.01 || Math.abs(ty - cy) > 0.01) {
+        requestAnimationFrame(loop);
+      } else {
+        running = false;
+      }
+    };
+
+    var kick = function () { if (!running) { running = true; requestAnimationFrame(loop); } };
+
+    el.addEventListener('pointermove', function (e) {
+      var r = el.getBoundingClientRect();
+      tx = ((e.clientX - r.left) / r.width - 0.5) * 10;
+      ty = ((e.clientY - r.top) / r.height - 0.5) * 10;
+      kick();
+    });
+    el.addEventListener('pointerleave', function () { tx = 0; ty = 0; kick(); });
+  })();
+})();
+
+</script>
+<script>
+
+/* Preview-only router. The deployed site is three real HTML files; this
+   swaps between copies of their <main> so one file can show all of them. */
+(function () {
+  var mains = Array.prototype.slice.call(document.querySelectorAll('main[data-route]'));
+  var routeOf = function (href) {
+    var m = String(href).match(/([a-z]+)\.html/);
+    return m ? (m[1] === 'index' ? 'index' : m[1]) : null;
+  };
+
+  function show(route, hash) {
+    mains.forEach(function (m) { m.hidden = m.dataset.route !== route; });
+
+    document.querySelectorAll('.nav-links a[href]').forEach(function (a) {
+      var r = routeOf(a.getAttribute('href'));
+      if (a.classList.contains('btn')) return;
+      if (r === route) a.setAttribute('aria-current', 'page');
+      else a.removeAttribute('aria-current');
+    });
+
+    // Reveals are one-shot IntersectionObserver callbacks that never fired
+    // for a hidden page, so settle them when the page first becomes visible.
+    var active = document.querySelector('main[data-route="' + route + '"]');
+    if (active) active.querySelectorAll('[data-reveal]').forEach(function (el) { el.classList.add('is-in'); });
+
+    if (hash) {
+      var target = active && active.querySelector(hash);
+      if (target) { target.scrollIntoView(); return; }
+    }
+    window.scrollTo(0, 0);
+  }
+
+  document.addEventListener('click', function (e) {
+    var a = e.target.closest('a[href]');
+    if (!a) return;
+    var href = a.getAttribute('href');
+    if (!href || href.charAt(0) === '#') return;      // in-page anchor: leave it
+    var route = routeOf(href);
+    if (!route) return;                                // tel:, mailto:, external
+    e.preventDefault();
+    var hash = href.indexOf('#') > -1 ? href.slice(href.indexOf('#')) : '';
+    show(route, hash);
+  });
+
+  show('index', '');
+})();
+
+</script>
+</body>
+</html>
