@@ -100,6 +100,7 @@ body{
   -webkit-font-smoothing:antialiased;
   text-rendering:optimizeLegibility;
   overflow-x:clip;
+  min-height:100vh;
   min-height:100svh;
   display:flex;
   flex-direction:column;
@@ -110,6 +111,11 @@ img,svg,video{ display:block; max-width:100% }
 a{ color:inherit; text-decoration:none }
 button,input,select,textarea{ font:inherit; color:inherit }
 ::selection{ background:var(--hi-vis); color:#fff }
+
+/* We provide our own press feedback (scale 0.97), so suppress the grey
+   rectangle iOS paints over tapped elements — the two together read as a
+   flicker rather than a press. */
+a,button,summary,input,select,textarea,label{ -webkit-tap-highlight-color:transparent }
 
 :focus-visible{
   outline:2px solid var(--hi-vis);
@@ -292,7 +298,7 @@ p + p{ margin-top:.9em }
 
 .nav-toggle{
   display:none;
-  width:42px; height:42px;
+  width:44px; height:44px;      /* 44px is the minimum comfortable tap target */
   align-items:center; justify-content:center;
   border:1px solid var(--line); border-radius:11px;
   background:var(--ink-2); cursor:pointer;
@@ -367,6 +373,7 @@ p + p{ margin-top:.9em }
    -------------------------------------------------------------------------- */
 .hero{
   position:relative;
+  min-height:100vh;
   min-height:100svh;
   display:grid;
   align-items:center;
@@ -462,6 +469,7 @@ p + p{ margin-top:.9em }
 }
 .journey-stage{
   position:sticky; top:0;
+  height:100vh;
   height:100svh;
   overflow:clip;
   isolation:isolate;
@@ -516,12 +524,14 @@ p + p{ margin-top:.9em }
 .rig{
   position:absolute; z-index:4;
   left:50%; bottom:16%;            /* the scene's ground line */
+  width:min(62vh, 90vw);
   width:min(62svh, 90vw);
   translate:-50% 0;
   opacity:0;
   will-change:transform, opacity;
 }
 .rig-van{
+  width:min(26vh, 56vw);
   width:min(26svh, 56vw);
   bottom:16.2%;
 }
@@ -611,6 +621,33 @@ p + p{ margin-top:.9em }
 .act-rail li[data-on="true"] .dot{ background:var(--hi-vis); transform:scale(1.45) }
 .act-rail li[data-on="true"] .label{ opacity:1; transform:none; color:var(--bone) }
 @media (max-width: 720px){ .act-rail{ display:none } }
+
+/* Landscape phones have almost no vertical room — roughly 360-390px of
+   stage. Caption-above-scene cannot fit, so separate them horizontally
+   instead: copy to the left, rig moved right and clear of it. */
+@media (orientation: landscape) and (max-height: 560px){
+  .captions{ padding-top:clamp(4.9rem, 13vh, 5.6rem) }   /* clear the 68px sticky header */
+  .cap{ max-width:min(46vw, 440px) }
+  .cap h2{ font-size:clamp(1.3rem, 1rem + 1.4vw, 1.75rem) }
+  .cap p{ font-size:.86rem }
+  .cap-stat{ margin-top:.6rem; font-size:.72rem }
+  .rig{ left:70% }
+  .rig-van{ left:72% }
+}
+
+/* Shorter still (an SE on its side is 375px tall). Widen the column so the
+   copy needs fewer lines, shrink the type, and drop the metadata chip —
+   the headline carries the act on a screen this size. */
+@media (orientation: landscape) and (max-height: 420px){
+  .captions{ padding-top:4.9rem }                        /* clear the 68px sticky header */
+  .cap{ max-width:min(52vw, 420px) }
+  .cap h2{ font-size:1.2rem; line-height:1.06; margin-bottom:.45rem }
+  .cap p{ font-size:.8rem; line-height:1.42 }
+  .cap-index{ margin-bottom:.45rem }
+  .cap-stat{ display:none }
+  .rig{ left:76%; width:min(46vh, 46vw) }
+  .rig-van{ left:78%; width:min(21vh, 30vw) }
+}
 
 /* Small screens: tighten the caption block so five lines of copy still
    clear the horizon. The rig scales itself from stage height already. */
@@ -842,7 +879,10 @@ p + p{ margin-top:.9em }
   background:var(--ink-2);
   border:1px solid var(--line);
   border-radius:11px;
-  font-size:.96rem;
+  /* Exactly 16px. Anything smaller makes iOS Safari zoom the page in when
+     the field takes focus, which then leaves the visitor scrolled sideways
+     in the middle of filling out a form. */
+  font-size:1rem;
   transition:border-color var(--t-hover) ease, background-color var(--t-hover) ease;
 }
 .field textarea{ min-height:130px; resize:vertical }
