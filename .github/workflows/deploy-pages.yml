@@ -5,6 +5,7 @@ on:
     branches:
       - claude/rips-society-website-rmo0pl
       - claude/ecommerce-website-rebuild-rj6o35
+      - claude/fou-logistics-website-dl117b
   workflow_dispatch:
 
 permissions:
@@ -29,10 +30,14 @@ jobs:
         uses: actions/configure-pages@v5
         with:
           enablement: true
+      # On this branch the site lives in fou-logistics/, so that folder is
+      # published as the site root and index.html is the landing page.
+      # (A workflow run always uses the file from the branch that triggered
+      # it, so the other website branches keep uploading their own root.)
       - name: Upload site
         uses: actions/upload-pages-artifact@v3
         with:
-          path: .
+          path: fou-logistics
       - name: Deploy
         id: deployment
         uses: actions/deploy-pages@v4
