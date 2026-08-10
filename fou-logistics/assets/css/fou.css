@@ -512,6 +512,13 @@ p + p{ margin-top:.9em }
   width:min(26svh, 56vw);
   bottom:16.2%;
 }
+/* The world pans left, so the rig is the thing travelling right and must
+   face right. The artwork is drawn cab-left, so mirror it here rather than
+   rewriting every coordinate — the livery text is counter-mirrored inside
+   the SVG so it still reads the right way round. Applied to the <svg>, not
+   to .rig, because .rig's transform belongs to the scroll animation. */
+.rig > svg{ transform:scaleX(-1) }
+
 .wheel{ transform-box:fill-box; transform-origin:center }
 
 /* Darkens the road under the captions so type stays legible over a moving
@@ -638,7 +645,10 @@ p + p{ margin-top:.9em }
 
 /* Wheels are geared to the world, not to a clock: they turn because the
    scene moves. Stop scrolling and they stop, like a real wheel. */
-@keyframes roll{ from{ transform:rotate(0turn) } to{ transform:rotate(16turn) } }
+/* Negative because the rig is mirrored: inside a scaleX(-1) parent a
+   negative rotation is what renders as clockwise, which is the direction a
+   wheel turns when the vehicle is moving right. */
+@keyframes roll{ from{ transform:rotate(0turn) } to{ transform:rotate(-16turn) } }
 
 @keyframes dusk{
   0%,38%   { opacity:0 }
@@ -660,7 +670,7 @@ p + p{ margin-top:.9em }
 }
 /* The last-mile van takes over at the end. */
 @keyframes van-in{
-  0%,78%   { opacity:0; transform:translate3d(3%,10px,0) }
+  0%,78%   { opacity:0; transform:translate3d(-3%,10px,0) }
   84%,100% { opacity:1; transform:none }
 }
 /* One shared cycle; each caption sets its own slice via --from/--to. */
