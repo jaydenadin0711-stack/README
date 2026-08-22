@@ -30,8 +30,23 @@ on the server — the browser never sees it.
 
 > Use **Chrome or Edge**. Speech recognition is a Chromium feature; Firefox has
 > no `SpeechRecognition` at all and Safari's is patchy. Everything except voice
-> *input* works everywhere. The page must be on `localhost` or `https://` for the
-> microphone to be allowed at all — that's a browser rule, not this app's.
+> *input* works everywhere.
+
+## Getting the microphone working
+
+Press **Start listening** and the browser asks for the mic — allow it once and
+you're done. Three things can stop that prompt appearing, and JARVIS tells you
+which one it is rather than just failing:
+
+| What you see | What's wrong | Fix |
+|---|---|---|
+| "opened in a panel that does not pass the microphone through" | The page is inside an iframe that wasn't granted mic access. A browser rule — no page can grant it to itself. | Press **Open in its own tab** (the button appears when this happens) and allow the mic there. |
+| "browsers only allow microphones on https or localhost" | You opened the file directly, so the page is on `file://`. | Run `npm start` and use `http://localhost:3000/jarvis/`. |
+| "the microphone is blocked for this page" | Permission was denied earlier and the browser remembers. | Click the camera or lock icon in the address bar → Microphone → **Allow**, then press Start listening again. |
+
+If recognition keeps dropping the moment it starts, JARVIS stops retrying and
+says so — Chrome sends audio to an online speech service, so that usually means
+a connection problem. The text box works regardless.
 
 ---
 
@@ -54,12 +69,19 @@ word for one sentence. There's a text box too, for when a mic isn't practical.
 | "note — order more sleeves" | saved to the Notes panel, kept on this device |
 | "read my notes" / "clear my notes" | reads back or wipes them |
 | "what's 18 percent of 240" | arithmetic, evaluated safely (no `eval`) |
+| "5 miles in km" / "20 c in f" | length, mass, volume, speed and temperature conversion |
+| "how long until Christmas" | days to a named or dated day |
 | "when is sunset" / "what's the moon" | computed from your coordinates on-device |
 | "flip a coin" / "roll a d20" | what you'd expect |
 | "mute" / "stop listening" | shuts it up, keeps the display running |
 
 **Everything else** — questions, explanations, writing, advice — goes to Claude
-through the bridge. Without the bridge it says so plainly rather than pretending.
+through the bridge.
+
+Without a key, JARVIS explains that once and then keeps it short ("Beyond me
+without Claude, I'm afraid") — the how-to-fix stays on screen in the console
+panel instead of being read at you every time. He never invents an answer he
+doesn't have.
 
 ---
 

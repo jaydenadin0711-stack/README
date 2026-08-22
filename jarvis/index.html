@@ -353,6 +353,23 @@ button:disabled { opacity: .4; cursor: not-allowed; }
   color: var(--muted);
   line-height: 1.6;
 }
+
+/* an actionable notice — mic trouble, or the brain running local-only */
+.note {
+  margin: 0 0 10px;
+  padding: 8px 10px;
+  font-size: 11.5px;
+  line-height: 1.55;
+  color: var(--amber);
+  background: rgba(240, 166, 60, .07);
+  border-left: 2px solid var(--amber);
+}
+.note.calm {
+  color: var(--muted);
+  background: rgba(34, 211, 238, .05);
+  border-left-color: var(--cyan-dim);
+}
+.note b { color: var(--text-strong); font-weight: 600; }
 .hint b { color: var(--text); font-weight: 600; }
 .hint code {
   font-family: var(--mono);
@@ -489,7 +506,10 @@ label.toggle input { accent-color: var(--cyan); width: 14px; height: 14px; curso
         <button id="btnTalk">🎙 Hold to talk</button>
         <button id="btnStop" class="ghost">■ Silence</button>
         <button id="btnClear" class="ghost">Clear log</button>
+        <button id="btnOpenTab" hidden>↗ Open in its own tab</button>
       </div>
+      <p class="note" id="micNote" hidden></p>
+      <p class="note calm" id="brainNote" hidden></p>
       <form class="composer" id="composer" autocomplete="off">
         <input id="textIn" placeholder="Type to Jarvis — or say “Jarvis, …”" aria-label="Message to Jarvis">
         <button type="submit">Send</button>
@@ -550,6 +570,8 @@ label.toggle input { accent-color: var(--cyan); width: 14px; height: 14px; curso
         <b>Jarvis, set a timer for 5 minutes</b><br>
         <b>Jarvis, note — order more sleeves</b><br>
         <b>Jarvis, what's 18 percent of 240</b><br>
+        <b>Jarvis, 5 miles in km</b> — or 20 c in f<br>
+        <b>Jarvis, how long until Christmas</b><br>
         <b>Jarvis, when is sunset</b><br>
         <b>Jarvis, flip a coin</b><br>
         Anything else goes to <b>Claude</b> when the bridge is running — see <code>jarvis/README.md</code>.
@@ -875,6 +897,7 @@ function speak(text) {
    ============================================================ */
 const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
 let rec = null, listening = false, wasListening = false, holdMode = false;
+let lastStart = 0, quickEnds = 0;
 
 if (!SR) {
   $('btnListen').disabled = true;
@@ -887,6 +910,7 @@ if (!SR) {
   rec.interimResults = true;
 
   rec.onstart = () => {
+    lastStart = Date.now();
     listening = true;
     $('btnListen').setAttribute('aria-pressed', 'true');
     $('btnListen').textContent = '◉ Listening';
@@ -902,6 +926,7 @@ if (!SR) {
       else interim += r[0].transcript;
     }
     if (interim) $('heardLine').textContent = '“' + interim.trim() + '”';
+    if (interim || final) quickEnds = 0;   // the service is clearly working
     if (final.trim()) {
       $('heardLine').textContent = '';
       handleUtterance(final.trim());
@@ -910,11 +935,11 @@ if (!SR) {
 
   rec.onerror = (e) => {
     if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
-      $('micTag').textContent = 'mic blocked';
-      say('sys', 'Microphone permission denied — type instead, or allow the mic and press Start listening.', true);
       listening = false;
+      autoRestart = false;
       $('btnListen').setAttribute('aria-pressed', 'false');
       $('btnListen').textContent = '◉ Start listening';
+      reportMicProblem('denied');
     } else if (e.error === 'no-speech') {
       /* normal in continuous mode */
     } else {
@@ -928,7 +953,17 @@ if (!SR) {
     $('btnListen').textContent = '◉ Start listening';
     $('micTag').textContent = 'mic idle';
     if (J.mode === 'listening') setMode('idle');
-    // Chrome ends recognition every ~60s; restart if we're meant to stay on
+
+    // Chrome ends recognition every ~60s, so staying on means restarting.
+    // But if it keeps ending immediately, the speech service isn't
+    // answering — restarting forever would just spin.
+    if (Date.now() - lastStart < 1000) quickEnds++; else quickEnds = 0;
+    if (quickEnds >= 4) {
+      autoRestart = false;
+      quickEnds = 0;
+      reportMicProblem('service');
+      return;
+    }
     if (autoRestart && $('optContinuous').checked && !holdMode) {
       setTimeout(() => { if (autoRestart) startListening(true); }, 250);
     }
@@ -937,11 +972,60 @@ if (!SR) {
 
 let autoRestart = false;
 
+/* ---------------- microphone permission ----------------
+   Browsers only hand over a microphone under three conditions: the page
+   is on https or localhost, the user has granted permission, and — when
+   the page is embedded in another site — the embedding frame passes the
+   microphone through. When one of those is missing the failure looks
+   identical from script, so check them in order and say which it is.  */
+const embedded = (() => { try { return window.self !== window.top; } catch (_) { return true; } })();
+
+function reportMicProblem(kind) {
+  const guidance = {
+    insecure: 'Browsers only allow microphones on https or localhost. Open this from your local server — http://localhost:3000/jarvis/ — and the mic will work.',
+    embedded: 'This page is embedded in a panel that does not pass the microphone through. Open it in its own browser tab and the mic will work — there is a button below to do that.',
+    denied: 'The microphone is blocked for this page. Click the camera or lock icon in the address bar, set Microphone to Allow, then press Start listening again.',
+    unsupported: 'This browser exposes no microphone API. Chrome or Edge will work.',
+    nodevice: 'No microphone was found on this machine.',
+    service: 'Speech recognition keeps dropping. Chrome sends audio to an online speech service — check the connection, or use the text box, which always works.'
+  };
+  $('micTag').textContent = kind === 'denied' ? 'mic blocked' : 'mic ' + kind;
+  const note = $('micNote');
+  note.hidden = false;
+  note.textContent = guidance[kind] || 'The microphone could not be opened.';
+  $('btnOpenTab').hidden = !(kind === 'embedded' || (kind === 'denied' && embedded));
+  say('sys', guidance[kind] || 'The microphone could not be opened.', true);
+}
+
+/* Asks for the microphone up front, so the browser's own prompt appears
+   on a real click instead of somewhere inside speech recognition. */
+async function requestMic() {
+  // A frame that isn't granted the microphone doesn't get a disabled API —
+  // Chrome removes navigator.mediaDevices outright, which looks identical
+  // to an ancient browser. Being embedded is the likelier explanation.
+  if (!navigator.mediaDevices || !navigator.mediaDevices.getUserMedia) {
+    reportMicProblem(embedded ? 'embedded' : !window.isSecureContext ? 'insecure' : 'unsupported');
+    return false;
+  }
+  if (!window.isSecureContext) { reportMicProblem('insecure'); return false; }
+  try {
+    micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    $('micNote').hidden = true;
+    $('btnOpenTab').hidden = true;
+    startMeter(micStream);
+    return true;
+  } catch (e) {
+    if (e.name === 'NotAllowedError' || e.name === 'SecurityError') reportMicProblem(embedded ? 'embedded' : 'denied');
+    else if (e.name === 'NotFoundError') reportMicProblem('nodevice');
+    else reportMicProblem('unsupported');
+    return false;
+  }
+}
+
 function startListening(silent) {
   if (!rec || listening) return;
   autoRestart = true;
   try { rec.start(); } catch (_) { /* already starting */ }
-  if (!silent) startMeter();
 }
 function stopListening(temporary) {
   if (!rec) return;
@@ -949,19 +1033,39 @@ function stopListening(temporary) {
   try { rec.stop(); } catch (_) {}
 }
 
-$('btnListen').addEventListener('click', () => {
-  if (listening) { stopListening(false); stopMeter(); }
-  else { startListening(false); }
+$('btnListen').addEventListener('click', async () => {
+  if (listening) { stopListening(false); stopMeter(); return; }
+  const ok = await requestMic();
+  if (ok) startListening(false);
 });
+
+$('btnOpenTab').addEventListener('click', () => window.open(location.href, '_blank', 'noopener'));
+
+/* Report what the browser already knows, without prompting. */
+if (navigator.permissions && navigator.permissions.query) {
+  navigator.permissions.query({ name: 'microphone' })
+    .then(p => {
+      const show = () => {
+        if (p.state === 'granted') { $('micTag').textContent = 'mic ready'; $('micNote').hidden = true; $('btnOpenTab').hidden = true; }
+        else if (p.state === 'denied') reportMicProblem('denied');
+        else $('micTag').textContent = 'mic — press start';
+      };
+      show();
+      p.onchange = show;
+    })
+    .catch(() => { /* Firefox and Safari don't expose the microphone name */ });
+}
 
 /* hold-to-talk: ignores the wake word for one utterance */
 const talkBtn = $('btnTalk');
-function holdStart(e) {
+async function holdStart(e) {
   e.preventDefault();
   holdMode = true;
   talkBtn.setAttribute('aria-pressed', 'true');
   synth.cancel();
-  startListening(false);
+  const ok = await requestMic();
+  if (ok) startListening(false);
+  else { holdMode = false; talkBtn.setAttribute('aria-pressed', 'false'); }
 }
 function holdEnd() {
   if (!holdMode) return;
@@ -997,10 +1101,10 @@ $('composer').addEventListener('submit', (e) => {
 /* ---------------- microphone level meter ---------------- */
 let audioCtx = null, analyser = null, micStream = null, meterRAF = 0;
 
-async function startMeter() {
+async function startMeter(stream) {
   if (analyser || !navigator.mediaDevices) return;
   try {
-    micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    micStream = stream || await navigator.mediaDevices.getUserMedia({ audio: true });
     audioCtx = new (window.AudioContext || window.webkitAudioContext)();
     const src = audioCtx.createMediaStreamSource(micStream);
     analyser = audioCtx.createAnalyser();
@@ -1101,6 +1205,95 @@ function calc(expr) {
   }
   if (st.length !== 1 || !isFinite(st[0])) return null;
   return Math.round(st[0] * 1e10) / 1e10;
+}
+
+/* -- unit conversion: "5 miles in km", "180 lb to kg", "20 c in f" --
+   Everything reduces to a base unit per dimension; temperature is
+   affine so it gets its own path. */
+const UNITS = {
+  // length → metres
+  m: ['len', 1], metre: ['len', 1], metres: ['len', 1], meter: ['len', 1], meters: ['len', 1],
+  km: ['len', 1000], kilometre: ['len', 1000], kilometres: ['len', 1000], kilometer: ['len', 1000], kilometers: ['len', 1000],
+  cm: ['len', 0.01], centimetre: ['len', 0.01], centimetres: ['len', 0.01], centimeter: ['len', 0.01], centimeters: ['len', 0.01],
+  mm: ['len', 0.001], millimetre: ['len', 0.001], millimetres: ['len', 0.001],
+  mile: ['len', 1609.344], miles: ['len', 1609.344], mi: ['len', 1609.344],
+  yard: ['len', 0.9144], yards: ['len', 0.9144], yd: ['len', 0.9144],
+  foot: ['len', 0.3048], feet: ['len', 0.3048], ft: ['len', 0.3048],
+  inch: ['len', 0.0254], inches: ['len', 0.0254], 'in': ['len', 0.0254],
+  // mass → kilograms
+  kg: ['mass', 1], kilo: ['mass', 1], kilos: ['mass', 1], kilogram: ['mass', 1], kilograms: ['mass', 1],
+  g: ['mass', 0.001], gram: ['mass', 0.001], grams: ['mass', 0.001],
+  lb: ['mass', 0.45359237], lbs: ['mass', 0.45359237], pound: ['mass', 0.45359237], pounds: ['mass', 0.45359237],
+  oz: ['mass', 0.028349523125], ounce: ['mass', 0.028349523125], ounces: ['mass', 0.028349523125],
+  stone: ['mass', 6.35029318], st: ['mass', 6.35029318], tonne: ['mass', 1000], tonnes: ['mass', 1000], ton: ['mass', 1000],
+  // volume → litres
+  l: ['vol', 1], litre: ['vol', 1], litres: ['vol', 1], liter: ['vol', 1], liters: ['vol', 1],
+  ml: ['vol', 0.001], millilitre: ['vol', 0.001], millilitres: ['vol', 0.001],
+  gallon: ['vol', 3.785411784], gallons: ['vol', 3.785411784], gal: ['vol', 3.785411784],
+  quart: ['vol', 0.946352946], quarts: ['vol', 0.946352946],
+  pint: ['vol', 0.473176473], pints: ['vol', 0.473176473], cup: ['vol', 0.2365882365], cups: ['vol', 0.2365882365],
+  // speed → metres per second
+  mph: ['speed', 0.44704], kph: ['speed', 0.2777778], 'km/h': ['speed', 0.2777778], kmh: ['speed', 0.2777778],
+  knot: ['speed', 0.5144444], knots: ['speed', 0.5144444], 'm/s': ['speed', 1]
+};
+const TEMPS = { c: 1, celsius: 1, centigrade: 1, f: 1, fahrenheit: 1, k: 1, kelvin: 1 };
+
+function tempTo(value, from, to) {
+  const f = from[0], t = to[0];
+  const c = f === 'c' ? value : f === 'f' ? (value - 32) * 5 / 9 : value - 273.15;
+  return t === 'c' ? c : t === 'f' ? c * 9 / 5 + 32 : c + 273.15;
+}
+
+function convert(text) {
+  const m = text.match(/(-?\d+(?:\.\d+)?)\s*(?:degrees?\s*)?([a-z°\/]+)\s*(?:in|to|into|as|=)\s*(?:degrees?\s*)?([a-z°\/]+)/i);
+  if (!m) return null;
+  const n = parseFloat(m[1]);
+  const from = m[2].toLowerCase().replace(/°/g, '');
+  const to = m[3].toLowerCase().replace(/°/g, '');
+
+  if (TEMPS[from] && TEMPS[to]) {
+    const out = tempTo(n, from, to);
+    return round(out) + ' degrees ' + (to[0] === 'c' ? 'Celsius' : to[0] === 'f' ? 'Fahrenheit' : 'Kelvin');
+  }
+  const a = UNITS[from], b = UNITS[to];
+  if (!a || !b || a[0] !== b[0]) return null;
+  return round((n * a[1]) / b[1]) + ' ' + to;
+}
+const round = (n) => {
+  const abs = Math.abs(n);
+  const dp = abs >= 100 ? 1 : abs >= 1 ? 2 : 4;
+  return parseFloat(n.toFixed(dp));
+};
+
+/* -- "how many days until 25 December" -- */
+function daysUntil(text) {
+  const m = text.match(/how (?:many days|long)\s+(?:is it\s+)?(?:until|till|til|to)\s+(.+)/i);
+  if (!m) return null;
+  let target = m[1].trim().replace(/[?.!]$/, '');
+
+  const fixed = { christmas: '12-25', xmas: '12-25', 'new year': '01-01', "new year's": '01-01',
+                  halloween: '10-31', 'new years': '01-01' };
+  const now = new Date();
+  const midnight = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+  let when = null;
+
+  const key = target.toLowerCase().replace(/^the\s+/, '');
+  if (fixed[key]) {
+    const [mo, da] = fixed[key].split('-').map(Number);
+    when = new Date(now.getFullYear(), mo - 1, da);
+    if (when < midnight) when = new Date(now.getFullYear() + 1, mo - 1, da);
+  } else {
+    const parsed = Date.parse(/\d{4}/.test(target) ? target : target + ' ' + now.getFullYear());
+    if (isNaN(parsed)) return null;
+    when = new Date(parsed);
+    if (when < midnight && !/\d{4}/.test(target)) when.setFullYear(when.getFullYear() + 1);
+  }
+
+  const days = Math.round((when - midnight) / DAY_MS);
+  const label = when.toLocaleDateString(undefined, { weekday: 'long', day: 'numeric', month: 'long' });
+  if (days === 0) return 'That is today — ' + label + '.';
+  if (days === 1) return 'One day. That is tomorrow, ' + label + '.';
+  return days + ' days, on ' + label + '.';
 }
 
 /* -- duration parsing: "5 minutes", "1 hour 30", "90 seconds" -- */
@@ -1335,7 +1528,7 @@ function localBrain(raw) {
   if (/\b(who are you|what are you|your name)\b/.test(q))
     return 'I am Jarvis — a voice interface running entirely in your browser. I read this machine\'s own telemetry, and for anything beyond that I pass the question to Claude.';
   if (/\b(what can you do|help|commands|capabilities)\b/.test(q))
-    return 'I can report the time and date, battery, network, hardware and heap, run diagnostics, set timers, take notes, do arithmetic, and tell you sunrise, sunset and the moon phase. Anything else I hand to Claude when the bridge is running.';
+    return 'I can report the time and date, battery, network, hardware and heap, run diagnostics, set timers, take notes, do arithmetic, convert units, count the days to a date, and tell you sunrise, sunset and the moon phase. Anything else I hand to Claude when the bridge is running.';
 
   if (/\b(time|clock)\b/.test(q) && !/timer/.test(q))
     return 'It is ' + now.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) + '.';
@@ -1449,6 +1642,12 @@ function localBrain(raw) {
     return String(Math.min(a, b) + Math.floor(Math.random() * (Math.abs(b - a) + 1)));
   }
 
+  // unit conversion and countdowns
+  const conv = convert(q);
+  if (conv) return conv + '.';
+  const until = daysUntil(q);
+  if (until) return until;
+
   // arithmetic
   const mathAsk = q.replace(/^(what(?:'s| is)|calculate|compute|work out|how much is)\s+/i, '');
   if (mathAsk !== q || /^[\d\s+\-*/^().]+$/.test(q)) {
@@ -1539,6 +1738,29 @@ async function askClaude(text) {
 /* ============================================================
    8. RESPOND
    ============================================================ */
+let offlineExplained = false, offlineIndex = 0;
+
+/* Short, varied, and free of instructions — the instructions are on
+   screen. Nobody wants the same paragraph read at them every time. */
+const OFFLINE_LINES = [
+  'Beyond me without Claude, I am afraid.',
+  'Not something I can answer offline.',
+  'That one needs the bridge.',
+  'Out of reach on local systems.',
+  'I would only be guessing at that one.'
+];
+
+function showBrainNote() {
+  const note = $('brainNote');
+  if (!note || !note.hidden) return;
+  note.hidden = false;
+  note.className = 'note calm';
+  note.innerHTML = embedded
+    ? '<b>Local brain.</b> Questions beyond this machine need Claude, which this page cannot reach when it is embedded. ' +
+      'Run it from your repo — <b>npm start</b> with <b>ANTHROPIC_API_KEY</b> set — then open <b>localhost:3000/jarvis/</b>.'
+    : '<b>Local brain.</b> For open conversation, set <b>ANTHROPIC_API_KEY</b> in your <b>.env</b> and restart with <b>npm start</b>. ' +
+      'Everything on this display keeps working either way.';
+}
 async function respond(text) {
   const local = localBrain(text);
 
@@ -1557,8 +1779,16 @@ async function respond(text) {
   if (!J.bridge) await checkBridge();
 
   if (!J.bridge) {
-    say('jarvis', 'That one is past my local wiring. Start the bridge — ' +
-      'npm start in this repo with an Anthropic API key set — and I will answer it properly.');
+    // Say the how-to-fix once. After that it lives on screen in the
+    // console panel — repeating setup instructions at every question is
+    // no use to anyone who has already heard them.
+    if (!offlineExplained) {
+      offlineExplained = true;
+      showBrainNote();
+      say('jarvis', 'That is beyond what I can answer on my own. I handle the machine — time, power, uplink, timers, notes, sums, sun and moon — but for open conversation I need Claude on the line. The console panel shows how.');
+    } else {
+      say('jarvis', OFFLINE_LINES[offlineIndex++ % OFFLINE_LINES.length]);
+    }
     setMode(listening ? 'listening' : 'idle');
     return;
   }
@@ -1697,9 +1927,12 @@ setInterval(renderClock, 1000);
   }
 
   const bridge = await checkBridge();
-  say('sys', bridge
-    ? 'Claude bridge online — full conversation available.'
-    : 'Local brain only — every built-in command works. For open conversation, run this from the repo server with an API key (see jarvis/README.md).', true);
+  if (bridge) {
+    say('sys', 'Claude bridge online — full conversation available.', true);
+  } else {
+    say('sys', 'Local brain only — every built-in command works.', true);
+    showBrainNote();
+  }
 
   setMode('idle');
   const greeting = bridge
