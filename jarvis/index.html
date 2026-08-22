@@ -601,6 +601,7 @@ label.toggle input { accent-color: var(--cyan); width: 14px; height: 14px; curso
         <button id="btnReadMail" style="margin-top:10px" hidden>▸ Read them out</button>
       </div>
       <p class="note" id="mailNote" hidden></p>
+      <p class="diag" id="mailDiag" hidden></p>
     </section>
 
     <section class="panel">
@@ -2111,23 +2112,61 @@ function showMailNote(text, bad) {
   n.textContent = text;
 }
 
+/* The same treatment the microphone gets: say what the runtime actually
+   reported, so a failure can be read rather than guessed at. */
+function showMailDiag(text) {
+  const d = $('mailDiag');
+  d.hidden = false;
+  d.textContent = text;
+}
+
 async function initMail() {
   if (!(window.claude && typeof window.claude.use === 'function')) {
     mail.state = 'unavailable';
     renderMail();
     showMailNote('Mail works in the Claude-hosted copy of JARVIS, which can use the Gmail connector on your account. This copy has no way to reach it.', false);
+    showMailDiag('no connector runtime in this page');
     return;
   }
   mcpApi = await window.claude.use('mcp');
   if (!mcpApi) {
     mail.state = 'unavailable';
     renderMail();
-    showMailNote('Connector access was not granted to this view.', false);
+    showMailNote('This view was not given connector access, so Gmail is out of reach here.', false);
+    showMailDiag('claude.use("mcp") resolved null');
     return;
   }
 
   mail.state = 'connecting';
   renderMail();
+  showMailDiag('connector runtime ready — asking which connectors are visible');
+
+  // Which connectors can this frame actually see? Reported verbatim, since
+  // "no mail" and "no Gmail connector" are different problems.
+  try {
+    const seen = await mcpApi.listTools();
+    const servers = (seen && seen.servers) || [];
+    if (!servers.length) {
+      showMailDiag('no connectors visible to this page');
+    } else {
+      showMailDiag(servers.map(s => {
+        const n = (s.tools || []).length;
+        return s.server + ' (' + s.authStatus + ', ' + n + (n === 1 ? ' tool)' : ' tools)');
+      }).join(' · '));
+    }
+    const gmail = servers.filter(s => s.server === MAIL_SERVER)[0];
+    if (!gmail) {
+      mail.state = 'unavailable';
+      renderMail();
+      showMailNote(mailProblem('server_not_connected'), true);
+      return;
+    }
+    if (gmail.authStatus === 'needs_reauth') {
+      showMailNote(mailProblem('needs_reauth'), true);
+    }
+  } catch (e) {
+    showMailDiag('listTools failed: ' + ((e && e.code) || 'unknown'));
+  }
 
   // Display data that should stay current: watchTool replays, refreshes
   // and coalesces, and hands every failure to the same handler.
@@ -2149,6 +2188,8 @@ async function initMail() {
       mail.state = code === 'server_unavailable' ? 'retrying' : 'unavailable';
       renderMail();
       showMailNote(mailProblem(code, ev.error && ev.error.server), true);
+      showMailDiag('watch error: ' + (code || 'unknown') +
+        (ev.error && ev.error.message ? ' — ' + ev.error.message : ''));
     }
   }, { refetchInterval: 120000 });
 }
