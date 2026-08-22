@@ -370,6 +370,35 @@ button:disabled { opacity: .4; cursor: not-allowed; }
   border-left-color: var(--cyan-dim);
 }
 .note b { color: var(--text-strong); font-weight: 600; }
+
+/* what the browser reports about the mic, verbatim */
+.diag {
+  margin: -4px 0 10px;
+  font-family: var(--mono);
+  font-size: 10px;
+  letter-spacing: .04em;
+  color: #4d7d90;
+  overflow-wrap: anywhere;
+}
+.escape { margin-bottom: 10px; }
+.escape .hint { margin: 8px 0 0; }
+
+/* a link that carries a button's weight */
+a.btn {
+  display: inline-block;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  text-decoration: none;
+  color: #01121a;
+  background: var(--cyan);
+  border: 1px solid var(--cyan);
+  border-radius: var(--radius);
+  padding: 8px 12px;
+}
+a.btn:hover { background: #7de9ff; border-color: #7de9ff; }
+a.btn:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
 .hint b { color: var(--text); font-weight: 600; }
 .hint code {
   font-family: var(--mono);
@@ -506,9 +535,15 @@ label.toggle input { accent-color: var(--cyan); width: 14px; height: 14px; curso
         <button id="btnTalk">🎙 Hold to talk</button>
         <button id="btnStop" class="ghost">■ Silence</button>
         <button id="btnClear" class="ghost">Clear log</button>
-        <button id="btnOpenTab" hidden>↗ Open in its own tab</button>
       </div>
       <p class="note" id="micNote" hidden></p>
+      <p class="diag" id="micDiag" hidden></p>
+      <div class="escape" id="micEscape" hidden>
+        <a id="btnOpenTab" class="btn" target="_blank" rel="noopener">↗ Open in its own tab</a>
+        <p class="hint">Still embedded after that? Then use a copy that is a page in its own right —
+          your published site at <code>…github.io/README/jarvis/</code>, or
+          <code>localhost:3000/jarvis/</code> after <code>npm start</code>, which also gets you Claude.</p>
+      </div>
       <p class="note calm" id="brainNote" hidden></p>
       <form class="composer" id="composer" autocomplete="off">
         <input id="textIn" placeholder="Type to Jarvis — or say “Jarvis, …”" aria-label="Message to Jarvis">
@@ -980,26 +1015,66 @@ let autoRestart = false;
    identical from script, so check them in order and say which it is.  */
 const embedded = (() => { try { return window.self !== window.top; } catch (_) { return true; } })();
 
-function reportMicProblem(kind) {
+/* Is this document actually permitted to use a microphone? A page embedded
+   in another site only gets one if the embedder passes it through, and that
+   is not something this page — or the person reading it — can grant. */
+function micPolicyAllows() {
+  try {
+    const policy = document.featurePolicy || document.permissionsPolicy;
+    if (policy && typeof policy.allowsFeature === 'function') return policy.allowsFeature('microphone');
+  } catch (_) {}
+  return null;   // browser won't say
+}
+
+/* What the browser reports, verbatim — so a failure can be read rather
+   than guessed at. */
+function micDiagnostics(errName) {
+  const policy = micPolicyAllows();
+  const bits = [
+    embedded ? 'embedded frame' : 'top-level page',
+    window.isSecureContext ? 'secure context' : 'INSECURE context',
+    'mic policy ' + (policy === null ? 'unknown' : policy ? 'allowed' : 'BLOCKED'),
+    'mediaDevices ' + (navigator.mediaDevices && navigator.mediaDevices.getUserMedia ? 'present' : 'ABSENT')
+  ];
+  if (errName) bits.push('error ' + errName);
+  return bits.join(' · ');
+}
+
+function reportMicProblem(kind, errName) {
   const guidance = {
-    insecure: 'Browsers only allow microphones on https or localhost. Open this from your local server — http://localhost:3000/jarvis/ — and the mic will work.',
-    embedded: 'This page is embedded in a panel that does not pass the microphone through. Open it in its own browser tab and the mic will work — there is a button below to do that.',
+    insecure: 'Browsers only allow microphones on https or localhost. This page is on file://, which never gets one. Run it from localhost — or the published https copy — and the mic will work.',
+    embedded: 'This page is embedded in another site, which has not passed the microphone through to it. Nothing you allow in the browser or in your system settings can override that — only the site doing the embedding can. Voice needs JARVIS opened as a page of its own — the options below will do it.',
     denied: 'The microphone is blocked for this page. Click the camera or lock icon in the address bar, set Microphone to Allow, then press Start listening again.',
     unsupported: 'This browser exposes no microphone API. Chrome or Edge will work.',
-    nodevice: 'No microphone was found on this machine.',
+    nodevice: 'No microphone was found on this machine. Check that it is plugged in and not disabled in your system sound settings.',
     service: 'Speech recognition keeps dropping. Chrome sends audio to an online speech service — check the connection, or use the text box, which always works.'
   };
   $('micTag').textContent = kind === 'denied' ? 'mic blocked' : 'mic ' + kind;
+
   const note = $('micNote');
   note.hidden = false;
   note.textContent = guidance[kind] || 'The microphone could not be opened.';
-  $('btnOpenTab').hidden = !(kind === 'embedded' || (kind === 'denied' && embedded));
+
+  const diag = $('micDiag');
+  diag.hidden = false;
+  diag.textContent = micDiagnostics(errName);
+
+  // Offer the escape routes whenever the frame is the problem
+  const frameProblem = kind === 'embedded' || (embedded && (kind === 'denied' || kind === 'unsupported'));
+  $('micEscape').hidden = !frameProblem;
+  $('btnOpenTab').href = location.href;
+
   say('sys', guidance[kind] || 'The microphone could not be opened.', true);
 }
 
 /* Asks for the microphone up front, so the browser's own prompt appears
    on a real click instead of somewhere inside speech recognition. */
 async function requestMic() {
+  // Ask the permissions policy first — it is the only check that
+  // distinguishes "you haven't allowed it yet" from "this frame was never
+  // going to get one", and the two need completely different advice.
+  if (micPolicyAllows() === false) { reportMicProblem('embedded'); return false; }
+
   // A frame that isn't granted the microphone doesn't get a disabled API —
   // Chrome removes navigator.mediaDevices outright, which looks identical
   // to an ancient browser. Being embedded is the likelier explanation.
@@ -1011,13 +1086,15 @@ async function requestMic() {
   try {
     micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
     $('micNote').hidden = true;
-    $('btnOpenTab').hidden = true;
+    $('micDiag').hidden = true;
+    $('micEscape').hidden = true;
+    $('micTag').textContent = 'mic live';
     startMeter(micStream);
     return true;
   } catch (e) {
-    if (e.name === 'NotAllowedError' || e.name === 'SecurityError') reportMicProblem(embedded ? 'embedded' : 'denied');
-    else if (e.name === 'NotFoundError') reportMicProblem('nodevice');
-    else reportMicProblem('unsupported');
+    if (e.name === 'NotAllowedError' || e.name === 'SecurityError') reportMicProblem(embedded ? 'embedded' : 'denied', e.name);
+    else if (e.name === 'NotFoundError' || e.name === 'OverconstrainedError') reportMicProblem('nodevice', e.name);
+    else reportMicProblem('unsupported', e.name);
     return false;
   }
 }
@@ -1039,15 +1116,24 @@ $('btnListen').addEventListener('click', async () => {
   if (ok) startListening(false);
 });
 
-$('btnOpenTab').addEventListener('click', () => window.open(location.href, '_blank', 'noopener'));
+/* An anchor rather than window.open — popups are often blocked inside an
+   embedded frame, and a link shows where it goes. */
+$('btnOpenTab').href = location.href;
 
 /* Report what the browser already knows, without prompting. */
-if (navigator.permissions && navigator.permissions.query) {
+if (micPolicyAllows() === false) {
+  // Say so at load rather than after a click that was never going to work.
+  reportMicProblem('embedded');
+} else if (navigator.permissions && navigator.permissions.query) {
   navigator.permissions.query({ name: 'microphone' })
     .then(p => {
       const show = () => {
-        if (p.state === 'granted') { $('micTag').textContent = 'mic ready'; $('micNote').hidden = true; $('btnOpenTab').hidden = true; }
-        else if (p.state === 'denied') reportMicProblem('denied');
+        if (p.state === 'granted') {
+          $('micTag').textContent = 'mic ready';
+          $('micNote').hidden = true;
+          $('micDiag').hidden = true;
+          $('micEscape').hidden = true;
+        } else if (p.state === 'denied') reportMicProblem('denied');
         else $('micTag').textContent = 'mic — press start';
       };
       show();
