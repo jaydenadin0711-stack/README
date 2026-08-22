@@ -1,0 +1,1714 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>J.A.R.V.I.S.</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Chakra+Petch:wght@400;500;600;700&family=JetBrains+Mono:wght@400;500;700&display=swap">
+<style>
+/* ============================================================
+   J.A.R.V.I.S. — heads-up display
+   Single committed visual world (dark instrument panel), so every
+   colour is painted explicitly and nothing is inherited from the host.
+   ============================================================ */
+:root {
+  --ground:      #01060a;
+  --ground-2:    #020c12;
+  --panel:       #04121a;
+  --panel-2:     #061a24;
+  --line:        #0d3a4d;
+  --line-soft:   #082633;
+  --cyan:        #22d3ee;
+  --cyan-dim:    #0e7490;
+  --cyan-glow:   rgba(34, 211, 238, .35);
+  --text:        #bfe9f5;
+  --text-strong: #eafcff;
+  --muted:       #5b8ea3;
+  --amber:       #f0a63c;
+  --red:         #ff4d5e;
+  --green:       #3ddc97;
+
+  --ui: "Chakra Petch", "Segoe UI", system-ui, sans-serif;
+  --mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, monospace;
+
+  --gap: 14px;
+  --radius: 2px;
+}
+
+* { box-sizing: border-box; }
+
+body {
+  margin: 0;
+  min-height: 100vh;
+  background: var(--ground);
+  background-image:
+    radial-gradient(1100px 620px at 50% 38%, #04202c 0%, rgba(1,6,10,0) 68%),
+    linear-gradient(var(--line-soft) 1px, transparent 1px),
+    linear-gradient(90deg, var(--line-soft) 1px, transparent 1px);
+  background-size: auto, 46px 46px, 46px 46px;
+  color: var(--text);
+  font-family: var(--ui);
+  font-size: 14px;
+  line-height: 1.5;
+  -webkit-font-smoothing: antialiased;
+}
+
+/* faint scanline veil */
+body::after {
+  content: "";
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  z-index: 40;
+  background: repeating-linear-gradient(
+    to bottom,
+    rgba(34,211,238,.030) 0px,
+    rgba(34,211,238,.030) 1px,
+    transparent 1px,
+    transparent 3px
+  );
+  mix-blend-mode: screen;
+  opacity: .5;
+}
+
+/* ---------- layout ---------- */
+.shell {
+  display: grid;
+  grid-template-columns: minmax(210px, 250px) minmax(320px, 1fr) minmax(210px, 250px);
+  gap: var(--gap);
+  padding: var(--gap);
+  max-width: 1560px;
+  margin: 0 auto;
+  align-items: start;
+}
+.rail { display: flex; flex-direction: column; gap: var(--gap); }
+.core-col { display: flex; flex-direction: column; gap: var(--gap); min-width: 0; }
+
+/* ---------- panel chrome ---------- */
+.panel {
+  position: relative;
+  background: linear-gradient(180deg, var(--panel) 0%, var(--ground-2) 100%);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 12px;
+}
+/* corner brackets — the HUD's signature detail */
+.panel::before, .panel::after {
+  content: "";
+  position: absolute;
+  width: 9px; height: 9px;
+  border: 1px solid var(--cyan);
+  opacity: .75;
+  pointer-events: none;
+}
+.panel::before { top: -1px; left: -1px; border-right: 0; border-bottom: 0; }
+.panel::after  { bottom: -1px; right: -1px; border-left: 0; border-top: 0; }
+
+.panel-head {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: .18em;
+  text-transform: uppercase;
+  color: var(--cyan);
+  padding-bottom: 8px;
+  margin-bottom: 10px;
+  border-bottom: 1px solid var(--line-soft);
+}
+.panel-head .tag {
+  font-family: var(--mono);
+  font-size: 9px;
+  letter-spacing: .1em;
+  color: var(--muted);
+  font-weight: 500;
+}
+
+/* ---------- readout rows ---------- */
+.row {
+  display: flex;
+  align-items: baseline;
+  justify-content: space-between;
+  gap: 10px;
+  padding: 4px 0;
+}
+.row + .row { border-top: 1px dashed var(--line-soft); }
+.k {
+  font-size: 10px;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--muted);
+  white-space: nowrap;
+}
+.v {
+  font-family: var(--mono);
+  font-size: 12px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-strong);
+  text-align: right;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+.v.good { color: var(--green); }
+.v.warn { color: var(--amber); }
+.v.bad  { color: var(--red); }
+
+/* meters */
+.meter {
+  height: 4px;
+  background: #041b26;
+  border: 1px solid var(--line-soft);
+  overflow: hidden;
+  margin-top: 6px;
+}
+.meter > i {
+  display: block;
+  height: 100%;
+  width: 0%;
+  background: linear-gradient(90deg, var(--cyan-dim), var(--cyan));
+  transition: width .35s ease;
+}
+.meter.live > i { transition: width .06s linear; }
+.meter > i.warn { background: linear-gradient(90deg, #8a5a12, var(--amber)); }
+.meter > i.bad  { background: linear-gradient(90deg, #7d1f28, var(--red)); }
+
+/* ---------- masthead ---------- */
+.masthead {
+  grid-column: 1 / -1;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  flex-wrap: wrap;
+  border-bottom: 1px solid var(--line);
+  padding-bottom: 10px;
+}
+.wordmark {
+  font-size: 20px;
+  font-weight: 700;
+  letter-spacing: .42em;
+  color: var(--text-strong);
+  text-shadow: 0 0 18px var(--cyan-glow);
+  margin: 0;
+}
+.wordmark small {
+  display: block;
+  font-family: var(--mono);
+  font-size: 9px;
+  font-weight: 400;
+  letter-spacing: .22em;
+  color: var(--muted);
+  text-shadow: none;
+  margin-top: 2px;
+}
+.mast-stats {
+  display: flex;
+  gap: 18px;
+  flex-wrap: wrap;
+  font-family: var(--mono);
+  font-size: 11px;
+  font-variant-numeric: tabular-nums;
+  color: var(--text-strong);
+}
+.mast-stats span small {
+  display: block;
+  font-size: 9px;
+  letter-spacing: .14em;
+  color: var(--muted);
+  text-transform: uppercase;
+  font-family: var(--ui);
+}
+
+/* ---------- reactor ---------- */
+.reactor-wrap {
+  position: relative;
+  display: grid;
+  place-items: center;
+  padding: 4px 0 0;
+}
+#reactor {
+  display: block;
+  width: 100%;
+  max-width: 420px;
+  height: auto;
+  aspect-ratio: 1 / 1;
+}
+.state-line {
+  text-align: center;
+  font-family: var(--mono);
+  font-size: 11px;
+  letter-spacing: .2em;
+  text-transform: uppercase;
+  color: var(--cyan);
+  min-height: 18px;
+  margin-top: 2px;
+}
+.heard {
+  text-align: center;
+  color: var(--muted);
+  font-size: 13px;
+  min-height: 20px;
+  font-style: italic;
+  padding: 0 8px;
+}
+
+/* ---------- controls ---------- */
+.controls { display: flex; flex-wrap: wrap; gap: 8px; }
+button {
+  font-family: var(--ui);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: .12em;
+  text-transform: uppercase;
+  color: var(--cyan);
+  background: #041a24;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 8px 12px;
+  cursor: pointer;
+  transition: background .15s, border-color .15s, color .15s;
+}
+button:hover { background: #06242f; border-color: var(--cyan-dim); }
+button:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
+button[aria-pressed="true"] {
+  background: var(--cyan);
+  border-color: var(--cyan);
+  color: #01121a;
+}
+button.ghost { color: var(--muted); }
+button.ghost:hover { color: var(--text); }
+button:disabled { opacity: .4; cursor: not-allowed; }
+
+.composer { display: flex; gap: 8px; }
+.composer input {
+  flex: 1;
+  min-width: 0;
+  font-family: var(--mono);
+  font-size: 13px;
+  color: var(--text-strong);
+  background: #020f16;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 10px 12px;
+}
+.composer input::placeholder { color: #3c6a7c; }
+.composer input:focus { outline: none; border-color: var(--cyan); box-shadow: 0 0 0 1px var(--cyan-glow); }
+
+/* ---------- log ---------- */
+.log {
+  max-height: 300px;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  scrollbar-width: thin;
+  scrollbar-color: var(--line) transparent;
+}
+.log::-webkit-scrollbar { width: 6px; }
+.log::-webkit-scrollbar-thumb { background: var(--line); }
+.msg { display: grid; grid-template-columns: 52px 1fr; gap: 8px; align-items: start; }
+.msg .who {
+  font-size: 9px;
+  font-weight: 700;
+  letter-spacing: .1em;
+  text-transform: uppercase;
+  color: var(--muted);
+  padding-top: 3px;
+}
+.msg.you .who { color: var(--amber); }
+.msg.jarvis .who { color: var(--cyan); }
+.msg.sys .who { color: var(--muted); }
+.msg .body { font-size: 13px; color: var(--text); overflow-wrap: anywhere; }
+.msg.jarvis .body { color: var(--text-strong); }
+.msg.sys .body { color: var(--muted); font-family: var(--mono); font-size: 11px; }
+.msg .body .stamp {
+  font-family: var(--mono);
+  font-size: 9px;
+  color: #35606f;
+  margin-left: 6px;
+}
+
+/* lists inside panels */
+.list { display: flex; flex-direction: column; gap: 6px; }
+.item {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 12px;
+  padding: 6px 8px;
+  background: #031219;
+  border-left: 2px solid var(--cyan-dim);
+}
+.item .t { font-family: var(--mono); color: var(--text-strong); font-variant-numeric: tabular-nums; }
+.item.done { border-left-color: var(--green); }
+.empty { color: #35606f; font-size: 11px; font-family: var(--mono); }
+
+.hint {
+  font-size: 11px;
+  color: var(--muted);
+  line-height: 1.6;
+}
+.hint b { color: var(--text); font-weight: 600; }
+.hint code {
+  font-family: var(--mono);
+  font-size: 10.5px;
+  color: var(--cyan);
+  background: #031219;
+  padding: 1px 4px;
+}
+
+.dot {
+  display: inline-block;
+  width: 6px; height: 6px;
+  border-radius: 50%;
+  background: var(--muted);
+  margin-right: 6px;
+  vertical-align: middle;
+}
+.dot.on { background: var(--green); box-shadow: 0 0 8px var(--green); }
+.dot.off { background: var(--red); }
+.dot.idle { background: var(--amber); }
+
+select {
+  width: 100%;
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--text);
+  background: #020f16;
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  padding: 6px 8px;
+}
+select:focus { outline: none; border-color: var(--cyan); }
+
+label.toggle {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 11px;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+  color: var(--muted);
+  cursor: pointer;
+  padding: 5px 0;
+}
+label.toggle input { accent-color: var(--cyan); width: 14px; height: 14px; cursor: pointer; }
+
+/* ---------- responsive: side-panel friendly ---------- */
+@media (max-width: 1080px) {
+  .shell { grid-template-columns: 1fr 1fr; }
+  /* reactor and console come first; the masthead stays above everything */
+  .masthead { order: -2; }
+  .core-col { grid-column: 1 / -1; order: -1; }
+}
+@media (max-width: 720px) {
+  .shell { grid-template-columns: 1fr; padding: 10px; gap: 10px; }
+  #reactor { max-width: 300px; }
+  .wordmark { font-size: 16px; letter-spacing: .3em; }
+  .mast-stats { gap: 12px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  * { animation-duration: .001ms !important; transition-duration: .001ms !important; }
+}
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+  <header class="masthead">
+    <h1 class="wordmark">J.A.R.V.I.S.<small>just a rather very intelligent system</small></h1>
+    <div class="mast-stats">
+      <span id="mastClock">--:--:--<small>local time</small></span>
+      <span id="mastDate">---<small>date</small></span>
+      <span id="mastUptime">00:00<small>session</small></span>
+      <span id="mastBrain">local<small>brain</small></span>
+    </div>
+  </header>
+
+  <!-- ============ LEFT RAIL ============ -->
+  <div class="rail">
+
+    <section class="panel">
+      <div class="panel-head"><span>Power</span><span class="tag" id="powerTag">--</span></div>
+      <div class="row"><span class="k">Charge</span><span class="v" id="battPct">—</span></div>
+      <div class="meter"><i id="battBar"></i></div>
+      <div class="row"><span class="k">Source</span><span class="v" id="battSrc">—</span></div>
+      <div class="row"><span class="k">Remaining</span><span class="v" id="battTime">—</span></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><span>Uplink</span><span class="tag" id="netTag">--</span></div>
+      <div class="row"><span class="k">Status</span><span class="v" id="netState">—</span></div>
+      <div class="row"><span class="k">Type</span><span class="v" id="netType">—</span></div>
+      <div class="row"><span class="k">Downlink</span><span class="v" id="netDown">—</span></div>
+      <div class="row"><span class="k">Latency</span><span class="v" id="netRtt">—</span></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><span>Hardware</span><span class="tag">host</span></div>
+      <div class="row"><span class="k">Cores</span><span class="v" id="hwCores">—</span></div>
+      <div class="row"><span class="k">Memory</span><span class="v" id="hwMem">—</span></div>
+      <div class="row"><span class="k">Display</span><span class="v" id="hwScreen">—</span></div>
+      <div class="row"><span class="k">Renderer</span><span class="v" id="hwGpu">—</span></div>
+      <div class="row"><span class="k">Platform</span><span class="v" id="hwPlat">—</span></div>
+      <div class="row"><span class="k">Render rate</span><span class="v" id="hwFps">—</span></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><span>Heap</span><span class="tag" id="heapTag">js</span></div>
+      <div class="row"><span class="k">In use</span><span class="v" id="heapUse">—</span></div>
+      <div class="meter"><i id="heapBar"></i></div>
+      <div class="row"><span class="k">Limit</span><span class="v" id="heapLim">—</span></div>
+    </section>
+
+  </div>
+
+  <!-- ============ CENTRE ============ -->
+  <div class="core-col">
+
+    <section class="panel">
+      <div class="reactor-wrap">
+        <canvas id="reactor" width="840" height="840" aria-label="Assistant status core"></canvas>
+      </div>
+      <div class="state-line" id="stateLine">booting</div>
+      <div class="heard" id="heardLine"></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><span>Console</span><span class="tag" id="micTag">mic offline</span></div>
+      <div class="controls" style="margin-bottom:10px">
+        <button id="btnListen" aria-pressed="false">◉ Start listening</button>
+        <button id="btnTalk">🎙 Hold to talk</button>
+        <button id="btnStop" class="ghost">■ Silence</button>
+        <button id="btnClear" class="ghost">Clear log</button>
+      </div>
+      <form class="composer" id="composer" autocomplete="off">
+        <input id="textIn" placeholder="Type to Jarvis — or say “Jarvis, …”" aria-label="Message to Jarvis">
+        <button type="submit">Send</button>
+      </form>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><span>Transcript</span><span class="tag" id="logTag">0 entries</span></div>
+      <div class="log" id="log"></div>
+    </section>
+
+  </div>
+
+  <!-- ============ RIGHT RAIL ============ -->
+  <div class="rail">
+
+    <section class="panel">
+      <div class="panel-head"><span>Voice</span><span class="tag" id="voiceTag">—</span></div>
+      <select id="voicePick" aria-label="Assistant voice"></select>
+      <label class="toggle"><span>Wake word “Jarvis”</span><input type="checkbox" id="optWake" checked></label>
+      <label class="toggle"><span>Speak replies</span><input type="checkbox" id="optSpeak" checked></label>
+      <label class="toggle"><span>Keep listening</span><input type="checkbox" id="optContinuous" checked></label>
+      <div class="row"><span class="k">Mic level</span><span class="v" id="micLvl">—</span></div>
+      <div class="meter live"><i id="micBar"></i></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><span>Timers</span><span class="tag" id="timerTag">0 active</span></div>
+      <div class="list" id="timerList"><div class="empty">no timers running</div></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><span>Notes</span><span class="tag" id="noteTag">0</span></div>
+      <div class="list" id="noteList"><div class="empty">say “note — call the shop”</div></div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><span>Solar</span><span class="tag" id="solarTag">no fix</span></div>
+      <div id="solarBody">
+        <p class="hint" style="margin:0 0 10px">Sunrise, sunset and moon phase are computed on-device from your coordinates — nothing is sent anywhere.</p>
+        <button id="btnLocate">◎ Acquire position</button>
+      </div>
+      <div id="solarData" hidden>
+        <div class="row"><span class="k">Sunrise</span><span class="v" id="sunUp">—</span></div>
+        <div class="row"><span class="k">Sunset</span><span class="v" id="sunDown">—</span></div>
+        <div class="row"><span class="k">Daylight</span><span class="v" id="sunLen">—</span></div>
+        <div class="row"><span class="k">Sun</span><span class="v" id="sunNow">—</span></div>
+        <div class="row"><span class="k">Moon</span><span class="v" id="moonNow">—</span></div>
+        <div class="meter"><i id="moonBar"></i></div>
+      </div>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><span>Try saying</span><span class="tag">voice</span></div>
+      <p class="hint">
+        <b>Jarvis, status report</b> — full diagnostic, spoken<br>
+        <b>Jarvis, what's my battery</b><br>
+        <b>Jarvis, set a timer for 5 minutes</b><br>
+        <b>Jarvis, note — order more sleeves</b><br>
+        <b>Jarvis, what's 18 percent of 240</b><br>
+        <b>Jarvis, when is sunset</b><br>
+        <b>Jarvis, flip a coin</b><br>
+        Anything else goes to <b>Claude</b> when the bridge is running — see <code>jarvis/README.md</code>.
+      </p>
+    </section>
+
+  </div>
+</div>
+
+<script>
+/* ============================================================
+   J.A.R.V.I.S.
+   A voice assistant with a heads-up display.
+
+   Everything on screen is measured from the machine it runs on —
+   battery, uplink, hardware, heap, frame rate, microphone level —
+   or computed on-device (sun and moon from your coordinates).
+   No placeholder numbers anywhere.
+
+   Two brains:
+     local  — deterministic command handling, always available
+     bridge — POST /api/jarvis/chat, which reaches Claude
+   ============================================================ */
+'use strict';
+
+const $ = (id) => document.getElementById(id);
+const clamp = (n, a, b) => Math.min(b, Math.max(a, n));
+const pad2 = (n) => String(n).padStart(2, '0');
+
+/* ---------------- assistant state ---------------- */
+const J = {
+  mode: 'boot',          // boot | idle | listening | thinking | speaking
+  level: 0,              // live mic level 0..1
+  speakEnergy: 0,        // synthetic envelope while talking
+  bridge: false,         // is the Claude bridge reachable
+  started: Date.now(),
+  history: [],           // conversation sent to the bridge
+  coords: null,
+  fps: 0
+};
+
+function setMode(m, note) {
+  J.mode = m;
+  const label = {
+    boot: 'booting',
+    idle: 'standing by',
+    listening: 'listening',
+    thinking: 'thinking',
+    speaking: 'speaking'
+  }[m] || m;
+  $('stateLine').textContent = note ? label + ' — ' + note : label;
+}
+
+/* ============================================================
+   1. THE REACTOR
+   Concentric rings on a canvas: an outer sweep, a segmented
+   ring that reacts to microphone level, tick marks, and a core
+   that breathes when idle and flares while speaking.
+   ============================================================ */
+const cv = $('reactor');
+const ctx = cv.getContext('2d');
+const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
+
+const SEGMENTS = 64;
+const segEnergy = new Array(SEGMENTS).fill(0);
+
+let frames = 0, fpsMark = performance.now(), t = 0;
+
+function ring(cx, cy, r, w, color, from, to, alpha) {
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, from, to);
+  ctx.strokeStyle = color;
+  ctx.globalAlpha = alpha === undefined ? 1 : alpha;
+  ctx.lineWidth = w;
+  ctx.stroke();
+  ctx.globalAlpha = 1;
+}
+
+function drawReactor(now) {
+  const W = cv.width, H = cv.height;
+  const cx = W / 2, cy = H / 2;
+  const R = W * 0.44;
+  const TAU = Math.PI * 2;
+
+  if (!reduceMotion) t = now / 1000;
+  else t = now / 4000;
+
+  ctx.clearRect(0, 0, W, H);
+
+  // energy driving the whole assembly
+  const listening = J.mode === 'listening';
+  const speaking = J.mode === 'speaking';
+  const thinking = J.mode === 'thinking';
+  const drive = speaking ? J.speakEnergy : (listening ? J.level : 0);
+  const breathe = (Math.sin(t * 1.4) + 1) / 2;
+  const hot = speaking ? '#7de9ff' : listening ? '#22d3ee' : thinking ? '#f0a63c' : '#22d3ee';
+
+  // --- outer halo ---
+  const halo = ctx.createRadialGradient(cx, cy, R * 0.2, cx, cy, R * 1.12);
+  halo.addColorStop(0, 'rgba(34,211,238,' + (0.10 + drive * 0.22) + ')');
+  halo.addColorStop(1, 'rgba(34,211,238,0)');
+  ctx.fillStyle = halo;
+  ctx.fillRect(0, 0, W, H);
+
+  // --- outer bezel + rotating gap ring ---
+  ring(cx, cy, R, 2, '#0d3a4d', 0, TAU, 1);
+  const sweep = (t * 0.55) % TAU;
+  ring(cx, cy, R, 3, hot, sweep, sweep + 1.15, 0.85);
+  ring(cx, cy, R, 3, hot, sweep + Math.PI, sweep + Math.PI + 0.55, 0.55);
+
+  // --- tick ruler ---
+  const ticks = 96;
+  for (let i = 0; i < ticks; i++) {
+    const a = (i / ticks) * TAU - Math.PI / 2;
+    const major = i % 8 === 0;
+    const len = major ? R * 0.075 : R * 0.035;
+    const r0 = R * 0.925;
+    ctx.beginPath();
+    ctx.moveTo(cx + Math.cos(a) * r0, cy + Math.sin(a) * r0);
+    ctx.lineTo(cx + Math.cos(a) * (r0 - len), cy + Math.sin(a) * (r0 - len));
+    ctx.strokeStyle = major ? '#22d3ee' : '#0d3a4d';
+    ctx.globalAlpha = major ? 0.8 : 0.6;
+    ctx.lineWidth = major ? 2 : 1;
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+
+  // --- reactive segment ring (the "voice" ring) ---
+  const segR = R * 0.70;
+  for (let i = 0; i < SEGMENTS; i++) {
+    // each segment chases the drive level with its own phase, so the
+    // ring ripples rather than pulsing as one lump
+    const phase = Math.sin(t * 5 + i * 0.55) * 0.5 + 0.5;
+    const target = drive * (0.45 + phase * 0.85) + (listening ? 0.04 : 0.02) + breathe * 0.03;
+    segEnergy[i] += (target - segEnergy[i]) * 0.25;
+    const e = clamp(segEnergy[i], 0, 1);
+
+    const a0 = (i / SEGMENTS) * TAU - Math.PI / 2 + 0.012;
+    const a1 = ((i + 1) / SEGMENTS) * TAU - Math.PI / 2 - 0.012;
+    const len = R * 0.06 + e * R * 0.20;
+
+    ctx.beginPath();
+    ctx.arc(cx, cy, segR + len / 2, a0, a1);
+    ctx.strokeStyle = hot;
+    ctx.globalAlpha = 0.25 + e * 0.7;
+    ctx.lineWidth = Math.max(2, len);
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+
+  // --- thinking: counter-rotating dashed ring ---
+  if (thinking) {
+    ctx.setLineDash([R * 0.05, R * 0.05]);
+    ring(cx, cy, R * 0.55, 2, '#f0a63c', -t * 2, -t * 2 + TAU, 0.9);
+    ctx.setLineDash([]);
+  }
+
+  // --- inner rings ---
+  ring(cx, cy, R * 0.50, 1, '#0d3a4d', 0, TAU, 1);
+  const inner = (-t * 0.9) % TAU;
+  ring(cx, cy, R * 0.44, 4, hot, inner, inner + 2.4, 0.5 + drive * 0.4);
+  ring(cx, cy, R * 0.38, 1, '#0d3a4d', 0, TAU, 1);
+
+  // --- core ---
+  const coreR = R * 0.30 * (1 + drive * 0.16 + breathe * 0.03);
+  const core = ctx.createRadialGradient(cx, cy, 1, cx, cy, coreR);
+  core.addColorStop(0, '#ffffff');
+  core.addColorStop(0.28, speaking ? '#a8f2ff' : '#7de9ff');
+  core.addColorStop(0.62, hot);
+  core.addColorStop(1, 'rgba(14,116,144,0.05)');
+  ctx.beginPath();
+  ctx.arc(cx, cy, coreR, 0, TAU);
+  ctx.fillStyle = core;
+  ctx.globalAlpha = 0.55 + drive * 0.45;
+  ctx.fill();
+  ctx.globalAlpha = 1;
+
+  // core aperture blades
+  for (let i = 0; i < 6; i++) {
+    const a = (i / 6) * TAU + t * 0.4;
+    ctx.beginPath();
+    ctx.arc(cx, cy, coreR * 0.72, a, a + 0.62);
+    ctx.strokeStyle = '#01121a';
+    ctx.lineWidth = R * 0.03;
+    ctx.globalAlpha = 0.65;
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+  }
+
+  // --- readout arcs, bottom ---
+  ctx.font = '600 ' + Math.round(R * 0.055) + 'px "JetBrains Mono", monospace';
+  ctx.fillStyle = '#5b8ea3';
+  ctx.textAlign = 'center';
+  ctx.fillText(J.mode.toUpperCase(), cx, cy + R * 1.03);
+}
+
+function loop(now) {
+  // speaking envelope — decays unless refreshed by the speech events
+  J.speakEnergy *= 0.94;
+  if (J.mode === 'speaking') {
+    J.speakEnergy = clamp(J.speakEnergy + Math.random() * 0.22, 0.25, 1);
+  }
+  drawReactor(now);
+
+  frames++;
+  if (now - fpsMark >= 1000) {
+    J.fps = Math.round((frames * 1000) / (now - fpsMark));
+    $('hwFps').textContent = J.fps + ' fps';
+    frames = 0; fpsMark = now;
+  }
+  requestAnimationFrame(loop);
+}
+requestAnimationFrame(loop);
+
+/* ============================================================
+   2. TRANSCRIPT
+   ============================================================ */
+const logEl = $('log');
+let logCount = 0;
+
+function stamp() {
+  const d = new Date();
+  return pad2(d.getHours()) + ':' + pad2(d.getMinutes()) + ':' + pad2(d.getSeconds());
+}
+
+function say(who, text, quiet) {
+  const row = document.createElement('div');
+  row.className = 'msg ' + who;
+  const label = who === 'you' ? 'you' : who === 'jarvis' ? 'jarvis' : 'sys';
+  row.innerHTML = '<div class="who">' + label + '</div><div class="body"></div>';
+  const body = row.querySelector('.body');
+  body.textContent = text;
+  const s = document.createElement('span');
+  s.className = 'stamp';
+  s.textContent = stamp();
+  body.appendChild(s);
+  logEl.appendChild(row);
+  logEl.scrollTop = logEl.scrollHeight;
+  logCount++;
+  $('logTag').textContent = logCount + (logCount === 1 ? ' entry' : ' entries');
+  if (who === 'jarvis' && !quiet) speak(text);
+}
+
+/* ============================================================
+   3. SPEECH OUT
+   ============================================================ */
+const synth = window.speechSynthesis;
+let voices = [], chosenVoice = null;
+
+function rankVoice(v) {
+  const n = (v.name + ' ' + v.lang).toLowerCase();
+  let s = 0;
+  if (v.lang && v.lang.toLowerCase().startsWith('en-gb')) s += 40;     // Jarvis is British
+  else if (v.lang && v.lang.toLowerCase().startsWith('en')) s += 15;
+  if (/daniel|george|arthur|oliver|male|ryan|guy/.test(n)) s += 25;
+  if (/google/.test(n)) s += 10;
+  if (/female|samantha|karen|zira|moira/.test(n)) s -= 15;
+  if (v.localService) s += 5;
+  return s;
+}
+
+function loadVoices() {
+  const sel = $('voicePick');
+  voices = synth.getVoices().filter(v => !v.lang || v.lang.toLowerCase().startsWith('en'));
+  if (!voices.length) voices = synth.getVoices();
+  if (!voices.length) {
+    // Some browsers populate voices asynchronously; others expose none at all.
+    sel.innerHTML = '<option>system default voice</option>';
+    sel.disabled = true;
+    $('voiceTag').textContent = 'default';
+    return;
+  }
+  sel.disabled = false;
+  const ranked = voices.slice().sort((a, b) => rankVoice(b) - rankVoice(a));
+  const saved = localStorage.getItem('jarvis.voice');
+  chosenVoice = ranked.find(v => v.name === saved) || ranked[0];
+
+  sel.innerHTML = '';
+  ranked.forEach(v => {
+    const o = document.createElement('option');
+    o.value = v.name;
+    o.textContent = v.name + ' — ' + v.lang;
+    if (chosenVoice && v.name === chosenVoice.name) o.selected = true;
+    sel.appendChild(o);
+  });
+  $('voiceTag').textContent = chosenVoice ? (chosenVoice.lang || 'en') : 'none';
+}
+loadVoices();
+synth.addEventListener('voiceschanged', loadVoices);
+
+$('voicePick').addEventListener('change', (e) => {
+  chosenVoice = voices.find(v => v.name === e.target.value) || null;
+  if (chosenVoice) {
+    localStorage.setItem('jarvis.voice', chosenVoice.name);
+    $('voiceTag').textContent = chosenVoice.lang || 'en';
+    speak('Voice set.');
+  }
+});
+
+function speak(text) {
+  if (!$('optSpeak').checked || !synth) return;
+  // Don't read the timestamp or long code aloud
+  const clean = String(text).replace(/\s+/g, ' ').trim();
+  if (!clean) return;
+
+  synth.cancel();
+  const u = new SpeechSynthesisUtterance(clean);
+  if (chosenVoice) u.voice = chosenVoice;
+  u.rate = 1.02;
+  u.pitch = 0.92;
+  u.volume = 1;
+
+  u.onstart = () => { wasListening = listening; if (listening) stopListening(true); setMode('speaking'); };
+  u.onboundary = () => { J.speakEnergy = clamp(J.speakEnergy + 0.35, 0, 1); };
+  u.onend = () => { setMode('idle'); if (wasListening && $('optContinuous').checked) startListening(true); };
+  u.onerror = () => { setMode('idle'); };
+
+  synth.speak(u);
+}
+
+/* ============================================================
+   4. SPEECH IN
+   ============================================================ */
+const SR = window.SpeechRecognition || window.webkitSpeechRecognition;
+let rec = null, listening = false, wasListening = false, holdMode = false;
+
+if (!SR) {
+  $('btnListen').disabled = true;
+  $('btnTalk').disabled = true;
+  $('micTag').textContent = 'no speech api';
+} else {
+  rec = new SR();
+  rec.lang = 'en-GB';
+  rec.continuous = true;
+  rec.interimResults = true;
+
+  rec.onstart = () => {
+    listening = true;
+    $('btnListen').setAttribute('aria-pressed', 'true');
+    $('btnListen').textContent = '◉ Listening';
+    $('micTag').textContent = 'mic live';
+    if (J.mode !== 'speaking') setMode('listening', $('optWake').checked && !holdMode ? 'say “Jarvis”' : '');
+  };
+
+  rec.onresult = (e) => {
+    let interim = '', final = '';
+    for (let i = e.resultIndex; i < e.results.length; i++) {
+      const r = e.results[i];
+      if (r.isFinal) final += r[0].transcript;
+      else interim += r[0].transcript;
+    }
+    if (interim) $('heardLine').textContent = '“' + interim.trim() + '”';
+    if (final.trim()) {
+      $('heardLine').textContent = '';
+      handleUtterance(final.trim());
+    }
+  };
+
+  rec.onerror = (e) => {
+    if (e.error === 'not-allowed' || e.error === 'service-not-allowed') {
+      $('micTag').textContent = 'mic blocked';
+      say('sys', 'Microphone permission denied — type instead, or allow the mic and press Start listening.', true);
+      listening = false;
+      $('btnListen').setAttribute('aria-pressed', 'false');
+      $('btnListen').textContent = '◉ Start listening';
+    } else if (e.error === 'no-speech') {
+      /* normal in continuous mode */
+    } else {
+      $('micTag').textContent = 'mic ' + e.error;
+    }
+  };
+
+  rec.onend = () => {
+    listening = false;
+    $('btnListen').setAttribute('aria-pressed', 'false');
+    $('btnListen').textContent = '◉ Start listening';
+    $('micTag').textContent = 'mic idle';
+    if (J.mode === 'listening') setMode('idle');
+    // Chrome ends recognition every ~60s; restart if we're meant to stay on
+    if (autoRestart && $('optContinuous').checked && !holdMode) {
+      setTimeout(() => { if (autoRestart) startListening(true); }, 250);
+    }
+  };
+}
+
+let autoRestart = false;
+
+function startListening(silent) {
+  if (!rec || listening) return;
+  autoRestart = true;
+  try { rec.start(); } catch (_) { /* already starting */ }
+  if (!silent) startMeter();
+}
+function stopListening(temporary) {
+  if (!rec) return;
+  if (!temporary) autoRestart = false;
+  try { rec.stop(); } catch (_) {}
+}
+
+$('btnListen').addEventListener('click', () => {
+  if (listening) { stopListening(false); stopMeter(); }
+  else { startListening(false); }
+});
+
+/* hold-to-talk: ignores the wake word for one utterance */
+const talkBtn = $('btnTalk');
+function holdStart(e) {
+  e.preventDefault();
+  holdMode = true;
+  talkBtn.setAttribute('aria-pressed', 'true');
+  synth.cancel();
+  startListening(false);
+}
+function holdEnd() {
+  if (!holdMode) return;
+  talkBtn.setAttribute('aria-pressed', 'false');
+  setTimeout(() => { holdMode = false; stopListening(false); }, 400);
+}
+talkBtn.addEventListener('mousedown', holdStart);
+talkBtn.addEventListener('touchstart', holdStart, { passive: false });
+addEventListener('mouseup', holdEnd);
+addEventListener('touchend', holdEnd);
+
+$('btnStop').addEventListener('click', () => {
+  synth.cancel();
+  setMode(listening ? 'listening' : 'idle');
+});
+$('btnClear').addEventListener('click', () => {
+  logEl.innerHTML = '';
+  logCount = 0;
+  J.history = [];
+  $('logTag').textContent = '0 entries';
+  say('sys', 'Transcript cleared.', true);
+});
+
+$('composer').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const v = $('textIn').value.trim();
+  if (!v) return;
+  $('textIn').value = '';
+  say('you', v, true);
+  respond(v);
+});
+
+/* ---------------- microphone level meter ---------------- */
+let audioCtx = null, analyser = null, micStream = null, meterRAF = 0;
+
+async function startMeter() {
+  if (analyser || !navigator.mediaDevices) return;
+  try {
+    micStream = await navigator.mediaDevices.getUserMedia({ audio: true });
+    audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const src = audioCtx.createMediaStreamSource(micStream);
+    analyser = audioCtx.createAnalyser();
+    analyser.fftSize = 512;
+    analyser.smoothingTimeConstant = 0.75;
+    src.connect(analyser);
+    const buf = new Uint8Array(analyser.frequencyBinCount);
+
+    const tick = () => {
+      analyser.getByteFrequencyData(buf);
+      let sum = 0;
+      for (let i = 0; i < buf.length; i++) sum += buf[i] * buf[i];
+      const rms = Math.sqrt(sum / buf.length) / 255;
+      J.level = clamp(rms * 3.2, 0, 1);
+      $('micBar').style.width = (J.level * 100).toFixed(0) + '%';
+      $('micLvl').textContent = Math.round(J.level * 100) + '%';
+      meterRAF = requestAnimationFrame(tick);
+    };
+    tick();
+  } catch (_) {
+    $('micLvl').textContent = 'denied';
+  }
+}
+function stopMeter() {
+  cancelAnimationFrame(meterRAF);
+  if (micStream) micStream.getTracks().forEach(t => t.stop());
+  if (audioCtx) audioCtx.close();
+  micStream = null; audioCtx = null; analyser = null;
+  J.level = 0;
+  $('micBar').style.width = '0%';
+  $('micLvl').textContent = '—';
+}
+
+/* ============================================================
+   5. UTTERANCE ROUTING (wake word)
+   ============================================================ */
+const WAKE = /\b(jarvis|jervis|jarvis[,.]?|java's|jervais)\b/i;
+
+function handleUtterance(text) {
+  const needWake = $('optWake').checked && !holdMode;
+  if (needWake && !WAKE.test(text)) return;           // not addressed to us
+  const cmd = text.replace(WAKE, '').replace(/^[\s,.:;-]+/, '').trim();
+  if (!cmd) { say('jarvis', 'At your service.'); return; }
+  say('you', cmd, true);
+  respond(cmd);
+}
+
+/* ============================================================
+   6. LOCAL BRAIN
+   Deterministic handlers that need no network. Each returns a
+   string (spoken + logged) or null to fall through to Claude.
+   ============================================================ */
+
+/* -- a small, safe arithmetic evaluator (no eval) -- */
+function calc(expr) {
+  const src = expr
+    .replace(/\bplus\b/gi, '+').replace(/\bminus\b/gi, '-')
+    .replace(/\b(times|multiplied by|x)\b/gi, '*')
+    .replace(/\b(divided by|over)\b/gi, '/')
+    .replace(/\bpercent of\b/gi, '% of')
+    .replace(/[,\s]+/g, ' ')
+    .trim();
+
+  // "18 % of 240"
+  const pct = src.match(/^(-?\d+(?:\.\d+)?)\s*%\s*of\s*(-?\d+(?:\.\d+)?)$/i);
+  if (pct) return Math.round((parseFloat(pct[1]) / 100) * parseFloat(pct[2]) * 1e10) / 1e10;
+
+  const tokens = src.match(/(\d+\.?\d*|[+\-*/^()])/g);
+  if (!tokens || !/\d/.test(src) || !/[+\-*/^]/.test(src)) return null;
+  if (tokens.join('').replace(/\s/g, '') !== src.replace(/\s/g, '')) return null;
+
+  const prec = { '+': 1, '-': 1, '*': 2, '/': 2, '^': 3 };
+  const out = [], ops = [];
+  for (const tk of tokens) {
+    if (/^\d/.test(tk)) out.push(parseFloat(tk));
+    else if (tk === '(') ops.push(tk);
+    else if (tk === ')') {
+      while (ops.length && ops[ops.length - 1] !== '(') out.push(ops.pop());
+      if (!ops.length) return null;
+      ops.pop();
+    } else {
+      while (ops.length && ops[ops.length - 1] !== '(' &&
+             prec[ops[ops.length - 1]] >= prec[tk] && tk !== '^') out.push(ops.pop());
+      ops.push(tk);
+    }
+  }
+  while (ops.length) { const o = ops.pop(); if (o === '(') return null; out.push(o); }
+
+  const st = [];
+  for (const tk of out) {
+    if (typeof tk === 'number') st.push(tk);
+    else {
+      const b = st.pop(), a = st.pop();
+      if (a === undefined || b === undefined) return null;
+      st.push(tk === '+' ? a + b : tk === '-' ? a - b : tk === '*' ? a * b :
+              tk === '/' ? a / b : Math.pow(a, b));
+    }
+  }
+  if (st.length !== 1 || !isFinite(st[0])) return null;
+  return Math.round(st[0] * 1e10) / 1e10;
+}
+
+/* -- duration parsing: "5 minutes", "1 hour 30", "90 seconds" -- */
+function parseDuration(s) {
+  let ms = 0, found = false;
+  const words = { one: 1, two: 2, three: 3, four: 4, five: 5, six: 6, seven: 7,
+                  eight: 8, nine: 9, ten: 10, fifteen: 15, twenty: 20, thirty: 30,
+                  forty: 40, fifty: 50, sixty: 60, half: 0.5, a: 1, an: 1 };
+  const norm = s.replace(/\b(one|two|three|four|five|six|seven|eight|nine|ten|fifteen|twenty|thirty|forty|fifty|sixty|half|an?)\b/gi,
+    (m) => String(words[m.toLowerCase()]));
+  const re = /(\d+(?:\.\d+)?)\s*(hours?|hrs?|h|minutes?|mins?|m|seconds?|secs?|s)\b/gi;
+  let m;
+  while ((m = re.exec(norm))) {
+    const n = parseFloat(m[1]), u = m[2].toLowerCase();
+    if (u[0] === 'h') ms += n * 3600000;
+    else if (u[0] === 'm') ms += n * 60000;
+    else ms += n * 1000;
+    found = true;
+  }
+  return found ? ms : null;
+}
+
+function humanDuration(ms) {
+  const s = Math.round(ms / 1000);
+  const h = Math.floor(s / 3600), m = Math.floor((s % 3600) / 60), sec = s % 60;
+  const bits = [];
+  if (h) bits.push(h + (h === 1 ? ' hour' : ' hours'));
+  if (m) bits.push(m + (m === 1 ? ' minute' : ' minutes'));
+  if (sec && !h) bits.push(sec + (sec === 1 ? ' second' : ' seconds'));
+  return bits.join(' and ') || '0 seconds';
+}
+
+/* -- timers -- */
+const timers = [];
+function addTimer(ms, label) {
+  const timer = { id: Date.now() + Math.random(), ends: Date.now() + ms, label: label || '', fired: false };
+  timers.push(timer);
+  renderTimers();
+  return timer;
+}
+function renderTimers() {
+  const el = $('timerList');
+  const live = timers.filter(t => !t.fired);
+  $('timerTag').textContent = live.length + ' active';
+  if (!live.length) { el.innerHTML = '<div class="empty">no timers running</div>'; return; }
+  el.innerHTML = '';
+  live.forEach(t => {
+    const left = Math.max(0, t.ends - Date.now());
+    const s = Math.ceil(left / 1000);
+    const d = document.createElement('div');
+    d.className = 'item';
+    d.innerHTML = '<span>' + (t.label || 'timer') + '</span><span class="t">' +
+      pad2(Math.floor(s / 3600)) + ':' + pad2(Math.floor((s % 3600) / 60)) + ':' + pad2(s % 60) + '</span>';
+    el.appendChild(d);
+  });
+}
+setInterval(() => {
+  let changed = false;
+  timers.forEach(t => {
+    if (!t.fired && Date.now() >= t.ends) {
+      t.fired = true; changed = true;
+      say('jarvis', 'Time is up' + (t.label ? ' for ' + t.label : '') + '.');
+    }
+  });
+  if (timers.some(t => !t.fired) || changed) renderTimers();
+}, 1000);
+
+/* -- notes (persisted on this device) -- */
+let notes = [];
+try { notes = JSON.parse(localStorage.getItem('jarvis.notes') || '[]'); } catch (_) { notes = []; }
+function saveNotes() {
+  try { localStorage.setItem('jarvis.notes', JSON.stringify(notes)); } catch (_) {}
+  renderNotes();
+}
+function renderNotes() {
+  const el = $('noteList');
+  $('noteTag').textContent = String(notes.length);
+  if (!notes.length) { el.innerHTML = '<div class="empty">say “note — call the shop”</div>'; return; }
+  el.innerHTML = '';
+  notes.slice(-8).reverse().forEach(n => {
+    const d = document.createElement('div');
+    d.className = 'item';
+    const txt = document.createElement('span');
+    txt.textContent = n.text;
+    const when = document.createElement('span');
+    when.className = 't';
+    when.textContent = n.at;
+    d.append(txt, when);
+    el.appendChild(d);
+  });
+}
+renderNotes();
+
+/* -- sun & moon, computed on device (NOAA / Meeus approximations) -- */
+const RAD = Math.PI / 180, DAY_MS = 86400000, J1970 = 2440588, J2000 = 2451545;
+const toJulian = (d) => d.valueOf() / DAY_MS - 0.5 + J1970;
+const fromJulian = (j) => new Date((j + 0.5 - J1970) * DAY_MS);
+const toDays = (d) => toJulian(d) - J2000;
+const OBLIQ = RAD * 23.4397;
+
+const solarMeanAnomaly = (d) => RAD * (357.5291 + 0.98560028 * d);
+const eclipticLongitude = (M) =>
+  M + RAD * (1.9148 * Math.sin(M) + 0.02 * Math.sin(2 * M) + 0.0003 * Math.sin(3 * M)) + RAD * 102.9372 + Math.PI;
+const declination = (L) => Math.asin(Math.sin(OBLIQ) * Math.sin(L));
+const rightAscension = (L) => Math.atan2(Math.sin(L) * Math.cos(OBLIQ), Math.cos(L));
+const siderealTime = (d, lw) => RAD * (280.16 + 360.9856235 * d) - lw;
+const altitude = (H, phi, dec) =>
+  Math.asin(Math.sin(phi) * Math.sin(dec) + Math.cos(phi) * Math.cos(dec) * Math.cos(H));
+
+function sunTimes(date, lat, lng) {
+  const lw = RAD * -lng, phi = RAD * lat, d = toDays(date);
+  const J0 = 0.0009;
+  const n = Math.round(d - J0 - lw / (2 * Math.PI));
+  const ds = J0 + lw / (2 * Math.PI) + n;
+  const M = solarMeanAnomaly(ds);
+  const L = eclipticLongitude(M);
+  const dec = declination(L);
+  const Jnoon = J2000 + ds + 0.0053 * Math.sin(M) - 0.0069 * Math.sin(2 * L);
+
+  const h = RAD * -0.833;   // refraction + solar disc
+  const cosH = (Math.sin(h) - Math.sin(phi) * Math.sin(dec)) / (Math.cos(phi) * Math.cos(dec));
+  if (cosH > 1) return { polar: 'night', noon: fromJulian(Jnoon) };   // sun never rises
+  if (cosH < -1) return { polar: 'day', noon: fromJulian(Jnoon) };    // sun never sets
+
+  const w = Math.acos(cosH);
+  const Jset = J2000 + (J0 + (w + lw) / (2 * Math.PI) + n) + 0.0053 * Math.sin(M) - 0.0069 * Math.sin(2 * L);
+  const Jrise = Jnoon - (Jset - Jnoon);
+  return { rise: fromJulian(Jrise), set: fromJulian(Jset), noon: fromJulian(Jnoon) };
+}
+
+function sunPosition(date, lat, lng) {
+  const lw = RAD * -lng, phi = RAD * lat, d = toDays(date);
+  const M = solarMeanAnomaly(d), L = eclipticLongitude(M);
+  const dec = declination(L), ra = rightAscension(L);
+  const H = siderealTime(d, lw) - ra;
+  return { altitude: altitude(H, phi, dec) / RAD };
+}
+
+function moonPhase(date) {
+  const synodic = 29.530588853;
+  const known = Date.UTC(2000, 0, 6, 18, 14);          // a known new moon
+  let age = (((date.getTime() - known) / DAY_MS) % synodic + synodic) % synodic;
+  const illum = (1 - Math.cos((2 * Math.PI * age) / synodic)) / 2;
+  const names = ['New moon', 'Waxing crescent', 'First quarter', 'Waxing gibbous',
+                 'Full moon', 'Waning gibbous', 'Last quarter', 'Waning crescent'];
+  const idx = Math.floor((age / synodic) * 8 + 0.5) % 8;
+  return { age, illum, name: names[idx] };
+}
+
+const clockStr = (d) => pad2(d.getHours()) + ':' + pad2(d.getMinutes());
+
+function renderSolar() {
+  if (!J.coords) return;
+  const now = new Date();
+  const { lat, lng } = J.coords;
+  const s = sunTimes(now, lat, lng);
+  $('solarBody').hidden = true;
+  $('solarData').hidden = false;
+  $('solarTag').textContent = lat.toFixed(2) + ', ' + lng.toFixed(2);
+
+  if (s.polar) {
+    $('sunUp').textContent = s.polar === 'day' ? 'no sunset' : 'no sunrise';
+    $('sunDown').textContent = '—';
+    $('sunLen').textContent = s.polar === 'day' ? '24 h' : '0 h';
+  } else {
+    $('sunUp').textContent = clockStr(s.rise);
+    $('sunDown').textContent = clockStr(s.set);
+    const len = s.set - s.rise;
+    $('sunLen').textContent = Math.floor(len / 3600000) + 'h ' + pad2(Math.round((len % 3600000) / 60000)) + 'm';
+  }
+  const pos = sunPosition(now, lat, lng);
+  $('sunNow').textContent = (pos.altitude >= 0 ? '+' : '') + pos.altitude.toFixed(1) + '° alt';
+  $('sunNow').className = 'v ' + (pos.altitude > 0 ? 'good' : '');
+
+  const m = moonPhase(now);
+  $('moonNow').textContent = m.name + ' · ' + Math.round(m.illum * 100) + '%';
+  $('moonBar').style.width = (m.illum * 100).toFixed(0) + '%';
+}
+
+function acquirePosition(then) {
+  if (!navigator.geolocation) { if (then) then('This browser has no location service.'); return; }
+  $('solarTag').textContent = 'locating…';
+  navigator.geolocation.getCurrentPosition(
+    (p) => {
+      J.coords = { lat: p.coords.latitude, lng: p.coords.longitude };
+      try { localStorage.setItem('jarvis.coords', JSON.stringify(J.coords)); } catch (_) {}
+      renderSolar();
+      if (then) then(null);
+    },
+    () => { $('solarTag').textContent = 'denied'; if (then) then('I could not get a position fix — location permission was denied.'); },
+    { enableHighAccuracy: false, timeout: 10000, maximumAge: 600000 }
+  );
+}
+$('btnLocate').addEventListener('click', () => acquirePosition((err) => { if (err) say('sys', err, true); }));
+try {
+  const saved = JSON.parse(localStorage.getItem('jarvis.coords') || 'null');
+  if (saved && typeof saved.lat === 'number') { J.coords = saved; renderSolar(); }
+} catch (_) {}
+setInterval(() => { if (J.coords) renderSolar(); }, 60000);
+
+/* -- diagnostics summary, in words -- */
+function diagnostics() {
+  const bits = [];
+  if (battery) {
+    bits.push('Power at ' + Math.round(battery.level * 100) + ' percent' +
+      (battery.charging ? ', charging' : ''));
+  }
+  bits.push(navigator.onLine ? 'uplink connected' : 'uplink offline');
+  const c = navigator.connection;
+  if (c && c.downlink) bits.push('throughput about ' + c.downlink + ' megabits');
+  bits.push(navigator.hardwareConcurrency ? navigator.hardwareConcurrency + ' logical cores' : 'core count unavailable');
+  if (navigator.deviceMemory) bits.push(navigator.deviceMemory + ' gigabytes of memory');
+  bits.push('rendering at ' + J.fps + ' frames per second');
+  bits.push(J.bridge ? 'Claude bridge online' : 'running on the local brain only');
+  const live = timers.filter(t => !t.fired).length;
+  if (live) bits.push(live + (live === 1 ? ' timer' : ' timers') + ' running');
+  const sentences = bits.map(b => b.charAt(0).toUpperCase() + b.slice(1));
+  return 'All systems nominal. ' + sentences.join('. ') + '.';
+}
+
+/* -- the local intent table -- */
+function localBrain(raw) {
+  const q = raw.toLowerCase().replace(/[?!.]+$/, '').trim();
+  const now = new Date();
+
+  if (/^(hi|hey|hello|good (morning|afternoon|evening)|you (there|up|awake))\b/.test(q)) {
+    const h = now.getHours();
+    const part = h < 12 ? 'Good morning' : h < 18 ? 'Good afternoon' : 'Good evening';
+    return part + '. All systems are online and I am listening.';
+  }
+  if (/^(thanks|thank you|cheers|nice one)\b/.test(q)) return 'Always a pleasure.';
+  if (/\b(who are you|what are you|your name)\b/.test(q))
+    return 'I am Jarvis — a voice interface running entirely in your browser. I read this machine\'s own telemetry, and for anything beyond that I pass the question to Claude.';
+  if (/\b(what can you do|help|commands|capabilities)\b/.test(q))
+    return 'I can report the time and date, battery, network, hardware and heap, run diagnostics, set timers, take notes, do arithmetic, and tell you sunrise, sunset and the moon phase. Anything else I hand to Claude when the bridge is running.';
+
+  if (/\b(time|clock)\b/.test(q) && !/timer/.test(q))
+    return 'It is ' + now.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) + '.';
+  if (/\b(date|day is it|today)\b/.test(q))
+    return 'Today is ' + now.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }) + '.';
+
+  if (/\b(battery|power|charge)\b/.test(q)) {
+    if (!battery) return 'This browser does not expose battery information.';
+    const pct = Math.round(battery.level * 100);
+    let s = 'Battery is at ' + pct + ' percent';
+    s += battery.charging ? ' and charging' : '';
+    if (!battery.charging && isFinite(battery.dischargingTime) && battery.dischargingTime > 0)
+      s += ', about ' + humanDuration(battery.dischargingTime * 1000) + ' remaining';
+    if (battery.charging && isFinite(battery.chargingTime) && battery.chargingTime > 0)
+      s += ', full in about ' + humanDuration(battery.chargingTime * 1000);
+    return s + '.';
+  }
+
+  if (/\b(network|internet|connection|online|wifi|uplink)\b/.test(q)) {
+    if (!navigator.onLine) return 'The uplink is down — this machine is offline.';
+    const c = navigator.connection;
+    let s = 'Uplink is connected';
+    if (c) {
+      if (c.effectiveType) s += ' on an ' + c.effectiveType + ' class connection';
+      if (c.downlink) s += ', roughly ' + c.downlink + ' megabits down';
+      if (c.rtt) s += ', ' + c.rtt + ' milliseconds round trip';
+    }
+    return s + '.';
+  }
+
+  if (/\b(status|diagnostic|systems|report|how are you)\b/.test(q)) {
+    setMode('thinking');
+    return diagnostics();
+  }
+
+  if (/\b(memory|ram|heap|cpu|cores|hardware|specs?)\b/.test(q)) {
+    const bits = [];
+    if (navigator.hardwareConcurrency) bits.push(navigator.hardwareConcurrency + ' logical cores');
+    if (navigator.deviceMemory) bits.push('at least ' + navigator.deviceMemory + ' gigabytes of memory');
+    bits.push('a ' + screen.width + ' by ' + screen.height + ' display');
+    if (performance.memory) bits.push('the page is holding ' + (performance.memory.usedJSHeapSize / 1048576).toFixed(0) + ' megabytes of heap');
+    return 'This machine reports ' + bits.join(', ') + '.';
+  }
+
+  if (/\b(sunrise|sunset|sundown|daylight|golden hour|sun)\b/.test(q)) {
+    if (!J.coords) { acquirePosition(() => { if (J.coords) say('jarvis', localBrain(raw) || ''); }); return 'I need a position fix first — approve the location prompt and ask again.'; }
+    const s = sunTimes(new Date(), J.coords.lat, J.coords.lng);
+    if (s.polar) return s.polar === 'day' ? 'The sun does not set at your latitude today.' : 'The sun does not rise at your latitude today.';
+    if (/sunrise/.test(q)) return 'Sunrise is at ' + s.rise.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) + '.';
+    if (/sunset|sundown/.test(q)) return 'Sunset is at ' + s.set.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) + '.';
+    const len = s.set - s.rise;
+    return 'Sunrise ' + clockStr(s.rise) + ', sunset ' + clockStr(s.set) + ' — ' +
+      Math.floor(len / 3600000) + ' hours and ' + Math.round((len % 3600000) / 60000) + ' minutes of daylight.';
+  }
+  if (/\bmoon\b/.test(q)) {
+    const m = moonPhase(new Date());
+    return 'The moon is a ' + m.name.toLowerCase() + ', ' + Math.round(m.illum * 100) +
+      ' percent illuminated, ' + m.age.toFixed(1) + ' days into the cycle.';
+  }
+
+  // timers
+  const timerAsk = q.match(/\b(?:set|start)?\s*(?:a\s+)?timer\s*(?:for\s+)?(.+)/) ||
+                   (/\b(remind me in|wake me in|alarm for)\b/.test(q) ? [null, q.replace(/.*\b(?:remind me in|wake me in|alarm for)\b/, '')] : null);
+  if (timerAsk) {
+    const ms = parseDuration(timerAsk[1] || q);
+    if (ms && ms > 0) {
+      const label = (timerAsk[1] || '').replace(/^[\d\s.]*(hours?|hrs?|h|minutes?|mins?|m|seconds?|secs?|s)\b/gi, '')
+        .replace(/^\s*(for|to)\s+/i, '').trim();
+      addTimer(ms, label);
+      return 'Timer set for ' + humanDuration(ms) + (label ? ', ' + label : '') + '.';
+    }
+    return 'I need a length for that timer — try “set a timer for five minutes”.';
+  }
+  if (/\b(cancel|stop|clear)\b.*\btimers?\b/.test(q)) {
+    const n = timers.filter(t => !t.fired).length;
+    timers.forEach(t => t.fired = true);
+    renderTimers();
+    return n ? 'Cleared ' + n + (n === 1 ? ' timer' : ' timers') + '.' : 'There were no timers running.';
+  }
+  if (/\btimers?\b/.test(q) && /\b(how many|what|list|left|remaining)\b/.test(q)) {
+    const live = timers.filter(t => !t.fired);
+    if (!live.length) return 'No timers are running.';
+    return live.map(t => (t.label || 'a timer') + ' with ' + humanDuration(t.ends - Date.now()) + ' left').join(', ') + '.';
+  }
+
+  // notes
+  const noteMatch = raw.match(/^\s*(?:make a |take a |new )?note[\s:,—-]+(.+)/i) ||
+                    raw.match(/^\s*remember (?:that )?(.+)/i);
+  if (noteMatch) {
+    notes.push({ text: noteMatch[1].trim(), at: clockStr(now) });
+    saveNotes();
+    return 'Noted.';
+  }
+  if (/\b(read|what are|list|show)\b.*\bnotes?\b/.test(q)) {
+    if (!notes.length) return 'You have no notes.';
+    return 'You have ' + notes.length + (notes.length === 1 ? ' note: ' : ' notes: ') +
+      notes.slice(-5).map(n => n.text).join('; ') + '.';
+  }
+  if (/\b(clear|delete|wipe)\b.*\bnotes?\b/.test(q)) {
+    const n = notes.length; notes = []; saveNotes();
+    return n ? 'Cleared ' + n + (n === 1 ? ' note' : ' notes') + '.' : 'There were no notes to clear.';
+  }
+
+  // dice / coin / random
+  if (/\b(flip|toss)\b.*\bcoin\b/.test(q)) return Math.random() < 0.5 ? 'Heads.' : 'Tails.';
+  const dice = q.match(/\broll\b.*?\b(?:a\s+)?(?:d(\d+)|die|dice)\b/);
+  if (dice) { const sides = dice[1] ? parseInt(dice[1], 10) : 6; return 'You rolled a ' + (1 + Math.floor(Math.random() * sides)) + '.'; }
+  const rnd = q.match(/random number(?:\s+between\s+(-?\d+)\s+and\s+(-?\d+))?/);
+  if (rnd) {
+    const a = rnd[1] ? parseInt(rnd[1], 10) : 1, b = rnd[2] ? parseInt(rnd[2], 10) : 100;
+    return String(Math.min(a, b) + Math.floor(Math.random() * (Math.abs(b - a) + 1)));
+  }
+
+  // arithmetic
+  const mathAsk = q.replace(/^(what(?:'s| is)|calculate|compute|work out|how much is)\s+/i, '');
+  if (mathAsk !== q || /^[\d\s+\-*/^().]+$/.test(q)) {
+    const r = calc(mathAsk);
+    if (r !== null) return String(r);
+  }
+
+  if (/\b(mute|be quiet|shut up|stop talking|silence)\b/.test(q)) {
+    synth.cancel();
+    $('optSpeak').checked = false;
+    return null;   // handled silently below
+  }
+  if (/\b(unmute|speak again|start talking)\b/.test(q)) {
+    $('optSpeak').checked = true;
+    return 'Voice restored.';
+  }
+  if (/\b(stop listening|go to sleep|standby)\b/.test(q)) {
+    stopListening(false); stopMeter();
+    return 'Standing by.';
+  }
+
+  return null;   // → Claude
+}
+
+/* ============================================================
+   7. THE BRIDGE TO CLAUDE
+   Present when this page is served by the Node server in this
+   repo with an ANTHROPIC_API_KEY set. Without it the page still
+   works — the local brain handles what it can and says plainly
+   when a question is beyond it.
+   ============================================================ */
+/* The bridge is mounted at the site root, so these must be root-relative —
+   a relative path would resolve against /jarvis/ and miss. */
+const BRIDGE = '/api/jarvis';
+
+async function checkBridge() {
+  try {
+    const r = await fetch(BRIDGE + '/health', { method: 'GET' });
+    if (!r.ok) throw new Error('no bridge');
+    const j = await r.json();
+    J.bridge = !!j.ready;
+    $('mastBrain').innerHTML = (J.bridge ? 'claude' : 'local') + '<small>brain</small>';
+    return J.bridge;
+  } catch (_) {
+    J.bridge = false;
+    $('mastBrain').innerHTML = 'local<small>brain</small>';
+    return false;
+  }
+}
+
+function contextForClaude() {
+  const c = navigator.connection || {};
+  const bits = [
+    'Local time: ' + new Date().toLocaleString(),
+    'Battery: ' + (battery ? Math.round(battery.level * 100) + '%' + (battery.charging ? ' charging' : '') : 'unavailable'),
+    'Network: ' + (navigator.onLine ? 'online' + (c.effectiveType ? ' (' + c.effectiveType + ', ' + (c.downlink || '?') + ' Mbps)' : '') : 'offline'),
+    'Hardware: ' + (navigator.hardwareConcurrency || '?') + ' cores, ' + (navigator.deviceMemory || '?') + ' GB, ' + screen.width + '×' + screen.height,
+    'Active timers: ' + timers.filter(t => !t.fired).length,
+    'Saved notes: ' + notes.length
+  ];
+  if (J.coords) {
+    const s = sunTimes(new Date(), J.coords.lat, J.coords.lng);
+    if (s.rise) bits.push('Sunrise ' + clockStr(s.rise) + ', sunset ' + clockStr(s.set));
+  }
+  return bits.join('\n');
+}
+
+async function askClaude(text) {
+  setMode('thinking');
+  const res = await fetch(BRIDGE + '/chat', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify({
+      message: text,
+      history: J.history.slice(-12),
+      telemetry: contextForClaude()
+    })
+  });
+  if (!res.ok) {
+    let detail = '';
+    try { detail = (await res.json()).error || ''; } catch (_) {}
+    throw new Error(detail || ('bridge returned ' + res.status));
+  }
+  const data = await res.json();
+  return data.reply;
+}
+
+/* ============================================================
+   8. RESPOND
+   ============================================================ */
+async function respond(text) {
+  const local = localBrain(text);
+
+  if (local === null && /\b(mute|be quiet|shut up|stop talking|silence)\b/i.test(text)) {
+    say('sys', 'Voice muted.', true);
+    setMode(listening ? 'listening' : 'idle');
+    return;
+  }
+  if (local) {
+    say('jarvis', local);
+    if (J.mode === 'thinking') setMode('idle');
+    J.history.push({ role: 'user', content: text }, { role: 'assistant', content: local });
+    return;
+  }
+
+  if (!J.bridge) await checkBridge();
+
+  if (!J.bridge) {
+    say('jarvis', 'That one is past my local wiring. Start the bridge — ' +
+      'npm start in this repo with an Anthropic API key set — and I will answer it properly.');
+    setMode(listening ? 'listening' : 'idle');
+    return;
+  }
+
+  try {
+    const reply = await askClaude(text);
+    J.history.push({ role: 'user', content: text }, { role: 'assistant', content: reply });
+    say('jarvis', reply);
+  } catch (err) {
+    say('sys', 'Bridge error: ' + err.message, true);
+    say('jarvis', 'The link to Claude dropped. I am still here on local systems.');
+  } finally {
+    if (J.mode === 'thinking') setMode(listening ? 'listening' : 'idle');
+  }
+}
+
+/* ============================================================
+   9. TELEMETRY
+   ============================================================ */
+let battery = null;
+
+function fmtSecs(s) {
+  if (!isFinite(s) || s <= 0) return '—';
+  const h = Math.floor(s / 3600), m = Math.round((s % 3600) / 60);
+  return h ? h + 'h ' + pad2(m) + 'm' : m + 'm';
+}
+
+function renderBattery() {
+  if (!battery) return;
+  const pct = Math.round(battery.level * 100);
+  const el = $('battPct'), bar = $('battBar');
+  el.textContent = pct + '%';
+  el.className = 'v ' + (pct <= 15 ? 'bad' : pct <= 35 ? 'warn' : 'good');
+  bar.style.width = pct + '%';
+  bar.className = pct <= 15 ? 'bad' : pct <= 35 ? 'warn' : '';
+  $('battSrc').textContent = battery.charging ? 'mains' : 'battery';
+  $('powerTag').textContent = battery.charging ? 'charging' : 'discharging';
+  $('battTime').textContent = battery.charging
+    ? (isFinite(battery.chargingTime) && battery.chargingTime > 0 ? fmtSecs(battery.chargingTime) + ' to full' : 'charging')
+    : fmtSecs(battery.dischargingTime);
+}
+
+if (navigator.getBattery) {
+  navigator.getBattery().then(b => {
+    battery = b;
+    renderBattery();
+    ['levelchange', 'chargingchange', 'chargingtimechange', 'dischargingtimechange']
+      .forEach(ev => b.addEventListener(ev, renderBattery));
+  }).catch(() => { $('powerTag').textContent = 'unavailable'; });
+} else {
+  $('battPct').textContent = 'n/a';
+  $('powerTag').textContent = 'unsupported';
+  $('battSrc').textContent = 'browser hides this';
+}
+
+function renderNetwork() {
+  const on = navigator.onLine;
+  const el = $('netState');
+  el.textContent = on ? 'connected' : 'offline';
+  el.className = 'v ' + (on ? 'good' : 'bad');
+  $('netTag').textContent = on ? 'live' : 'down';
+  const c = navigator.connection;
+  if (c) {
+    $('netType').textContent = c.effectiveType || c.type || '—';
+    $('netDown').textContent = c.downlink ? c.downlink.toFixed(1) + ' Mbps' : '—';
+    $('netRtt').textContent = c.rtt ? c.rtt + ' ms' : '—';
+  } else {
+    $('netType').textContent = 'not exposed';
+  }
+}
+renderNetwork();
+addEventListener('online', renderNetwork);
+addEventListener('offline', renderNetwork);
+if (navigator.connection) navigator.connection.addEventListener('change', renderNetwork);
+
+function gpuName() {
+  try {
+    const c = document.createElement('canvas');
+    const gl = c.getContext('webgl') || c.getContext('experimental-webgl');
+    if (!gl) return 'no webgl';
+    const dbg = gl.getExtension('WEBGL_debug_renderer_info');
+    const name = dbg ? gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER);
+    return String(name).replace(/^ANGLE \(|\)$/g, '').split(',')[0].trim() || 'unknown';
+  } catch (_) { return 'unknown'; }
+}
+
+$('hwCores').textContent = navigator.hardwareConcurrency ? navigator.hardwareConcurrency + ' logical' : 'not exposed';
+$('hwMem').textContent = navigator.deviceMemory ? '≥ ' + navigator.deviceMemory + ' GB' : 'not exposed';
+$('hwScreen').textContent = screen.width + '×' + screen.height + ' @' + (devicePixelRatio || 1) + 'x';
+$('hwGpu').textContent = gpuName();
+$('hwPlat').textContent = (navigator.userAgentData && navigator.userAgentData.platform) || navigator.platform || '—';
+
+function renderHeap() {
+  const m = performance.memory;
+  if (!m) {
+    $('heapUse').textContent = 'not exposed';
+    $('heapLim').textContent = 'chrome only';
+    $('heapTag').textContent = 'n/a';
+    return;
+  }
+  const used = m.usedJSHeapSize / 1048576, lim = m.jsHeapSizeLimit / 1048576;
+  $('heapUse').textContent = used.toFixed(1) + ' MB';
+  $('heapLim').textContent = lim.toFixed(0) + ' MB';
+  const pctUsed = (used / lim) * 100;
+  const bar = $('heapBar');
+  bar.style.width = clamp(pctUsed, 0, 100).toFixed(1) + '%';
+  bar.className = pctUsed > 80 ? 'bad' : pctUsed > 55 ? 'warn' : '';
+  $('heapTag').textContent = pctUsed.toFixed(0) + '%';
+}
+renderHeap();
+setInterval(renderHeap, 2000);
+
+function renderClock() {
+  const d = new Date();
+  $('mastClock').innerHTML = pad2(d.getHours()) + ':' + pad2(d.getMinutes()) + ':' + pad2(d.getSeconds()) + '<small>local time</small>';
+  $('mastDate').innerHTML = d.toLocaleDateString(undefined, { weekday: 'short', day: 'numeric', month: 'short' }) + '<small>date</small>';
+  const up = Math.floor((Date.now() - J.started) / 1000);
+  $('mastUptime').innerHTML = pad2(Math.floor(up / 60)) + ':' + pad2(up % 60) + '<small>session</small>';
+}
+renderClock();
+setInterval(renderClock, 1000);
+
+/* ============================================================
+   10. BOOT
+   ============================================================ */
+(async function boot() {
+  setMode('boot');
+  const lines = [
+    'Reactor core online.',
+    'Telemetry bus attached — power, uplink, hardware, heap.',
+    'Speech synthesis ' + (synth ? 'ready' : 'unavailable') + ', recognition ' + (SR ? 'ready' : 'unavailable') + '.'
+  ];
+  for (let i = 0; i < lines.length; i++) {
+    await new Promise(r => setTimeout(r, 380));
+    say('sys', lines[i], true);
+  }
+
+  const bridge = await checkBridge();
+  say('sys', bridge
+    ? 'Claude bridge online — full conversation available.'
+    : 'Local brain only — every built-in command works. For open conversation, run this from the repo server with an API key (see jarvis/README.md).', true);
+
+  setMode('idle');
+  const greeting = bridge
+    ? 'Good ' + (new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 18 ? 'afternoon' : 'evening') +
+      '. All systems online and Claude is on the line. What do you need?'
+    : 'Good ' + (new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 18 ? 'afternoon' : 'evening') +
+      '. All systems online. Press start listening, or just type.';
+  say('jarvis', greeting);
+})();
+</script>
+</body>
+</html>

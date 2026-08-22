@@ -15,6 +15,14 @@ Multi-page e-commerce website built for **Twin City to Sin City Cards (TCSC)**. 
 
 Products live in **`data/products.json`** — edit that one file to add/remove products, change prices, or mark items `"featured": true` for the home page. No code changes needed. The current inventory (slabs, wax, Pokémon, singles, mystery boxes, supplies) is realistic sample stock — **swap in TCSC's real products before launch.**
 
+## Also in here: J.A.R.V.I.S.
+
+A voice assistant with a heads-up display, at **`/jarvis/`** — talk to it and it
+talks back, with live readings off your own machine (power, uplink, hardware, heap,
+mic level, sunrise/sunset) around an animated core. It answers time, battery,
+network, timers, notes, arithmetic and diagnostics entirely on-device; set
+`ANTHROPIC_API_KEY` and everything else goes to Claude. See **`jarvis/README.md`**.
+
 ## How payments work (important)
 
 The site **never collects or stores card numbers itself** — doing that without PCI-DSS certification is illegal and would get the store shut down by any payment processor. Instead:
