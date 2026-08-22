@@ -263,6 +263,9 @@ app.get('/api/admin/orders', (req, res) => {
   res.json({ count: list.length, orders: list });
 });
 
+/* ---------------- jarvis voice assistant ---------------- */
+app.use('/api/jarvis', require('./jarvis').buildRouter());
+
 /* ---------------- static site ---------------- */
 app.use(express.static(ROOT, { extensions: ['html'] }));
 
@@ -273,5 +276,6 @@ app.listen(PORT, () => {
   console.log('  Payments: ' + (stripe ? 'STRIPE (' + (STRIPE_KEY.startsWith('sk_live') ? 'LIVE' : 'test key') + ')' : 'TEST MODE — set STRIPE_SECRET_KEY to charge real cards'));
   console.log('  Email:    ' + (process.env.SMTP_HOST ? 'SMTP configured' : 'not configured — logged to console'));
   console.log('  SMS:      ' + (process.env.TWILIO_ACCOUNT_SID ? 'Twilio configured' : 'not configured — logged to console'));
+  console.log('  Jarvis:   ' + (process.env.ANTHROPIC_API_KEY ? 'Claude bridge live → http://localhost:' + PORT + '/jarvis/' : 'local brain only — set ANTHROPIC_API_KEY for conversation'));
   console.log('');
 });
