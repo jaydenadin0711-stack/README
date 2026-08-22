@@ -944,7 +944,10 @@ function unlockVoice() {
     speak(line);
   }
 }
-['pointerdown', 'keydown', 'touchstart'].forEach(ev =>
+/* Listen on click, not pointerdown: hiding the prompt reflows the page, and
+   doing that between mousedown and mouseup moves whatever was being clicked
+   out from under the cursor, so the click never lands on its target. */
+['click', 'keydown', 'touchend'].forEach(ev =>
   addEventListener(ev, unlockVoice, { once: true, passive: true }));
 
 function speak(text) {
@@ -1998,10 +2001,26 @@ function showBrainNote() {
   note.hidden = false;
   note.className = 'note calm';
   note.innerHTML = embedded
-    ? '<b>Local brain.</b> Questions beyond this machine need Claude, which this page cannot reach when it is embedded. ' +
-      'Run it from your repo — <b>npm start</b> with <b>ANTHROPIC_API_KEY</b> set — then open <b>localhost:3000/jarvis/</b>.'
-    : '<b>Local brain.</b> For open conversation, set <b>ANTHROPIC_API_KEY</b> in your <b>.env</b> and restart with <b>npm start</b>. ' +
-      'Everything on this display keeps working either way.';
+    ? '<b>Local brain.</b> Questions beyond this machine need Claude, which this page cannot reach while it is embedded — ' +
+      'open it as a page of its own, then connect a key there.'
+    : '<b>Local brain.</b> To have him answer anything else, put your own Anthropic key in the <b>Brain</b> panel — ' +
+      'it stays in this browser. Running the bridge (<b>npm start</b> with <b>ANTHROPIC_API_KEY</b> set) does the same ' +
+      'job with the key kept off the browser entirely.';
+
+  // On a narrow screen the Brain panel is a long way down, so bring them to it.
+  if (!embedded) {
+    const go = document.createElement('button');
+    go.textContent = 'Connect a key';
+    go.style.marginTop = '8px';
+    go.addEventListener('click', () => {
+      const field = $('keyIn');
+      field.scrollIntoView({ behavior: 'smooth', block: 'center' });
+      // focus after the scroll is under way, or the button keeps it
+      setTimeout(() => field.focus({ preventScroll: true }), 320);
+    });
+    note.appendChild(document.createElement('br'));
+    note.appendChild(go);
+  }
 }
 async function respond(text) {
   const local = localBrain(text);
@@ -2027,7 +2046,7 @@ async function respond(text) {
     if (!offlineExplained) {
       offlineExplained = true;
       showBrainNote();
-      say('jarvis', 'That is beyond what I can answer on my own. I handle the machine — time, power, uplink, timers, notes, sums, sun and moon — but for open conversation I need Claude on the line. The console panel shows how.');
+      say('jarvis', 'That is beyond what I can answer on my own. I handle the machine — time, power, uplink, timers, notes, sums, sun and moon — but for open conversation I need Claude on the line. Put a key in the Brain panel and I will have him.');
     } else {
       say('jarvis', OFFLINE_LINES[offlineIndex++ % OFFLINE_LINES.length]);
     }
