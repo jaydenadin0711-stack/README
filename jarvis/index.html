@@ -594,6 +594,16 @@ label.toggle input { accent-color: var(--cyan); width: 14px; height: 14px; curso
     </section>
 
     <section class="panel">
+      <div class="panel-head"><span>Mail</span><span class="tag" id="mailTag">—</span></div>
+      <div id="mailBody">
+        <div class="row"><span class="k">Unread</span><span class="v" id="mailCount">—</span></div>
+        <div class="list" id="mailList"><div class="empty">not connected</div></div>
+        <button id="btnReadMail" style="margin-top:10px" hidden>▸ Read them out</button>
+      </div>
+      <p class="note" id="mailNote" hidden></p>
+    </section>
+
+    <section class="panel">
       <div class="panel-head"><span>Timers</span><span class="tag" id="timerTag">0 active</span></div>
       <div class="list" id="timerList"><div class="empty">no timers running</div></div>
     </section>
@@ -628,6 +638,7 @@ label.toggle input { accent-color: var(--cyan); width: 14px; height: 14px; curso
         <b>Jarvis, note — order more sleeves</b><br>
         <b>Jarvis, what's 18 percent of 240</b><br>
         <b>Jarvis, 5 miles in km</b> — or 20 c in f<br>
+        <b>Jarvis, any new mail</b> — Claude-hosted copy<br>
         <b>Jarvis, how long until Christmas</b><br>
         <b>Jarvis, when is sunset</b><br>
         <b>Jarvis, flip a coin</b><br>
@@ -1664,7 +1675,7 @@ function localBrain(raw) {
   if (/\b(who are you|what are you|your name)\b/.test(q))
     return 'I am Jarvis — a voice interface running entirely in your browser. I read this machine\'s own telemetry, and for anything beyond that I pass the question to Claude.';
   if (/\b(what can you do|help|commands|capabilities)\b/.test(q))
-    return 'I can report the time and date, battery, network, hardware and heap, run diagnostics, set timers, take notes, do arithmetic, convert units, count the days to a date, and tell you sunrise, sunset and the moon phase. Anything else I hand to Claude when the bridge is running.';
+    return 'I can report the time and date, battery, network, hardware and heap, run diagnostics, set timers, take notes, do arithmetic, convert units, count the days to a date, read out your unread mail where I can reach it, and tell you sunrise, sunset and the moon phase. Anything else I hand to Claude when the bridge is running.';
 
   if (/\b(time|clock)\b/.test(q) && !/timer/.test(q))
     return 'It is ' + now.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) + '.';
@@ -1981,6 +1992,186 @@ async function askClaude(text) {
 }
 
 /* ============================================================
+   7b. MAIL
+   Reads the viewer's Gmail through the connector already on their
+   Claude account — no password here, no token ever visible to this
+   page. Only available in the Claude-hosted copy, which is the only
+   place window.claude exists; everywhere else the panel says so and
+   the rest of the HUD is unaffected.
+   ============================================================ */
+const MAIL_SERVER = 'Gmail';
+const MAIL_TOOL = 'search_threads';
+const MAIL_QUERY = { query: 'is:unread in:inbox', pageSize: 20, view: 'THREAD_VIEW_MINIMAL' };
+
+let mcpApi = null;
+let mail = { items: [], estimate: 0, at: 0, state: 'unknown' };
+
+/* Snippets arrive HTML-escaped and padded with U+034F, which reads
+   horribly and speaks worse. */
+function cleanText(s) {
+  const box = document.createElement('textarea');
+  box.innerHTML = String(s == null ? '' : s);
+  return box.value.replace(/[͏​-‍﻿­]/g, '').replace(/\s+/g, ' ').trim();
+}
+
+/* "Name <a@b.com>" → Name. Machine addresses → the organisation, since
+   "no.reply.alerts" is not who the mail is from. */
+function senderName(raw) {
+  const s = String(raw || '');
+  const m = s.match(/^\s*"?([^"<]+?)"?\s*<([^>]+)>/);
+  if (m && m[1].trim()) return cleanText(m[1]);
+  const addr = (m ? m[2] : s).trim();
+  const at = addr.lastIndexOf('@');
+  if (at < 0) return addr || 'someone';
+  const local = addr.slice(0, at), domain = addr.slice(at + 1);
+  const machine = /^(no[._-]?reply|noreply|do[-._]?not[-._]?reply|alerts?|invoice|billing|statements?|notifications?|notify|support|info|news|mailer[-.]?daemon)/i.test(local);
+  if (machine) {
+    const parts = domain.split('.');
+    const org = parts.length >= 2 ? parts[parts.length - 2] : domain;
+    return org.charAt(0).toUpperCase() + org.slice(1);
+  }
+  return local.replace(/[._+-]+/g, ' ').trim() || addr;
+}
+
+/* A thread is returned whole, so pick out only the messages still unread. */
+function unreadFrom(payload) {
+  const threads = (payload && payload.threads) || [];
+  const items = [];
+  threads.forEach(t => (t.messages || []).forEach(m => {
+    if ((m.labelIds || []).indexOf('UNREAD') === -1) return;
+    items.push({
+      from: senderName(m.sender),
+      subject: cleanText(m.subject) || '(no subject)',
+      snippet: cleanText(m.snippet),
+      when: m.date ? new Date(m.date) : null
+    });
+  }));
+  items.sort((a, b) => (b.when ? b.when.getTime() : 0) - (a.when ? a.when.getTime() : 0));
+  const estimate = parseInt(payload && payload.resultCountEstimate, 10);
+  return { items, estimate: isFinite(estimate) ? estimate : items.length };
+}
+
+function mailProblem(code, server) {
+  // Each of these has a different fix — never one generic banner.
+  const copy = {
+    needs_reauth: 'Gmail needs reconnecting — claude.ai Settings → Connectors.',
+    server_not_connected: 'No Gmail connector on this account. Add it in claude.ai Settings → Connectors.',
+    selection_required: 'You have more than one Gmail connector — choose one when Claude asks, then reload.',
+    server_not_found: 'That Gmail connector no longer exists upstream.',
+    server_unavailable: 'Gmail is not answering just now. I will try again shortly.',
+    not_in_manifest: 'This page is not permitted to read Gmail.',
+    blocked_by_policy: 'Your organisation blocks Gmail access from pages like this.',
+    approval_required: 'Reading Gmail here needs an approval that artifacts cannot request yet.',
+    tool_error: 'Gmail refused that request.',
+    rate_limited: 'Too many requests to Gmail — pausing briefly.',
+    not_granted: 'This copy of JARVIS was not given connector access.',
+    capability_disabled: 'Connectors are not available in this view.'
+  };
+  return copy[code] || 'Gmail could not be reached (' + (code || 'unknown') + ').';
+}
+
+function renderMail() {
+  const list = $('mailList');
+  $('mailCount').textContent = mail.estimate ? String(mail.estimate) : '0';
+  $('mailTag').textContent = mail.state === 'ok'
+    ? (mail.at ? 'as of ' + clockStr(new Date(mail.at)) : 'live')
+    : mail.state;
+  $('btnReadMail').hidden = !mail.items.length;
+
+  if (!mail.items.length) {
+    list.innerHTML = '<div class="empty">' +
+      (mail.state === 'ok' ? 'nothing unread' : 'not connected') + '</div>';
+    return;
+  }
+  list.innerHTML = '';
+  mail.items.slice(0, 6).forEach(m => {
+    const row = document.createElement('div');
+    row.className = 'item';
+    const who = document.createElement('span');
+    who.textContent = m.from;
+    const when = document.createElement('span');
+    when.className = 't';
+    when.textContent = m.when ? clockStr(m.when) : '';
+    const head = document.createElement('div');
+    head.style.cssText = 'display:flex;justify-content:space-between;gap:8px;width:100%';
+    head.append(who, when);
+    const sub = document.createElement('div');
+    sub.style.cssText = 'color:#5b8ea3;font-size:11px;margin-top:2px';
+    sub.textContent = m.subject;
+    row.style.flexDirection = 'column';
+    row.append(head, sub);
+    list.appendChild(row);
+  });
+}
+
+function showMailNote(text, bad) {
+  const n = $('mailNote');
+  n.hidden = false;
+  n.className = bad ? 'note' : 'note calm';
+  n.textContent = text;
+}
+
+async function initMail() {
+  if (!(window.claude && typeof window.claude.use === 'function')) {
+    mail.state = 'unavailable';
+    renderMail();
+    showMailNote('Mail works in the Claude-hosted copy of JARVIS, which can use the Gmail connector on your account. This copy has no way to reach it.', false);
+    return;
+  }
+  mcpApi = await window.claude.use('mcp');
+  if (!mcpApi) {
+    mail.state = 'unavailable';
+    renderMail();
+    showMailNote('Connector access was not granted to this view.', false);
+    return;
+  }
+
+  mail.state = 'connecting';
+  renderMail();
+
+  // Display data that should stay current: watchTool replays, refreshes
+  // and coalesces, and hands every failure to the same handler.
+  mcpApi.watchTool(MAIL_SERVER, MAIL_TOOL, MAIL_QUERY, (ev) => {
+    if (ev.type === 'data') {
+      const parsed = unreadFrom(ev.result && ev.result.payload);
+      mail.items = parsed.items;
+      mail.estimate = parsed.estimate;
+      mail.at = (ev.result && ev.result.cache && ev.result.cache.storedAt) || Date.now();
+      mail.state = 'ok';
+      $('mailNote').hidden = true;
+      renderMail();
+    } else {
+      const code = ev.error && ev.error.code;
+      // Authorisation failures retract what is shown; transient ones keep it.
+      const authz = ['needs_reauth', 'server_not_connected', 'blocked_by_policy',
+                     'approval_required', 'not_in_manifest', 'not_granted'].indexOf(code) !== -1;
+      if (authz) { mail.items = []; mail.estimate = 0; }
+      mail.state = code === 'server_unavailable' ? 'retrying' : 'unavailable';
+      renderMail();
+      showMailNote(mailProblem(code, ev.error && ev.error.server), true);
+    }
+  }, { refetchInterval: 120000 });
+}
+
+/* What he says when asked about mail. */
+function mailSpoken() {
+  if (mail.state === 'unavailable' || mail.state === 'unknown')
+    return 'I cannot reach your mail from this copy. The Claude-hosted one can.';
+  if (mail.state === 'connecting') return 'Still connecting to your mail — ask me again in a moment.';
+  if (!mail.items.length) return 'Nothing unread. Your inbox is clear.';
+
+  const total = mail.estimate || mail.items.length;
+  const top = mail.items.slice(0, 3);
+  const lines = top.map(m => m.from + ', ' + m.subject.replace(/[.:;]+$/, ''));
+  let out = 'You have ' + total + (total === 1 ? ' unread message' : ' unread messages') + '. ';
+  out += (top.length === 1 ? 'It is from ' : 'The most recent: ') + lines.join('. Then ') + '.';
+  if (total > top.length) out += ' The rest are on the display.';
+  return out;
+}
+
+$('btnReadMail').addEventListener('click', () => say('jarvis', mailSpoken()));
+
+/* ============================================================
    8. RESPOND
    ============================================================ */
 let offlineExplained = false, offlineIndex = 0;
@@ -2023,6 +2214,17 @@ function showBrainNote() {
   }
 }
 async function respond(text) {
+  // Mail first: it is the one built-in that needs an await.
+  if (/\b(mail|email|inbox|messages?)\b/i.test(text) &&
+      !/\b(send|write|reply|compose|draft)\b/i.test(text)) {
+    if (mcpApi && mail.state === 'ok') {
+      try { await mcpApi.invalidate(MAIL_SERVER, MAIL_TOOL, MAIL_QUERY); } catch (_) {}
+    }
+    say('jarvis', mailSpoken());
+    setMode(listening ? 'listening' : 'idle');
+    return;
+  }
+
   const local = localBrain(text);
 
   if (local === null && /\b(mute|be quiet|shut up|stop talking|silence)\b/i.test(text)) {
@@ -2188,6 +2390,8 @@ setInterval(renderClock, 1000);
     await new Promise(r => setTimeout(r, 380));
     say('sys', lines[i], true);
   }
+
+  initMail();   // independent of the brain — let it settle on its own
 
   const bridge = await checkBridge();
   const thinking = bridge || !!userKey;

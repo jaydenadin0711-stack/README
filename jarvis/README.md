@@ -108,6 +108,25 @@ you can revoke at `console.anthropic.com`, and prefer the bridge when you can ru
 one. This won't work inside an embedded panel — the embedding page blocks outside
 calls — which the panel says when it detects one.
 
+## Mail
+
+Ask **"Jarvis, any new mail?"** and he reads out who it's from and what it's
+about; the Mail panel lists the unread ones and refreshes every couple of minutes.
+
+This works **only in the Claude-hosted copy** of JARVIS, which is the one place a
+page can use the Gmail connector already on your Claude account. There's no
+password here and no token this page can see — the call runs with your
+credentials, held by Claude. Elsewhere the panel says so and everything else
+carries on as normal.
+
+It reads unread inbox mail only (`is:unread in:inbox`) and never sends, replies,
+deletes or labels anything — the page declares one read tool and nothing else.
+
+If Gmail can't be reached, the panel says which of these it is, because each has a
+different fix: the connector needs reconnecting, isn't added to your account, is
+duplicated and needs choosing between, is blocked by an organisation policy, or is
+simply not answering right now.
+
 ## "He isn't speaking"
 
 Browsers keep a page silent until you interact with it, so his greeting can't play
