@@ -549,6 +549,18 @@ label.toggle input { accent-color: var(--cyan); width: 14px; height: 14px; curso
           <code>localhost:3000/jarvis/</code> after <code>npm start</code>, which also gets you Claude.</p>
       </div>
       <p class="note calm" id="brainNote" hidden></p>
+      <div id="handoff" hidden>
+        <p class="hint" style="margin:0 0 6px"><b>For Claude.</b> He could not answer this one — hand it over and Claude will answer as JARVIS.</p>
+        <div class="composer">
+          <input id="handoffText" readonly aria-label="Question to hand to Claude">
+          <button id="btnHandoff">Copy</button>
+        </div>
+        <p class="hint" id="handoffHint" style="margin:6px 0 0" hidden></p>
+        <form class="composer" id="returnForm" style="margin-top:8px">
+          <input id="returnText" placeholder="Paste Claude's answer — JARVIS will say it" aria-label="Claude's answer">
+          <button type="submit">Speak</button>
+        </form>
+      </div>
       <form class="composer" id="composer" autocomplete="off">
         <input id="textIn" placeholder="Type to Jarvis — or say “Jarvis, …”" aria-label="Message to Jarvis">
         <button type="submit">Send</button>
@@ -1905,6 +1917,7 @@ function renderBrain() {
   $('brainLive').hidden = !live;
   if (live) $('brainSource').textContent = source;
   $('brainEmbedded').hidden = live || !embedded;
+  if (live) $('handoff').hidden = true;   // no hand-off needed when he can ask directly
   $('mastBrain').innerHTML = (live ? 'claude' : 'local') + '<small>brain</small>';
   if (live) { const n = $('brainNote'); if (n) n.hidden = true; }
 }
@@ -2227,6 +2240,43 @@ const OFFLINE_LINES = [
   'I would only be guessing at that one.'
 ];
 
+/* ---------------- handing a question to Claude ----------------
+   Nothing in a published page can call Claude on its own, so when
+   JARVIS runs out of road the question is put somewhere it can be
+   taken across in one gesture rather than retyped. */
+function offerHandoff(question) {
+  const box = $('handoff');
+  box.hidden = false;
+  $('handoffText').value = question;
+  $('handoffHint').hidden = true;
+}
+
+$('btnHandoff').addEventListener('click', async () => {
+  const field = $('handoffText');
+  const hint = $('handoffHint');
+  hint.hidden = false;
+  try {
+    // Clipboard access is often refused inside an embedded frame.
+    await navigator.clipboard.writeText(field.value);
+    hint.textContent = 'Copied. Paste it to Claude and he will answer as JARVIS.';
+  } catch (_) {
+    field.focus();
+    field.select();
+    hint.textContent = 'This frame will not let a page use the clipboard — the question is selected, so press Ctrl+C (Cmd+C on a Mac).';
+  }
+});
+
+/* The other half of the hand-off: Claude's answer comes back and is
+   spoken in JARVIS's own voice, so the exchange still sounds like him. */
+$('returnForm').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const answer = $('returnText').value.trim();
+  if (!answer) return;
+  $('returnText').value = '';
+  $('handoff').hidden = true;
+  say('jarvis', answer);
+});
+
 function showBrainNote() {
   const note = $('brainNote');
   if (!note || !note.hidden) return;
@@ -2286,12 +2336,13 @@ async function respond(text) {
     // Say the how-to-fix once. After that it lives on screen in the
     // console panel — repeating setup instructions at every question is
     // no use to anyone who has already heard them.
+    offerHandoff(text);
     if (!offlineExplained) {
       offlineExplained = true;
       showBrainNote();
-      say('jarvis', 'That is beyond what I can answer on my own. I handle the machine — time, power, uplink, timers, notes, sums, sun and moon — but for open conversation I need Claude on the line. Put a key in the Brain panel and I will have him.');
+      say('jarvis', 'That one is for Claude. I have put it in the hand-off box below the console — take it to him and he will answer as me. Or give me a key in the Brain panel and I will ask him myself.');
     } else {
-      say('jarvis', OFFLINE_LINES[offlineIndex++ % OFFLINE_LINES.length]);
+      say('jarvis', OFFLINE_LINES[offlineIndex++ % OFFLINE_LINES.length] + ' It is in the hand-off box.');
     }
     setMode(listening ? 'listening' : 'idle');
     return;
