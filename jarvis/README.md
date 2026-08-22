@@ -16,6 +16,13 @@ in this repo with an Anthropic API key and it can also hold a real conversation.
 Double-click `jarvis/index.html`, or drag it into Chrome or Edge. Voice in, voice
 out, all the telemetry, all the built-in commands. No server, no key, no network.
 
+**Published copy — voice, no install**
+
+The repo's Pages workflow publishes the whole site, so JARVIS is live at
+`https://<your-user>.github.io/README/jarvis/`. It's https and a page in its own
+right, so the microphone works there. No server means no bridge — use your own
+key (below) if you want Claude on the published copy.
+
 **Full version — with Claude answering**
 
 ```bash
@@ -82,6 +89,30 @@ Without a key, JARVIS explains that once and then keeps it short ("Beyond me
 without Claude, I'm afraid") — the how-to-fix stays on screen in the console
 panel instead of being read at you every time. He never invents an answer he
 doesn't have.
+
+### Two ways to give him Claude
+
+|  | Where the key lives | Works on |
+|---|---|---|
+| **The bridge** (`ANTHROPIC_API_KEY` + `npm start`) | On your server. The browser never sees it. | `localhost:3000/jarvis/` |
+| **Your own key**, pasted into the Brain panel | In that browser's local storage, on your machine | Any copy that can reach the internet — including the published Pages site |
+
+The Brain panel appears whenever the bridge isn't running. Paste a key and JARVIS
+calls Anthropic straight from the browser, using the
+`anthropic-dangerous-direct-browser-access` header that exists for exactly this
+bring-your-own-key case. **Forget key** removes it.
+
+Be aware of the trade-off: a key in browser storage can be read by anything with
+access to that browser profile, and by any script running on that page. Use a key
+you can revoke at `console.anthropic.com`, and prefer the bridge when you can run
+one. This won't work inside an embedded panel — the embedding page blocks outside
+calls — which the panel says when it detects one.
+
+## "He isn't speaking"
+
+Browsers keep a page silent until you interact with it, so his greeting can't play
+on load. JARVIS holds the line and shows **"Click anywhere to give JARVIS his
+voice"** — one click anywhere and he speaks it, and stays audible from then on.
 
 ---
 

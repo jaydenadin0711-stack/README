@@ -524,6 +524,10 @@ label.toggle input { accent-color: var(--cyan); width: 14px; height: 14px; curso
       <div class="reactor-wrap">
         <canvas id="reactor" width="840" height="840" aria-label="Assistant status core"></canvas>
       </div>
+      <p class="note calm" id="voiceLock" hidden>
+        <b>Click anywhere to give JARVIS his voice.</b> Browsers keep a page silent until you interact with it —
+        his greeting is waiting.
+      </p>
       <div class="state-line" id="stateLine">booting</div>
       <div class="heard" id="heardLine"></div>
     </section>
@@ -560,6 +564,24 @@ label.toggle input { accent-color: var(--cyan); width: 14px; height: 14px; curso
 
   <!-- ============ RIGHT RAIL ============ -->
   <div class="rail">
+
+    <section class="panel">
+      <div class="panel-head"><span>Brain</span><span class="tag" id="brainTag">local</span></div>
+      <div id="brainSetup">
+        <p class="hint" style="margin:0 0 8px">Built-in commands work as they are. For everything else JARVIS needs Claude — either run the bridge, or give him a key of your own.</p>
+        <form id="keyForm" class="composer">
+          <input id="keyIn" type="password" placeholder="sk-ant-…" autocomplete="off" spellcheck="false" aria-label="Your Anthropic API key">
+          <button type="submit">Connect</button>
+        </form>
+        <p class="note" id="brainEmbedded" hidden style="margin:8px 0 0">Embedded here, calls to Anthropic are blocked as well. Use the published page or localhost.</p>
+        <p class="hint" style="margin:8px 0 0">The key is kept in this browser only and sent nowhere but Anthropic. Anyone who can use this browser profile can read it, so use one you can revoke at <b>console.anthropic.com</b>. Running the bridge instead keeps the key off the browser entirely.</p>
+      </div>
+      <div id="brainLive" hidden>
+        <div class="row"><span class="k">Source</span><span class="v good" id="brainSource">—</span></div>
+        <div class="row"><span class="k">Model</span><span class="v" id="brainModel">claude-opus-5</span></div>
+        <button id="btnForgetKey" class="ghost" style="margin-top:10px">Forget key</button>
+      </div>
+    </section>
 
     <section class="panel">
       <div class="panel-head"><span>Voice</span><span class="tag" id="voiceTag">—</span></div>
@@ -906,11 +928,36 @@ $('voicePick').addEventListener('change', (e) => {
   }
 });
 
+/* Browsers refuse to make sound until the person has interacted with the
+   page, so anything said during boot is silently dropped. Hold the most
+   recent line instead and deliver it the moment they touch anything. */
+let voiceUnlocked = false, pendingSpeech = null;
+
+function unlockVoice() {
+  if (voiceUnlocked) return;
+  voiceUnlocked = true;
+  $('voiceLock').hidden = true;
+  if (synth && synth.paused) synth.resume();
+  if (pendingSpeech) {
+    const line = pendingSpeech;
+    pendingSpeech = null;
+    speak(line);
+  }
+}
+['pointerdown', 'keydown', 'touchstart'].forEach(ev =>
+  addEventListener(ev, unlockVoice, { once: true, passive: true }));
+
 function speak(text) {
   if (!$('optSpeak').checked || !synth) return;
   // Don't read the timestamp or long code aloud
   const clean = String(text).replace(/\s+/g, ' ').trim();
   if (!clean) return;
+
+  if (!voiceUnlocked) {
+    pendingSpeech = clean;
+    $('voiceLock').hidden = false;
+    return;
+  }
 
   synth.cancel();
   const u = new SpeechSynthesisUtterance(clean);
@@ -1775,11 +1822,11 @@ async function checkBridge() {
     if (!r.ok) throw new Error('no bridge');
     const j = await r.json();
     J.bridge = !!j.ready;
-    $('mastBrain').innerHTML = (J.bridge ? 'claude' : 'local') + '<small>brain</small>';
+    renderBrain();
     return J.bridge;
   } catch (_) {
     J.bridge = false;
-    $('mastBrain').innerHTML = 'local<small>brain</small>';
+    renderBrain();
     return false;
   }
 }
@@ -1801,7 +1848,116 @@ function contextForClaude() {
   return bits.join('\n');
 }
 
+/* ---------------- talking to Claude with your own key ----------------
+   No server involved: the browser calls Anthropic directly. That needs
+   the dangerous-direct-browser-access header, which exists precisely for
+   the bring-your-own-key case. The key never leaves this browser except
+   in the request to Anthropic itself. */
+const DIRECT_URL = 'https://api.anthropic.com/v1/messages';
+const DIRECT_MODEL = 'claude-opus-5';
+
+/* Mirrors the persona in server/jarvis.js — replies are spoken aloud,
+   so they must be speech, not formatted prose. */
+const JARVIS_SYSTEM = [
+  'You are JARVIS, a voice assistant running as a heads-up display on the user\'s own machine.',
+  '',
+  'Your replies are read aloud by a speech synthesiser, so:',
+  '  • Write plain spoken English — no markdown, bullet points, headings, asterisks, emoji or code fences.',
+  '  • Keep it to one to three sentences unless the user asks for depth.',
+  '  • Say numbers the way a person would say them out loud.',
+  '  • Never describe what you are about to do; just answer.',
+  '',
+  'Manner: precise, dry, quietly witty, unhurried. Address the user directly.',
+  'You are competent and calm, never sycophantic and never apologetic without cause.',
+  '',
+  'The HUD already handles time, date, battery, network, hardware, timers, notes,',
+  'arithmetic, unit conversion and date countdowns on-device — those never reach you.',
+  'You get everything else: questions, reasoning, writing, explanations, advice, conversation.',
+  '',
+  'A live telemetry snapshot of the user\'s machine is attached to each message.',
+  'Use it when it is relevant and ignore it when it is not. Do not read it back',
+  'verbatim, and do not mention that it was attached.'
+].join('\n');
+
+let userKey = '';
+try { userKey = localStorage.getItem('jarvis.key') || ''; } catch (_) {}
+
+function renderBrain() {
+  const live = J.bridge || !!userKey;
+  const source = J.bridge ? 'the bridge' : userKey ? 'your key' : '';
+  $('brainTag').textContent = live ? 'claude' : 'local';
+  $('brainSetup').hidden = live;
+  $('brainLive').hidden = !live;
+  if (live) $('brainSource').textContent = source;
+  $('brainEmbedded').hidden = live || !embedded;
+  $('mastBrain').innerHTML = (live ? 'claude' : 'local') + '<small>brain</small>';
+  if (live) { const n = $('brainNote'); if (n) n.hidden = true; }
+}
+
+$('keyForm').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const v = $('keyIn').value.trim();
+  if (!v) return;
+  userKey = v;
+  try { localStorage.setItem('jarvis.key', v); } catch (_) {}
+  $('keyIn').value = '';
+  renderBrain();
+  say('sys', 'Key stored in this browser. Claude is on the line.', true);
+  say('jarvis', 'Connected. Ask me anything now.');
+});
+
+$('btnForgetKey').addEventListener('click', () => {
+  userKey = '';
+  try { localStorage.removeItem('jarvis.key'); } catch (_) {}
+  renderBrain();
+  showBrainNote();
+  say('sys', 'Key forgotten — removed from this browser.', true);
+});
+
+async function askClaudeDirect(text) {
+  setMode('thinking');
+  const messages = J.history.slice(-12)
+    .filter(m => m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string')
+    .concat([{ role: 'user', content: text + '\n\n<telemetry>\n' + contextForClaude() + '\n</telemetry>' }]);
+
+  const res = await fetch(DIRECT_URL, {
+    method: 'POST',
+    headers: {
+      'content-type': 'application/json',
+      'x-api-key': userKey,
+      'anthropic-version': '2023-06-01',
+      'anthropic-dangerous-direct-browser-access': 'true'
+    },
+    body: JSON.stringify({
+      model: DIRECT_MODEL,
+      max_tokens: 1024,
+      system: JARVIS_SYSTEM,
+      thinking: { type: 'adaptive' },
+      output_config: { effort: 'low' },
+      messages
+    })
+  });
+
+  if (!res.ok) {
+    let detail = '';
+    try { detail = (await res.json()).error.message || ''; } catch (_) {}
+    if (res.status === 401) throw new Error('Anthropic rejected that key.');
+    if (res.status === 429) throw new Error('Rate limited — give it a moment.');
+    throw new Error(detail || ('Anthropic returned ' + res.status));
+  }
+
+  const data = await res.json();
+  if (data.stop_reason === 'refusal') return 'I would rather not answer that one.';
+  return (data.content || [])
+    .filter(b => b.type === 'text')
+    .map(b => b.text)
+    .join(' ')
+    .replace(/\s+/g, ' ')
+    .trim() || 'I have nothing useful to add to that.';
+}
+
 async function askClaude(text) {
+  if (!J.bridge && userKey) return askClaudeDirect(text);
   setMode('thinking');
   const res = await fetch(BRIDGE + '/chat', {
     method: 'POST',
@@ -1862,9 +2018,9 @@ async function respond(text) {
     return;
   }
 
-  if (!J.bridge) await checkBridge();
+  if (!J.bridge && !userKey) await checkBridge();
 
-  if (!J.bridge) {
+  if (!J.bridge && !userKey) {
     // Say the how-to-fix once. After that it lives on screen in the
     // console panel — repeating setup instructions at every question is
     // no use to anyone who has already heard them.
@@ -1884,8 +2040,10 @@ async function respond(text) {
     J.history.push({ role: 'user', content: text }, { role: 'assistant', content: reply });
     say('jarvis', reply);
   } catch (err) {
-    say('sys', 'Bridge error: ' + err.message, true);
-    say('jarvis', 'The link to Claude dropped. I am still here on local systems.');
+    say('sys', 'Claude error: ' + err.message, true);
+    say('jarvis', /key/i.test(err.message)
+      ? 'That key was refused. Put a working one in the Brain panel and I will try again.'
+      : 'The link to Claude dropped. I am still here on local systems.');
   } finally {
     if (J.mode === 'thinking') setMode(listening ? 'listening' : 'idle');
   }
@@ -2013,20 +2171,20 @@ setInterval(renderClock, 1000);
   }
 
   const bridge = await checkBridge();
-  if (bridge) {
-    say('sys', 'Claude bridge online — full conversation available.', true);
-  } else {
+  const thinking = bridge || !!userKey;
+  if (bridge) say('sys', 'Claude bridge online — full conversation available.', true);
+  else if (userKey) say('sys', 'Using your own key — Claude is on the line.', true);
+  else {
     say('sys', 'Local brain only — every built-in command works.', true);
     showBrainNote();
   }
 
   setMode('idle');
-  const greeting = bridge
-    ? 'Good ' + (new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 18 ? 'afternoon' : 'evening') +
-      '. All systems online and Claude is on the line. What do you need?'
-    : 'Good ' + (new Date().getHours() < 12 ? 'morning' : new Date().getHours() < 18 ? 'afternoon' : 'evening') +
-      '. All systems online. Press start listening, or just type.';
-  say('jarvis', greeting);
+  const h = new Date().getHours();
+  const part = 'Good ' + (h < 12 ? 'morning' : h < 18 ? 'afternoon' : 'evening');
+  say('jarvis', thinking
+    ? part + '. All systems online and Claude is on the line. What do you need?'
+    : part + '. All systems online. Press start listening, or just type.');
 })();
 </script>
 </body>
