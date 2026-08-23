@@ -171,7 +171,21 @@ flares while speaking, and turns amber with a counter-rotating ring while thinki
 | Variable | Effect |
 |---|---|
 | `ANTHROPIC_API_KEY` | Turns the Claude bridge on. Without it the HUD runs on its local command set. |
-| `JARVIS_MODEL` | Which model answers. Defaults to `claude-opus-5`. |
+| `JARVIS_MODEL` | Which model answers by default. Defaults to `claude-opus-5`. |
+
+### Which model, and whether he can search
+
+The Brain panel picks the model per browser — Opus 5 (sharpest, roughly 1–2¢ a
+question), Sonnet 5 (about half that), or Haiku 4.5 (about a fifth). The choice
+is remembered on that device. The bridge accepts only those three from the
+browser and falls back to `JARVIS_MODEL` for anything else, so a page can't bill
+your key against a model you didn't choose.
+
+**Web search** is on by default. Without it he answers from training alone, which
+means anything about "right now" comes back confidently out of date. Anthropic
+runs the search and returns results in the same response; a long search can pause
+the turn, which both the bridge and the browser path continue automatically.
+Searches add a little cost per use, so the toggle is there if you'd rather not.
 
 The bridge sends a short telemetry snapshot (time, battery, network, hardware,
 timer and note counts) with each message so answers can account for the state of
