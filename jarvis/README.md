@@ -68,6 +68,11 @@ word for one sentence. There's a text box too, for when a mic isn't practical.
 
 | Say | What happens |
 |---|---|
+| "made 250 from a break" | logs it against this month, this year and all time |
+| "how are we doing" | earnings and every goal's progress, spoken |
+| "put 200 toward the Rolex" | adds to that goal's own fund |
+| "set the Rolex target to 9000" | changes what a goal is aiming at |
+| "goals" | reads each one back with how far off it is |
 | "what time is it" / "what's the date" | spoken time and date |
 | "status report" | full spoken diagnostic of power, uplink, hardware, frame rate |
 | "what's my battery" | charge, source, and time remaining |
@@ -159,6 +164,22 @@ on load. JARVIS holds the line and shows **"Click anywhere to give JARVIS his
 voice"** — one click anywhere and he speaks it, and stays audible from then on.
 
 ---
+
+## Earnings and goals
+
+Log what you make — by voice, or in the **Earnings** panel — and JARVIS keeps the
+running totals for this month, this year and all time, plus your best month so
+far. **Goals** sits underneath, each with a bar showing how close you are.
+
+Three goals are there to begin with: a first $10k month, a Rolex, and a first
+$100k year. A goal counts one of three things: **this month's** earnings, **this
+year's**, or **its own fund** you add to deliberately — which is how the Rolex
+works, since money you earn isn't money you've set aside. The Rolex target starts
+at $10,000 as a placeholder; set yours with *"set the Rolex target to 9000"*.
+
+Add or remove goals in the panel. Everything is stored in that browser and goes
+nowhere else — though when you ask JARVIS something that needs Claude, the totals
+ride along in the telemetry note so he can answer sensibly about them.
 
 ## What's actually on the display
 
