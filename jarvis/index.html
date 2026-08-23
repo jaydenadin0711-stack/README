@@ -234,9 +234,9 @@ body::after {
 #reactor {
   display: block;
   width: 100%;
-  max-width: 420px;
+  max-width: 640px;   /* wider than tall: the core sits centre, stems reach out */
   height: auto;
-  aspect-ratio: 1 / 1;
+  aspect-ratio: 1240 / 840;
 }
 .state-line {
   text-align: center;
@@ -408,6 +408,57 @@ a.btn:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
   padding: 1px 4px;
 }
 
+/* ---------- money + goals ---------- */
+.figure { display: flex; align-items: baseline; gap: 8px; padding: 2px 0 8px; }
+.figure .big {
+  font-family: var(--mono);
+  font-size: 26px;
+  font-weight: 700;
+  color: var(--green);
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -.02em;
+}
+.figure .cap {
+  font-size: 10px;
+  letter-spacing: .14em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+
+.goal { padding: 8px 0; }
+.goal + .goal { border-top: 1px dashed var(--line-soft); }
+.goal-head { display: flex; justify-content: space-between; align-items: baseline; gap: 8px; }
+.goal-name { font-size: 12.5px; color: var(--text-strong); flex: 1; min-width: 0; }
+.goal-num {
+  font-family: var(--mono);
+  font-size: 11px;
+  color: var(--muted);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+}
+.goal-foot {
+  display: flex;
+  justify-content: space-between;
+  margin-top: 4px;
+  font-family: var(--mono);
+  font-size: 10px;
+  color: var(--muted);
+}
+.goal.hit .goal-name { color: var(--green); }
+.goal.hit .goal-num { color: var(--green); }
+.goal .drop {
+  background: none;
+  border: 0;
+  color: #35606f;
+  font-size: 14px;
+  line-height: 1;
+  padding: 0 2px;
+  cursor: pointer;
+  letter-spacing: 0;
+}
+.goal .drop:hover { color: var(--red); background: none; }
+.meter > i.green { background: linear-gradient(90deg, #1c7a55, var(--green)); }
+
 .dot {
   display: inline-block;
   width: 6px; height: 6px;
@@ -483,6 +534,43 @@ label.toggle input { accent-color: var(--cyan); width: 14px; height: 14px; curso
   <div class="rail">
 
     <section class="panel">
+      <div class="panel-head"><span>Earnings</span><span class="tag" id="moneyTag">—</span></div>
+      <div class="figure">
+        <span class="big" id="moneyMonth">$0</span>
+        <span class="cap">this month</span>
+      </div>
+      <div class="row"><span class="k">This year</span><span class="v" id="moneyYear">$0</span></div>
+      <div class="row"><span class="k">All time</span><span class="v" id="moneyAll">$0</span></div>
+      <div class="row"><span class="k">Best month</span><span class="v" id="moneyBest">—</span></div>
+      <form class="composer" id="moneyForm" style="margin-top:10px">
+        <input id="moneyAmount" inputmode="decimal" placeholder="250" aria-label="Amount earned">
+        <button type="submit">Log</button>
+      </form>
+      <input id="moneyLabel" placeholder="what for (optional)" aria-label="What the money was for"
+             style="width:100%;margin-top:6px;font-family:var(--mono);font-size:12px;color:var(--text-strong);background:#020f16;border:1px solid var(--line);padding:8px 10px">
+      <div class="list" id="moneyList" style="margin-top:10px"><div class="empty">nothing logged yet</div></div>
+      <button id="btnUndoMoney" class="ghost" style="margin-top:8px" hidden>Undo last</button>
+    </section>
+
+    <section class="panel">
+      <div class="panel-head"><span>Goals</span><span class="tag" id="goalTag">—</span></div>
+      <div id="goalList"></div>
+      <form id="goalForm" style="margin-top:10px;display:flex;flex-direction:column;gap:6px">
+        <input id="goalName" placeholder="new goal" aria-label="Goal name"
+               style="font-family:var(--ui);font-size:12px;color:var(--text-strong);background:#020f16;border:1px solid var(--line);padding:8px 10px">
+        <div class="composer">
+          <input id="goalTarget" inputmode="decimal" placeholder="target $" aria-label="Goal target">
+          <select id="goalType" aria-label="What counts toward it" style="width:auto">
+            <option value="month">this month</option>
+            <option value="year">this year</option>
+            <option value="fund">its own fund</option>
+          </select>
+        </div>
+        <button type="submit">Add goal</button>
+      </form>
+    </section>
+
+    <section class="panel">
       <div class="panel-head"><span>Power</span><span class="tag" id="powerTag">--</span></div>
       <div class="row"><span class="k">Charge</span><span class="v" id="battPct">—</span></div>
       <div class="meter"><i id="battBar"></i></div>
@@ -522,7 +610,7 @@ label.toggle input { accent-color: var(--cyan); width: 14px; height: 14px; curso
 
     <section class="panel">
       <div class="reactor-wrap">
-        <canvas id="reactor" width="840" height="840" aria-label="Assistant status core"></canvas>
+        <canvas id="reactor" width="1240" height="840" aria-label="Assistant status core"></canvas>
       </div>
       <p class="note calm" id="voiceLock" hidden>
         <b>Click anywhere to give JARVIS his voice.</b> Browsers keep a page silent until you interact with it —
@@ -665,6 +753,9 @@ label.toggle input { accent-color: var(--cyan); width: 14px; height: 14px; curso
         <b>Jarvis, note — order more sleeves</b><br>
         <b>Jarvis, what's 18 percent of 240</b><br>
         <b>Jarvis, 5 miles in km</b> — or 20 c in f<br>
+        <b>Jarvis, made 250 from a break</b> — logs it<br>
+        <b>Jarvis, how are we doing</b> — money and goals<br>
+        <b>Jarvis, put 200 toward the Rolex</b><br>
         <b>Jarvis, any new mail</b> — Claude-hosted copy<br>
         <b>Jarvis, how long until Christmas</b><br>
         <b>Jarvis, when is sunset</b><br>
@@ -733,6 +824,136 @@ const reduceMotion = matchMedia('(prefers-reduced-motion: reduce)').matches;
 const SEGMENTS = 64;
 const segEnergy = new Array(SEGMENTS).fill(0);
 
+/* ---------- branching stems ----------
+   Circuit traces running off the core into the space either side. Laid
+   out once from a fixed seed so they never twitch between frames, and
+   sized as a fraction of the room available so nothing runs off-canvas. */
+function seeded(a) {
+  return function () {
+    a |= 0; a = a + 0x6D2B79F5 | 0;
+    let t = Math.imul(a ^ a >>> 15, 1 | a);
+    t = t + Math.imul(t ^ t >>> 7, 61 | t) ^ t;
+    return ((t ^ t >>> 14) >>> 0) / 4294967296;
+  };
+}
+
+const STEMS = (() => {
+  const rnd = seeded(20260823);
+  const out = [];
+  for (let i = 0; i < 16; i++) {
+    const right = i % 2 === 0;
+    // clustered around the horizontal, where the canvas is widest
+    const spread = (rnd() - 0.5) * 1.5;
+    out.push({
+      angle: (right ? 0 : Math.PI) + spread,
+      right,
+      reach: rnd(),
+      drop: (rnd() - 0.5) * 1.6,
+      speed: 0.25 + rnd() * 0.45,
+      phase: rnd(),
+      cap: rnd() < 0.55 ? 'box' : 'dot',
+      rungs: rnd() < 0.4
+    });
+  }
+  return out;
+})();
+
+function stemPoints(s, cx, cy, R, W, H) {
+  const dir = s.right ? 1 : -1;
+  const x0 = cx + Math.cos(s.angle) * R * 1.03;
+  const y0 = cy + Math.sin(s.angle) * R * 1.03;
+  const avail = (s.right ? W - x0 : x0) - W * 0.02;
+  if (avail <= 0) return null;
+
+  const l1 = avail * (0.24 + s.reach * 0.24);
+  const jog = avail * 0.12;
+  const l2 = avail * (0.14 + s.reach * 0.2);
+  const y1 = clamp(y0 + s.drop * H * 0.16, H * 0.05, H * 0.95);
+
+  return [
+    [x0, y0],
+    [x0 + dir * l1, y0],
+    [x0 + dir * (l1 + jog), y1],
+    [x0 + dir * (l1 + jog + l2), y1]
+  ];
+}
+
+function drawStems(cx, cy, R, W, H, drive, hot) {
+  for (let i = 0; i < STEMS.length; i++) {
+    const s = STEMS[i];
+    const pts = stemPoints(s, cx, cy, R, W, H);
+    if (!pts) continue;
+
+    // the trace itself
+    ctx.beginPath();
+    ctx.moveTo(pts[0][0], pts[0][1]);
+    for (let j = 1; j < pts.length; j++) ctx.lineTo(pts[j][0], pts[j][1]);
+    ctx.strokeStyle = '#0d3a4d';
+    ctx.globalAlpha = 0.55 + drive * 0.3;
+    ctx.lineWidth = 1.5;
+    ctx.stroke();
+    ctx.globalAlpha = 1;
+
+    // ladder rungs on some runs, like ribbon cable
+    if (s.rungs) {
+      const a = pts[1], b = pts[0];
+      const steps = 5;
+      ctx.strokeStyle = '#0d3a4d';
+      ctx.globalAlpha = 0.5;
+      ctx.lineWidth = 1;
+      for (let k = 1; k < steps; k++) {
+        const x = b[0] + (a[0] - b[0]) * (k / steps);
+        ctx.beginPath();
+        ctx.moveTo(x, b[1] - H * 0.012);
+        ctx.lineTo(x, b[1] + H * 0.012);
+        ctx.stroke();
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    // terminal fitting
+    const end = pts[pts.length - 1];
+    ctx.strokeStyle = hot;
+    ctx.globalAlpha = 0.5 + drive * 0.5;
+    ctx.lineWidth = 1.5;
+    if (s.cap === 'box') {
+      const w = W * 0.022, h = H * 0.016;
+      ctx.strokeRect(end[0] - (s.right ? 0 : w), end[1] - h / 2, w, h);
+    } else {
+      ctx.beginPath();
+      ctx.arc(end[0], end[1], W * 0.007, 0, Math.PI * 2);
+      ctx.stroke();
+    }
+    ctx.globalAlpha = 1;
+
+    // a charge running out along the trace
+    const seg = [];
+    let total = 0;
+    for (let j = 1; j < pts.length; j++) {
+      const d = Math.hypot(pts[j][0] - pts[j - 1][0], pts[j][1] - pts[j - 1][1]);
+      seg.push(d); total += d;
+    }
+    const f = ((t * s.speed + s.phase) % 1);
+    let want = f * total, k = 0;
+    while (k < seg.length && want > seg[k]) { want -= seg[k]; k++; }
+    if (k < seg.length) {
+      const a = pts[k], b = pts[k + 1];
+      const u = seg[k] ? want / seg[k] : 0;
+      const px = a[0] + (b[0] - a[0]) * u;
+      const py = a[1] + (b[1] - a[1]) * u;
+      const glow = ctx.createRadialGradient(px, py, 0, px, py, W * 0.012);
+      glow.addColorStop(0, hot);
+      glow.addColorStop(1, 'rgba(34,211,238,0)');
+      ctx.fillStyle = glow;
+      ctx.globalAlpha = 0.35 + drive * 0.65;
+      ctx.beginPath();
+      ctx.arc(px, py, W * 0.012, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+  }
+}
+
 let frames = 0, fpsMark = performance.now(), t = 0;
 
 function ring(cx, cy, r, w, color, from, to, alpha) {
@@ -748,7 +969,7 @@ function ring(cx, cy, r, w, color, from, to, alpha) {
 function drawReactor(now) {
   const W = cv.width, H = cv.height;
   const cx = W / 2, cy = H / 2;
-  const R = W * 0.44;
+  const R = H * 0.44;          // keyed to height, so the core is unchanged
   const TAU = Math.PI * 2;
 
   if (!reduceMotion) t = now / 1000;
@@ -770,6 +991,9 @@ function drawReactor(now) {
   halo.addColorStop(1, 'rgba(34,211,238,0)');
   ctx.fillStyle = halo;
   ctx.fillRect(0, 0, W, H);
+
+  // --- stems, behind the ring so the core stays the focus ---
+  drawStems(cx, cy, R, W, H, drive, hot);
 
   // --- outer bezel + rotating gap ring ---
   ring(cx, cy, R, 2, '#0d3a4d', 0, TAU, 1);
@@ -1702,7 +1926,7 @@ function localBrain(raw) {
   if (/\b(who are you|what are you|your name)\b/.test(q))
     return 'I am Jarvis — a voice interface running entirely in your browser. I read this machine\'s own telemetry, and for anything beyond that I pass the question to Claude.';
   if (/\b(what can you do|help|commands|capabilities)\b/.test(q))
-    return 'I can report the time and date, battery, network, hardware and heap, run diagnostics, set timers, take notes, do arithmetic, convert units, count the days to a date, read out your unread mail where I can reach it, and tell you sunrise, sunset and the moon phase. Anything else I hand to Claude when the bridge is running.';
+    return 'I keep your earnings and goals — tell me what you made and ask how we are doing. I also report the time and date, battery, network, hardware and heap, run diagnostics, set timers, take notes, do arithmetic, convert units, count the days to a date, read out your unread mail where I can reach it, and tell you sunrise, sunset and the moon phase. Anything else I hand to Claude when the bridge is running.';
 
   if (/\b(time|clock)\b/.test(q) && !/timer/.test(q))
     return 'It is ' + now.toLocaleTimeString(undefined, { hour: 'numeric', minute: '2-digit' }) + '.';
@@ -1732,6 +1956,66 @@ function localBrain(raw) {
     }
     return s + '.';
   }
+
+  /* ---- money and goals ---- */
+
+  // "made 250", "earned 1,200 from a break", "log 45.50" — but not
+  // "add 5 minutes", which belongs to the timer.
+  const earn = raw.match(/\b(?:made|earned|took in|banked|log|logged|add)\b\s*\$?\s*([\d,]+(?:\.\d{1,2})?)\s*(?:dollars?|bucks?)?\b(?!\s*(?:seconds?|secs?|minutes?|mins?|hours?|hrs?)\b)(.*)$/i);
+  if (earn && !/\btimer\b/i.test(raw)) {
+    const amount = parseFloat(earn[1].replace(/,/g, ''));
+    if (isFinite(amount) && amount > 0) {
+      const label = (earn[2] || '').replace(/^\s*(?:from|for|off|on|doing|selling)\s+/i, '').replace(/[.!?]+$/, '').trim();
+      logEarning(amount, label);
+      return 'Logged ' + spokenMoney(amount) + (label ? ' from ' + label : '') + '. ' + monthLine();
+    }
+  }
+
+  // "put 200 toward the rolex"
+  const toward = raw.match(/\b(?:put|add|move|save)\b\s*\$?\s*([\d,]+(?:\.\d{1,2})?)\s*(?:dollars?|bucks?)?\s*(?:toward|towards|to|into|on)\s+(?:the\s+|my\s+)?(.+)$/i);
+  if (toward) {
+    const amount = parseFloat(toward[1].replace(/,/g, ''));
+    const name = toward[2].replace(/[.!?]+$/, '').trim().toLowerCase();
+    const g = findGoal(name);
+    if (g && isFinite(amount)) {
+      if (g.type !== 'fund') return g.name + ' tracks your earnings, so it has no separate fund to add to.';
+      g.fund = (g.fund || 0) + amount;
+      saveMoney();
+      const left = g.target - g.fund;
+      return spokenMoney(amount) + ' into ' + g.name + '. ' +
+        (left > 0 ? spokenMoney(left) + ' to go.' : 'That is the whole thing — go and buy it.');
+    }
+    if (isFinite(amount)) return 'I have no goal called ' + name + '.';
+  }
+
+  // "set the rolex target to 9000" / "set the target for the rolex to 9000"
+  const retarget =
+    raw.match(/\bset\b\s+(?:the\s+|my\s+)?(.+?)\s+(?:target|goal)\s+(?:to|at)\s+\$?\s*([\d,]+(?:\.\d{1,2})?)/i) ||
+    raw.match(/\bset\b\s+(?:the\s+|my\s+)?(?:target|goal)\s+(?:for|on)\s+(.+?)\s+(?:to|at)\s+\$?\s*([\d,]+(?:\.\d{1,2})?)/i);
+  if (retarget) {
+    const amount = parseFloat(retarget[2].replace(/,/g, ''));
+    const g = findGoal(retarget[1]);
+    if (g && isFinite(amount) && amount > 0) {
+      g.target = amount;
+      saveMoney();
+      return g.name + ' target set to ' + spokenMoney(amount) + '.';
+    }
+  }
+
+  if (/\b(how (are )?we doing|how am i doing|how('s| is) (it going|business|the money|everything)|how much (have i |did i )?(made|make|earned|earn)|where (am i|are we) at)\b/.test(q)) {
+    return howAreWeDoing();
+  }
+  if (/\b(goals?|targets?)\b/.test(q) && !/\badd\b/.test(q)) {
+    if (!goals.length) return 'You have no goals set.';
+    return goals.map(g => {
+      const now = goalProgress(g);
+      if (g.target <= 0) return g.name;
+      if (now >= g.target) return g.name + ', done';
+      return g.name + ', ' + Math.round((now / g.target) * 100) + ' percent, ' + spokenMoney(g.target - now) + ' to go';
+    }).join('. ') + '.';
+  }
+  if (/\b(this month|month so far)\b/.test(q)) return 'You are at ' + spokenMoney(monthTotal()) + ' this month.';
+  if (/\b(this year|year so far)\b/.test(q)) return 'You are at ' + spokenMoney(yearTotal()) + ' this year.';
 
   if (/\b(status|diagnostic|systems|report|how are you)\b/.test(q)) {
     setMode('thinking');
@@ -1880,7 +2164,11 @@ function contextForClaude() {
     'Network: ' + (navigator.onLine ? 'online' + (c.effectiveType ? ' (' + c.effectiveType + ', ' + (c.downlink || '?') + ' Mbps)' : '') : 'offline'),
     'Hardware: ' + (navigator.hardwareConcurrency || '?') + ' cores, ' + (navigator.deviceMemory || '?') + ' GB, ' + screen.width + '×' + screen.height,
     'Active timers: ' + timers.filter(t => !t.fired).length,
-    'Saved notes: ' + notes.length
+    'Saved notes: ' + notes.length,
+    'Earnings: ' + fmtMoney(monthTotal()) + ' this month, ' + fmtMoney(yearTotal()) + ' this year',
+    'Goals: ' + (goals.length
+      ? goals.map(g => g.name + ' ' + fmtMoney(goalProgress(g)) + '/' + fmtMoney(g.target)).join('; ')
+      : 'none set')
   ];
   if (J.coords) {
     const s = sunTimes(new Date(), J.coords.lat, J.coords.lng);
@@ -2190,6 +2478,251 @@ function showMailDiag(text) {
   const d = $('mailDiag');
   d.hidden = false;
   d.textContent = text;
+}
+
+/* ============================================================
+   7a. MONEY AND GOALS
+   What you earned, and how close that puts you. Both live in this
+   browser only — nothing is uploaded, and nothing here reaches Claude
+   unless you ask him something that needs it.
+   ============================================================ */
+const fmtMoney = (n) => '$' + Number(n).toLocaleString('en-US',
+  { minimumFractionDigits: n % 1 ? 2 : 0, maximumFractionDigits: 2 });
+/* Speech synthesisers read "$3,200" unevenly, and read trailing decimals
+   as "point five" — so say the word, and drop the pennies once the
+   figure is big enough that nobody would say them aloud. */
+const spokenMoney = (n) => {
+  const v = Number(n);
+  const round = Math.abs(v) >= 100 ? Math.round(v) : v;
+  return round.toLocaleString('en-US',
+    { minimumFractionDigits: round % 1 ? 2 : 0, maximumFractionDigits: 2 }) + ' dollars';
+};
+
+/* Goal names are spoken, so they arrive without punctuation and with
+   stray articles — "the first 10k month" for "First $10k month". */
+const normGoal = (s) => String(s).toLowerCase()
+  .replace(/[^a-z0-9 ]+/g, ' ')
+  .replace(/\b(the|my|a|an|first|to|for)\b/g, ' ')
+  .replace(/\s+/g, ' ').trim();
+
+function findGoal(q) {
+  const n = normGoal(q);
+  if (!n) return null;
+  const hits = goals.filter(g => {
+    const gn = normGoal(g.name);
+    return gn && (gn.indexOf(n) !== -1 || n.indexOf(gn) !== -1);
+  });
+  return hits[0] || null;
+}
+
+let earnings = [];
+let goals = [];
+
+try { earnings = JSON.parse(localStorage.getItem('jarvis.earnings') || '[]'); } catch (_) { earnings = []; }
+try { goals = JSON.parse(localStorage.getItem('jarvis.goals') || 'null') || []; } catch (_) { goals = []; }
+
+if (!goals.length) {
+  // Seeded with the three you named. Targets are editable — the Rolex
+  // figure is a placeholder until you set what yours actually costs.
+  goals = [
+    { id: 'g1', name: 'First $10k month', target: 10000, type: 'month', fund: 0 },
+    { id: 'g2', name: 'Rolex', target: 10000, type: 'fund', fund: 0 },
+    { id: 'g3', name: 'First $100k year', target: 100000, type: 'year', fund: 0 }
+  ];
+}
+
+function saveMoney() {
+  try {
+    localStorage.setItem('jarvis.earnings', JSON.stringify(earnings));
+    localStorage.setItem('jarvis.goals', JSON.stringify(goals));
+  } catch (_) {}
+  renderMoney();
+  renderGoals();
+}
+
+const sameMonth = (d, ref) => d.getFullYear() === ref.getFullYear() && d.getMonth() === ref.getMonth();
+const sumWhere = (test) => earnings.reduce((n, e) => {
+  const d = new Date(e.at);
+  return test(d) ? n + e.amount : n;
+}, 0);
+
+function monthTotal(ref) { const r = ref || new Date(); return sumWhere(d => sameMonth(d, r)); }
+function yearTotal(ref) { const r = ref || new Date(); return sumWhere(d => d.getFullYear() === r.getFullYear()); }
+function allTotal() { return earnings.reduce((n, e) => n + e.amount, 0); }
+
+function bestMonth() {
+  const by = {};
+  earnings.forEach(e => {
+    const d = new Date(e.at);
+    const k = d.getFullYear() + '-' + pad2(d.getMonth() + 1);
+    by[k] = (by[k] || 0) + e.amount;
+  });
+  let bk = null, bv = 0;
+  Object.keys(by).forEach(k => { if (by[k] > bv) { bv = by[k]; bk = k; } });
+  return bk ? { key: bk, total: bv } : null;
+}
+
+function goalProgress(g) {
+  if (g.type === 'month') return monthTotal();
+  if (g.type === 'year') return yearTotal();
+  return g.fund || 0;
+}
+
+function renderMoney() {
+  const m = monthTotal(), y = yearTotal(), a = allTotal();
+  $('moneyMonth').textContent = fmtMoney(m);
+  $('moneyYear').textContent = fmtMoney(y);
+  $('moneyAll').textContent = fmtMoney(a);
+  $('moneyTag').textContent = earnings.length + (earnings.length === 1 ? ' entry' : ' entries');
+
+  const best = bestMonth();
+  if (best) {
+    const [yy, mm] = best.key.split('-');
+    const label = new Date(+yy, +mm - 1, 1).toLocaleDateString(undefined, { month: 'short', year: 'numeric' });
+    $('moneyBest').textContent = fmtMoney(best.total) + ' · ' + label;
+  } else {
+    $('moneyBest').textContent = '—';
+  }
+
+  const list = $('moneyList');
+  $('btnUndoMoney').hidden = !earnings.length;
+  if (!earnings.length) { list.innerHTML = '<div class="empty">nothing logged yet</div>'; return; }
+  list.innerHTML = '';
+  earnings.slice(-5).reverse().forEach(e => {
+    const row = document.createElement('div');
+    row.className = 'item';
+    const left = document.createElement('span');
+    left.textContent = e.label || 'logged';
+    const right = document.createElement('span');
+    right.className = 't';
+    right.textContent = fmtMoney(e.amount) + ' · ' + new Date(e.at).toLocaleDateString(undefined, { day: 'numeric', month: 'short' });
+    row.append(left, right);
+    list.appendChild(row);
+  });
+}
+
+function renderGoals() {
+  const box = $('goalList');
+  box.innerHTML = '';
+  let hit = 0;
+  goals.forEach(g => {
+    const now = goalProgress(g);
+    const pct = g.target > 0 ? clamp((now / g.target) * 100, 0, 100) : 0;
+    const done = g.target > 0 && now >= g.target;
+    if (done) hit++;
+
+    const el = document.createElement('div');
+    el.className = 'goal' + (done ? ' hit' : '');
+
+    // Name gets the whole first line — targets go underneath, or long
+    // names wrap around the figures and the row falls apart.
+    const head = document.createElement('div');
+    head.className = 'goal-head';
+    const name = document.createElement('span');
+    name.className = 'goal-name';
+    name.textContent = g.name;
+    head.appendChild(name);
+
+    const meter = document.createElement('div');
+    meter.className = 'meter';
+    const fill = document.createElement('i');
+    fill.className = done ? 'green' : '';
+    fill.style.width = pct.toFixed(1) + '%';
+    meter.appendChild(fill);
+
+    const foot = document.createElement('div');
+    foot.className = 'goal-foot';
+    const left = document.createElement('span');
+    left.textContent = done ? 'reached' : Math.round(pct) + '% · ' + fmtMoney(g.target - now) + ' to go';
+    const right = document.createElement('span');
+    right.className = 'goal-num';
+    right.textContent = fmtMoney(now) + ' / ' + fmtMoney(g.target);
+    foot.append(left, right);
+
+    const drop = document.createElement('button');
+    drop.className = 'drop';
+    drop.type = 'button';
+    drop.title = 'Remove goal';
+    drop.textContent = '×';
+    drop.addEventListener('click', () => {
+      goals = goals.filter(x => x.id !== g.id);
+      saveMoney();
+      say('sys', 'Goal removed.', true);
+    });
+    head.appendChild(drop);
+
+    el.append(head, meter, foot);
+    box.appendChild(el);
+  });
+  $('goalTag').textContent = goals.length ? hit + ' of ' + goals.length + ' hit' : 'none set';
+}
+
+function logEarning(amount, label) {
+  earnings.push({ amount, label: (label || '').trim().slice(0, 80), at: new Date().toISOString() });
+  saveMoney();
+}
+
+$('moneyForm').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const n = parseFloat(String($('moneyAmount').value).replace(/[^0-9.\-]/g, ''));
+  if (!isFinite(n) || n === 0) return;
+  const label = $('moneyLabel').value;
+  $('moneyAmount').value = ''; $('moneyLabel').value = '';
+  logEarning(n, label);
+  say('jarvis', 'Logged ' + spokenMoney(n) + '. ' + monthLine());
+});
+
+$('btnUndoMoney').addEventListener('click', () => {
+  const last = earnings.pop();
+  saveMoney();
+  say('sys', last ? 'Removed ' + fmtMoney(last.amount) + '.' : 'Nothing to undo.', true);
+});
+
+$('goalForm').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const name = $('goalName').value.trim();
+  const target = parseFloat(String($('goalTarget').value).replace(/[^0-9.]/g, ''));
+  if (!name || !isFinite(target) || target <= 0) return;
+  goals.push({ id: 'g' + Date.now(), name, target, type: $('goalType').value, fund: 0 });
+  $('goalName').value = ''; $('goalTarget').value = '';
+  saveMoney();
+  say('jarvis', 'Goal added: ' + name + ', ' + spokenMoney(target) + '.');
+});
+
+renderMoney();
+renderGoals();
+
+/* ---- what he says about it ---- */
+function monthLine() {
+  const m = monthTotal();
+  const g = goals.filter(x => x.type === 'month')[0];
+  if (!g) return 'That is ' + spokenMoney(m) + ' this month.';
+  const left = g.target - m;
+  if (left <= 0) return 'That is ' + spokenMoney(m) + ' this month — ' + g.name + ' is done.';
+  return 'That puts you at ' + spokenMoney(m) + ' this month, ' +
+    Math.round((m / g.target) * 100) + ' percent of ' + g.name + '.';
+}
+
+function howAreWeDoing() {
+  if (!earnings.length) {
+    return 'Nothing logged yet. Tell me what you make — say "made two fifty" — and I will keep the running total and the goals.';
+  }
+  const m = monthTotal(), y = yearTotal();
+  const bits = ['You are at ' + spokenMoney(m) + ' this month and ' + spokenMoney(y) + ' this year.'];
+
+  goals.forEach(g => {
+    const now = goalProgress(g);
+    if (g.target <= 0) return;
+    if (now >= g.target) { bits.push(g.name + ' is done.'); return; }
+    const pct = Math.round((now / g.target) * 100);
+    bits.push(g.name + ' is ' + pct + ' percent there, ' + spokenMoney(g.target - now) + ' to go.');
+  });
+
+  const best = bestMonth();
+  if (best && best.total > m && m > 0) {
+    bits.push('Your best month so far was ' + spokenMoney(best.total) + '.');
+  }
+  return bits.join(' ');
 }
 
 /* ---------------- Gmail, signed in directly ----------------
