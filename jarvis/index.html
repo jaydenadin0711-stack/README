@@ -595,6 +595,30 @@ label.toggle input { accent-color: var(--cyan); width: 14px; height: 14px; curso
     </section>
 
     <section class="panel">
+      <div class="panel-head"><span>Leads</span><span class="tag" id="leadTag">—</span></div>
+      <p class="hint" style="margin:0 0 8px">Businesses near you with no website on record — from OpenStreetMap, free and no sign-in.</p>
+      <div class="composer">
+        <select id="leadKind" aria-label="Kind of business">
+          <option value="all">everything</option>
+          <option value="beauty">salons &amp; barbers</option>
+          <option value="food">food &amp; drink</option>
+          <option value="trades">trades &amp; repair</option>
+          <option value="auto">auto</option>
+        </select>
+        <select id="leadRadius" aria-label="How far out" style="width:auto">
+          <option value="2000">2 km</option>
+          <option value="5000" selected>5 km</option>
+          <option value="10000">10 km</option>
+          <option value="25000">25 km</option>
+        </select>
+      </div>
+      <button id="btnFindLeads" style="margin-top:8px">◎ Find leads</button>
+      <p class="note" id="leadNote" hidden></p>
+      <div class="list" id="leadList" style="margin-top:10px"><div class="empty">nothing searched yet</div></div>
+      <button id="btnCopyLeads" class="ghost" style="margin-top:8px" hidden>Copy list</button>
+    </section>
+
+    <section class="panel">
       <div class="panel-head"><span>Power</span><span class="tag" id="powerTag">--</span></div>
       <div class="row"><span class="k">Charge</span><span class="v" id="battPct">—</span></div>
       <div class="meter"><i id="battBar"></i></div>
@@ -661,6 +685,10 @@ label.toggle input { accent-color: var(--cyan); width: 14px; height: 14px; curso
           <code>localhost:3000/jarvis/</code> after <code>npm start</code>, which also gets you Claude.</p>
       </div>
       <p class="note calm" id="brainNote" hidden></p>
+      <div id="openBox" hidden style="margin-bottom:10px">
+        <p class="hint" style="margin:0 0 6px">Your browser blocked the pop-up, since I opened it without you clicking. This link works:</p>
+        <a id="openLink" class="btn" target="_blank" rel="noopener">↗ Open</a>
+      </div>
       <div id="draftBox" hidden>
         <div class="panel-head" style="margin-bottom:8px">
           <span>Draft</span><span class="tag" id="draftCount">—</span>
@@ -1989,7 +2017,72 @@ function diagnostics() {
 
 /* Returned when a command has already done everything, including any
    speaking — respond() must not add a line of its own. */
-const HANDLED = ' handled';
+const HANDLED = '__jarvis_handled__';
+
+/* ---------------- opening sites ----------------
+   A web page cannot start a desktop application — no browser permits
+   it. What it can do is open the site, which for these is the same
+   thing. A pop-up opened without a click is usually blocked, so when
+   that happens put a link on screen rather than failing quietly. */
+const SITES = {
+  facebook: 'https://www.facebook.com', fb: 'https://www.facebook.com',
+  instagram: 'https://www.instagram.com', insta: 'https://www.instagram.com', ig: 'https://www.instagram.com',
+  gmail: 'https://mail.google.com',
+  youtube: 'https://www.youtube.com', 'you tube': 'https://www.youtube.com',
+  tiktok: 'https://www.tiktok.com', 'tik tok': 'https://www.tiktok.com',
+  twitter: 'https://x.com',
+  whatsapp: 'https://web.whatsapp.com',
+  linkedin: 'https://www.linkedin.com',
+  reddit: 'https://www.reddit.com',
+  ebay: 'https://www.ebay.com',
+  amazon: 'https://www.amazon.com',
+  etsy: 'https://www.etsy.com',
+  canva: 'https://www.canva.com',
+  'google drive': 'https://drive.google.com', drive: 'https://drive.google.com',
+  'google docs': 'https://docs.google.com', docs: 'https://docs.google.com',
+  sheets: 'https://sheets.google.com',
+  calendar: 'https://calendar.google.com',
+  'google maps': 'https://maps.google.com', maps: 'https://maps.google.com',
+  chatgpt: 'https://chatgpt.com',
+  claude: 'https://claude.ai',
+  github: 'https://github.com',
+  stripe: 'https://dashboard.stripe.com',
+  paypal: 'https://www.paypal.com',
+  venmo: 'https://venmo.com',
+  'cash app': 'https://cash.app',
+  google: 'https://www.google.com'
+};
+
+function resolveSite(name) {
+  const n = String(name).toLowerCase().replace(/[.!?]+$/, '')
+    .replace(/^(the|my|up)\s+/, '').replace(/\s+(app|website|site|page|dot com)$/,'').trim();
+  if (!n) return null;
+  if (SITES[n]) return { url: SITES[n], label: titleCase(n) };
+  const key = Object.keys(SITES)
+    .filter(k => n.indexOf(k) !== -1)
+    .sort((a, b) => b.length - a.length)[0];
+  if (key) return { url: SITES[key], label: titleCase(key) };
+  const dom = n.match(/\b[a-z0-9-]+\.[a-z]{2,}\b/);   // "open dropkickcreative.com"
+  if (dom) return { url: 'https://' + dom[0], label: dom[0] };
+  return null;
+}
+
+function openSite(site) {
+  let win = null;
+  // Not 'noopener' in the features string: that makes window.open return
+  // null even when it worked, so every success reads as a blocked pop-up.
+  // Sever the link afterwards instead.
+  try { win = window.open(site.url, '_blank'); } catch (_) {}
+  if (win) {
+    try { win.opener = null; } catch (_) {}
+    return true;
+  }
+  const link = $('openLink');
+  link.href = site.url;
+  link.textContent = '↗ Open ' + site.label;
+  $('openBox').hidden = false;
+  return false;
+}
 
 /* -- the local intent table -- */
 function localBrain(raw) {
@@ -2200,6 +2293,19 @@ function localBrain(raw) {
   if (mathAsk !== q || /^[\d\s+\-*/^().]+$/.test(q)) {
     const r = calc(mathAsk);
     if (r !== null) return String(r);
+  }
+
+  // "open instagram", "pull up google maps", "open dropkickcreative.com"
+  const openAsk = raw.match(/^\s*(?:jarvis[,\s]*)?(?:open|launch|pull up|bring up|go to|take me to)\s+(.+)$/i);
+  if (openAsk) {
+    const site = resolveSite(openAsk[1]);
+    if (site) {
+      const opened = openSite(site);
+      return opened
+        ? 'Opening ' + site.label + '.'
+        : site.label + ' is ready — your browser blocked the pop-up, so press the link on screen.';
+    }
+    return 'I do not know a site called ' + openAsk[1].trim() + '. Give me the address and I will open it.';
   }
 
   if (/\b(read (it|that|the draft)( out| aloud)?|read it back)\b/.test(q)) {
@@ -2830,6 +2936,181 @@ function howAreWeDoing() {
   return bits.join(' ');
 }
 
+/* ============================================================
+   7c. LEADS
+   Businesses with no website recorded, from OpenStreetMap's public
+   Overpass endpoint. No key, no account, no billing. What it can
+   honestly say is "OSM has no website for this place" — not "this
+   place has no website"; some will have a page nobody added. Treat it
+   as a list to work through, not a verified fact.
+   ============================================================ */
+const OVERPASS = 'https://overpass-api.de/api/interpreter';
+
+const LEAD_KINDS = {
+  all: [
+    'nwr["shop"]["name"]',
+    'nwr["amenity"~"^(restaurant|cafe|fast_food|bar|pub|ice_cream|pharmacy|dentist|veterinary|car_wash|driving_school)$"]["name"]',
+    'nwr["craft"]["name"]',
+    'nwr["office"]["name"]'
+  ],
+  beauty: ['nwr["shop"~"^(hairdresser|beauty|tattoo|massage|nail)$"]["name"]'],
+  food: [
+    'nwr["amenity"~"^(restaurant|cafe|fast_food|bar|pub|ice_cream)$"]["name"]',
+    'nwr["shop"~"^(bakery|butcher|deli|greengrocer|confectionery)$"]["name"]'
+  ],
+  trades: [
+    'nwr["craft"]["name"]',
+    'nwr["shop"~"^(car_repair|hardware|doityourself|electronics_repair|locksmith)$"]["name"]'
+  ],
+  auto: [
+    'nwr["shop"~"^(car|car_repair|car_parts|tyres|motorcycle)$"]["name"]',
+    'nwr["amenity"~"^(fuel|car_wash)$"]["name"]'
+  ]
+};
+
+let leads = [];
+let leadsDone = {};
+try { leadsDone = JSON.parse(localStorage.getItem('jarvis.leadsDone') || '{}'); } catch (_) { leadsDone = {}; }
+
+function leadQuery(kind, lat, lon, radius) {
+  const parts = (LEAD_KINDS[kind] || LEAD_KINDS.all)
+    .map(sel => sel + '[!"website"][!"contact:website"](around:' + radius + ',' + lat + ',' + lon + ');')
+    .join('');
+  return '[out:json][timeout:25];(' + parts + ');out center 80;';
+}
+
+const titleCase = (s) => String(s || '').replace(/_/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
+
+function leadFrom(el) {
+  const tg = el.tags || {};
+  const kind = tg.shop || tg.amenity || tg.craft || tg.office || 'business';
+  const street = [tg['addr:housenumber'], tg['addr:street']].filter(Boolean).join(' ');
+  return {
+    id: el.type + '/' + el.id,
+    name: tg.name,
+    kind: titleCase(kind),
+    phone: tg.phone || tg['contact:phone'] || '',
+    address: street || tg['addr:full'] || tg['addr:city'] || '',
+    lat: el.lat || (el.center && el.center.lat),
+    lon: el.lon || (el.center && el.center.lon)
+  };
+}
+
+function renderLeads() {
+  const list = $('leadList');
+  $('leadTag').textContent = leads.length ? leads.length + ' found' : '—';
+  $('btnCopyLeads').hidden = !leads.length;
+  if (!leads.length) {
+    list.innerHTML = '<div class="empty">nothing searched yet</div>';
+    return;
+  }
+  list.innerHTML = '';
+  leads.forEach(l => {
+    const row = document.createElement('div');
+    row.className = 'item' + (leadsDone[l.id] ? ' done' : '');
+    row.style.flexDirection = 'column';
+    row.style.alignItems = 'stretch';
+
+    const head = document.createElement('label');
+    head.style.cssText = 'display:flex;gap:8px;align-items:flex-start;cursor:pointer';
+    const tick = document.createElement('input');
+    tick.type = 'checkbox';
+    tick.checked = !!leadsDone[l.id];
+    tick.style.cssText = 'accent-color:var(--cyan);margin-top:3px';
+    tick.addEventListener('change', () => {
+      if (tick.checked) leadsDone[l.id] = true; else delete leadsDone[l.id];
+      try { localStorage.setItem('jarvis.leadsDone', JSON.stringify(leadsDone)); } catch (_) {}
+      renderLeads();
+    });
+    const nm = document.createElement('span');
+    nm.textContent = l.name;
+    nm.style.cssText = 'flex:1;min-width:0;color:var(--text-strong)';
+    if (leadsDone[l.id]) nm.style.textDecoration = 'line-through';
+    head.append(tick, nm);
+
+    const sub = document.createElement('div');
+    sub.style.cssText = 'font-family:var(--mono);font-size:10.5px;color:var(--muted);margin:3px 0 0 22px;overflow-wrap:anywhere';
+    sub.textContent = [l.kind, l.phone, l.address].filter(Boolean).join(' · ');
+
+    row.append(head, sub);
+    list.appendChild(row);
+  });
+}
+
+async function findLeads(kindOverride) {
+  const kind = kindOverride || $('leadKind').value;
+  const radius = parseInt($('leadRadius').value, 10) || 5000;
+  const note = $('leadNote');
+
+  if (!J.coords) {
+    note.hidden = false;
+    note.className = 'note';
+    note.textContent = 'I need a position fix first — approve the location prompt.';
+    return new Promise(resolve => acquirePosition((err) => {
+      if (err || !J.coords) { note.textContent = err || 'No position, so I cannot search near you.'; resolve(null); }
+      else resolve(findLeads(kind));
+    }));
+  }
+
+  note.hidden = false;
+  note.className = 'note calm';
+  note.textContent = 'Asking OpenStreetMap…';
+  $('leadTag').textContent = 'searching';
+
+  try {
+    const res = await fetch(OVERPASS, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: 'data=' + encodeURIComponent(leadQuery(kind, J.coords.lat, J.coords.lon, radius)),
+      signal: AbortSignal.timeout ? AbortSignal.timeout(40000) : undefined
+    });
+    if (res.status === 429 || res.status === 504) throw new Error('busy');
+    if (!res.ok) throw new Error('status ' + res.status);
+
+    const data = await res.json();
+    const seen = {};
+    leads = (data.elements || [])
+      .map(leadFrom)
+      .filter(l => l.name && !seen[l.id] && (seen[l.id] = true));
+
+    renderLeads();
+    if (!leads.length) {
+      note.textContent = 'Nothing came back. Try a wider radius, or a different kind of business.';
+      return 'No businesses without a website in that radius. Try casting wider.';
+    }
+    note.hidden = true;
+    const withPhone = leads.filter(l => l.phone).length;
+    return leads.length + ' businesses with no website on record. ' +
+      withPhone + ' of them have a phone number. They are on the display — tick them off as you go.';
+  } catch (e) {
+    $('leadTag').textContent = 'failed';
+    note.className = 'note';
+    const m = String((e && e.message) || e);
+    if (/busy/.test(m)) note.textContent = 'OpenStreetMap\'s free server is busy — it throttles heavy use. Wait a minute and try again.';
+    else if (/abort|timeout/i.test(m)) note.textContent = 'The search took too long. A smaller radius usually fixes it.';
+    else note.textContent = 'Could not reach OpenStreetMap (' + m + ').';
+    return 'The lead search did not come back. The panel says why.';
+  }
+}
+
+$('btnFindLeads').addEventListener('click', async () => {
+  const line = await findLeads();
+  if (line) say('jarvis', line);
+});
+
+$('btnCopyLeads').addEventListener('click', async () => {
+  // Tab separated, so it drops straight into a spreadsheet.
+  const text = leads.map(l => [l.name, l.phone, l.address, l.kind].join('\t')).join('\n');
+  try {
+    await navigator.clipboard.writeText(text);
+    say('sys', 'Copied ' + leads.length + ' leads — paste into a spreadsheet.', true);
+  } catch (_) {
+    say('sys', 'This frame will not let a page use the clipboard. Open JARVIS in its own tab to copy the list.', true);
+  }
+});
+
+renderLeads();
+
 /* ---------------- Gmail, signed in directly ----------------
    Where there is no Claude connector to borrow, the page signs in to
    Google itself. The access token lives in memory only and lasts about
@@ -3183,6 +3464,24 @@ async function respond(text) {
       try { await mcpApi.invalidate(MAIL_SERVER, MAIL_TOOL, MAIL_QUERY); } catch (_) {}
     }
     say('jarvis', mailSpoken());
+    setMode(listening ? 'listening' : 'idle');
+    return;
+  }
+
+  // Leads need an await, so they are handled here rather than in the table.
+  if (/\b(lead|leads|prospect|prospects)\b/i.test(text) ||
+      /\bbusinesse?s?\b.*\b(no|without|missing)\b.*\bweb\s?sites?\b/i.test(text) ||
+      /\b(find|get|pull)\b.*\b(no|without)\b.*\bweb\s?sites?\b/i.test(text)) {
+    // Plurals matter here: "barbers" is what anyone actually says.
+    const kind = /\b(barbers?|salons?|hair|hairdressers?|beauty|nails?|tattoos?|spas?)\b/i.test(text) ? 'beauty'
+      : /\b(restaurants?|caf[eé]s?|coffee|food|bars?|pubs?|baker(y|ies)|takeaways?)\b/i.test(text) ? 'food'
+      : /\b(trades?|plumbers?|electricians?|repairs?|contractors?|hardware|locksmiths?)\b/i.test(text) ? 'trades'
+      : /\b(autos?|cars?|mechanics?|ty[re]es?|tires?|garages?)\b/i.test(text) ? 'auto'
+      : null;
+    if (kind) $('leadKind').value = kind;
+    setMode('thinking');
+    const line = await findLeads(kind);
+    if (line) say('jarvis', line);
     setMode(listening ? 'listening' : 'idle');
     return;
   }
