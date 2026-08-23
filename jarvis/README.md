@@ -113,11 +113,36 @@ calls — which the panel says when it detects one.
 Ask **"Jarvis, any new mail?"** and he reads out who it's from and what it's
 about; the Mail panel lists the unread ones and refreshes every couple of minutes.
 
-This works **only in the Claude-hosted copy** of JARVIS, which is the one place a
-page can use the Gmail connector already on your Claude account. There's no
-password here and no token this page can see — the call runs with your
-credentials, held by Claude. Elsewhere the panel says so and everything else
-carries on as normal.
+There are two routes to the same inbox, and JARVIS picks whichever is available:
+
+- **Claude-hosted copy** — borrows the Gmail connector already on your Claude
+  account. No password, no token this page can see; the call runs with your
+  credentials, held by Claude. Nothing to set up.
+- **Anywhere else** (the published site, localhost) — signs in to Google directly
+  with a client ID of your own. Setup below, once.
+
+### Setting up Google sign-in (once, ~10 minutes)
+
+You need a Google **OAuth client ID**. It isn't a secret — it identifies the app,
+it doesn't grant access to anything on its own.
+
+1. Go to **console.cloud.google.com** and create a project (any name).
+2. **APIs & Services → Library**, search **Gmail API**, press **Enable**.
+3. **APIs & Services → OAuth consent screen**: choose **External**, fill in the
+   app name and your email. Under **Test users**, add your own Gmail address —
+   without this, Google refuses the sign-in.
+4. **APIs & Services → Credentials → Create credentials → OAuth client ID**,
+   type **Web application**. Under **Authorised JavaScript origins** add the
+   exact address you'll open JARVIS from, with no trailing slash:
+   - `https://<your-user>.github.io` for the published site
+   - `http://localhost:3000` if you also run it locally
+5. Copy the client ID (it ends `.apps.googleusercontent.com`), paste it into the
+   **Mail** panel, press **Save**, then **Connect Gmail**.
+
+The access token Google returns lives in memory only, lasts about an hour, and is
+never written to storage — only the client ID is remembered. The scope is
+read-only. If sign-in fails, the panel names the likely cause: a missing test
+user, a mismatched origin, or the Gmail API not switched on.
 
 It reads unread inbox mail only (`is:unread in:inbox`) and never sends, replies,
 deletes or labels anything — the page declares one read tool and nothing else.

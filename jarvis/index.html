@@ -619,6 +619,15 @@ label.toggle input { accent-color: var(--cyan); width: 14px; height: 14px; curso
       </div>
       <p class="note" id="mailNote" hidden></p>
       <p class="diag" id="mailDiag" hidden></p>
+      <div id="gmailSetup" hidden>
+        <p class="hint" style="margin:0 0 8px">Connect Gmail with a Google client ID of your own. It is stored in this browser and used only to sign you in to Google.</p>
+        <form class="composer" id="gmailForm">
+          <input id="gmailClientId" placeholder="…apps.googleusercontent.com" autocomplete="off" spellcheck="false" aria-label="Google OAuth client ID">
+          <button type="submit">Save</button>
+        </form>
+        <button id="btnGmailConnect" style="margin-top:8px" hidden>◎ Connect Gmail</button>
+        <button id="btnGmailForget" class="ghost" style="margin-top:8px" hidden>Forget client ID</button>
+      </div>
     </section>
 
     <section class="panel">
@@ -2183,20 +2192,194 @@ function showMailDiag(text) {
   d.textContent = text;
 }
 
-async function initMail() {
-  if (!(window.claude && typeof window.claude.use === 'function')) {
+/* ---------------- Gmail, signed in directly ----------------
+   Where there is no Claude connector to borrow, the page signs in to
+   Google itself. The access token lives in memory only and lasts about
+   an hour; it is never written to storage. Only the client ID — which
+   is not a secret — is remembered. Read-only scope. */
+const GOOGLE_SCOPE = 'https://www.googleapis.com/auth/gmail.readonly';
+const GMAIL_API = 'https://gmail.googleapis.com/gmail/v1/users/me/messages';
+
+let gClientId = '';
+try { gClientId = localStorage.getItem('jarvis.gclient') || ''; } catch (_) {}
+let gTokenClient = null, gToken = null, gTokenExpires = 0, gTimer = 0;
+
+function loadGoogleScript() {
+  return new Promise((resolve, reject) => {
+    if (window.google && window.google.accounts && window.google.accounts.oauth2) return resolve();
+    const s = document.createElement('script');
+    s.src = 'https://accounts.google.com/gsi/client';
+    s.async = true;
+    s.onload = resolve;
+    s.onerror = () => reject(new Error('blocked'));
+    document.head.appendChild(s);
+  });
+}
+
+function renderGmailSetup() {
+  const on = !!gClientId;
+  $('gmailSetup').hidden = false;
+  $('gmailClientId').value = gClientId;
+  $('btnGmailConnect').hidden = !on;
+  $('btnGmailForget').hidden = !on;
+}
+
+/* Ask Google for a token. Needs a real click the first time; afterwards
+   it can usually refresh without one. */
+function requestGoogleToken(silent) {
+  return new Promise((resolve, reject) => {
+    if (!gTokenClient) return reject(new Error('not initialised'));
+    gTokenClient.callback = (resp) => {
+      if (resp && resp.access_token) {
+        gToken = resp.access_token;
+        gTokenExpires = Date.now() + ((resp.expires_in || 3600) - 60) * 1000;
+        resolve(gToken);
+      } else {
+        reject(new Error((resp && resp.error) || 'no token'));
+      }
+    };
+    gTokenClient.error_callback = (err) => reject(new Error((err && err.type) || 'popup closed'));
+    try { gTokenClient.requestAccessToken({ prompt: silent ? '' : 'consent' }); }
+    catch (e) { reject(e); }
+  });
+}
+
+async function googleFetch(url) {
+  if (!gToken || Date.now() > gTokenExpires) await requestGoogleToken(true);
+  let res = await fetch(url, { headers: { Authorization: 'Bearer ' + gToken } });
+  if (res.status === 401) {                 // token died early — one retry
+    await requestGoogleToken(true);
+    res = await fetch(url, { headers: { Authorization: 'Bearer ' + gToken } });
+  }
+  if (!res.ok) {
+    let msg = '';
+    try { msg = (await res.json()).error.message || ''; } catch (_) {}
+    const err = new Error(msg || ('Gmail returned ' + res.status));
+    err.status = res.status;
+    throw err;
+  }
+  return res.json();
+}
+
+const headerOf = (msg, name) => {
+  const hs = (msg.payload && msg.payload.headers) || [];
+  for (let i = 0; i < hs.length; i++) if (hs[i].name.toLowerCase() === name) return hs[i].value;
+  return '';
+};
+
+async function loadGoogleMail() {
+  // The list gives ids only; each message's headers come separately.
+  const list = await googleFetch(GMAIL_API + '?q=' + encodeURIComponent('is:unread in:inbox') + '&maxResults=10');
+  const ids = (list.messages || []).map(m => m.id);
+  const detail = await Promise.all(ids.map(id =>
+    googleFetch(GMAIL_API + '/' + id + '?format=metadata&metadataHeaders=From&metadataHeaders=Subject&metadataHeaders=Date')
+      .catch(() => null)));
+
+  const items = detail.filter(Boolean).map(m => ({
+    from: senderName(headerOf(m, 'from')),
+    subject: cleanText(headerOf(m, 'subject')) || '(no subject)',
+    snippet: cleanText(m.snippet),
+    when: m.internalDate ? new Date(parseInt(m.internalDate, 10)) : null
+  }));
+  items.sort((a, b) => (b.when ? b.when.getTime() : 0) - (a.when ? a.when.getTime() : 0));
+
+  mail.items = items;
+  mail.estimate = typeof list.resultSizeEstimate === 'number' ? list.resultSizeEstimate : items.length;
+  mail.at = Date.now();
+  mail.state = 'ok';
+  $('mailNote').hidden = true;
+  $('gmailSetup').hidden = true;
+  showMailDiag('signed in to Google · ' + items.length + ' fetched');
+  renderMail();
+}
+
+async function connectGoogleMail() {
+  if (!gClientId) return;
+  mail.state = 'connecting';
+  renderMail();
+  try {
+    await loadGoogleScript();
+  } catch (_) {
     mail.state = 'unavailable';
     renderMail();
-    showMailNote('Mail works in the Claude-hosted copy of JARVIS, which can use the Gmail connector on your account. This copy has no way to reach it.', false);
-    showMailDiag('no connector runtime in this page');
+    showMailNote('Google\'s sign-in script could not load here — an embedded page usually blocks it. Use the published site or localhost.', true);
+    showMailDiag('accounts.google.com script blocked');
+    return;
+  }
+  try {
+    gTokenClient = window.google.accounts.oauth2.initTokenClient({
+      client_id: gClientId,
+      scope: GOOGLE_SCOPE,
+      callback: () => {}
+    });
+    await requestGoogleToken(false);
+    await loadGoogleMail();
+    clearInterval(gTimer);
+    gTimer = setInterval(() => { loadGoogleMail().catch(() => {}); }, 120000);
+  } catch (e) {
+    mail.state = 'unavailable';
+    renderMail();
+    const m = String((e && e.message) || e);
+    // Each of these needs something different from you.
+    if (/access_denied/i.test(m))
+      showMailNote('Google refused the sign-in. If the app is still in Testing, add your own address as a test user.', true);
+    else if (/popup|closed|idpiframe/i.test(m))
+      showMailNote('The Google window closed before finishing. Press Connect and complete the sign-in.', true);
+    else if (/origin|redirect_uri|invalid_client/i.test(m))
+      showMailNote('Google rejected this client ID for this address. Its authorised JavaScript origin must match this site exactly.', true);
+    else if (/disabled|has not been used|API/i.test(m))
+      showMailNote('The Gmail API is not switched on for that project. Enable it, wait a minute, then try again.', true);
+    else
+      showMailNote('Gmail sign-in failed: ' + m, true);
+    showMailDiag('google error: ' + m);
+  }
+}
+
+function initGoogleMail() {
+  renderGmailSetup();
+  mail.state = gClientId ? 'press connect' : 'no client id';
+  renderMail();
+  if (!gClientId) {
+    showMailNote('To read mail here, JARVIS needs a Google client ID of your own — see jarvis/README.md for the five steps.', false);
+  }
+}
+
+$('gmailForm').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const v = $('gmailClientId').value.trim();
+  if (!v) return;
+  gClientId = v;
+  try { localStorage.setItem('jarvis.gclient', v); } catch (_) {}
+  renderGmailSetup();
+  $('mailNote').hidden = true;
+  say('sys', 'Client ID saved. Press Connect Gmail.', true);
+});
+
+$('btnGmailConnect').addEventListener('click', connectGoogleMail);
+
+$('btnGmailForget').addEventListener('click', () => {
+  gClientId = ''; gToken = null; gTokenExpires = 0;
+  clearInterval(gTimer);
+  try { localStorage.removeItem('jarvis.gclient'); } catch (_) {}
+  mail.items = []; mail.estimate = 0; mail.state = 'no client id';
+  renderGmailSetup();
+  renderMail();
+  say('sys', 'Google client ID forgotten.', true);
+});
+
+async function initMail() {
+  // Two routes to the same inbox. The Claude-hosted copy borrows the
+  // connector already on the account; everywhere else signs in to Google
+  // directly. Whichever answers fills the same panel.
+  if (!(window.claude && typeof window.claude.use === 'function')) {
+    showMailDiag('no connector runtime — using Google sign-in');
+    initGoogleMail();
     return;
   }
   mcpApi = await window.claude.use('mcp');
   if (!mcpApi) {
-    mail.state = 'unavailable';
-    renderMail();
-    showMailNote('This view was not given connector access, so Gmail is out of reach here.', false);
-    showMailDiag('claude.use("mcp") resolved null');
+    showMailDiag('claude.use("mcp") resolved null — using Google sign-in');
+    initGoogleMail();
     return;
   }
 
