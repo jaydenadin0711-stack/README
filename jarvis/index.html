@@ -596,7 +596,11 @@ label.toggle input { accent-color: var(--cyan); width: 14px; height: 14px; curso
 
     <section class="panel">
       <div class="panel-head"><span>Leads</span><span class="tag" id="leadTag">—</span></div>
-      <p class="hint" style="margin:0 0 8px">Businesses near you with no website on record — from OpenStreetMap, free and no sign-in.</p>
+      <p class="hint" style="margin:0 0 8px">Businesses with no website on record — from OpenStreetMap, free and no sign-in.</p>
+      <form class="composer" id="leadPlaceForm" style="margin-bottom:8px">
+        <input id="leadPlace" placeholder="Las Vegas, Nevada" aria-label="Where to search">
+        <button type="button" id="btnUseHere" class="ghost" title="Search around this device instead">◎</button>
+      </form>
       <div class="composer">
         <select id="leadKind" aria-label="Kind of business">
           <option value="all">everything</option>
@@ -607,8 +611,8 @@ label.toggle input { accent-color: var(--cyan); width: 14px; height: 14px; curso
         </select>
         <select id="leadRadius" aria-label="How far out" style="width:auto">
           <option value="2000">2 km</option>
-          <option value="5000" selected>5 km</option>
-          <option value="10000">10 km</option>
+          <option value="5000">5 km</option>
+          <option value="10000" selected>10 km</option>
           <option value="25000">25 km</option>
         </select>
       </div>
@@ -2968,9 +2972,44 @@ const LEAD_KINDS = {
   ]
 };
 
+const NOMINATIM = 'https://nominatim.openstreetmap.org/search';
+const DEFAULT_PLACE = 'Las Vegas, Nevada';
+
 let leads = [];
 let leadsDone = {};
+let geoCache = {};
+let leadPlace = DEFAULT_PLACE;
+let useDeviceLocation = false;
+
 try { leadsDone = JSON.parse(localStorage.getItem('jarvis.leadsDone') || '{}'); } catch (_) { leadsDone = {}; }
+try { geoCache = JSON.parse(localStorage.getItem('jarvis.geocache') || '{}'); } catch (_) { geoCache = {}; }
+try { leadPlace = localStorage.getItem('jarvis.leadPlace') || DEFAULT_PLACE; } catch (_) {}
+
+/* Turn a place name into coordinates, once. OpenStreetMap's geocoder is
+   free and asks that it not be hammered, so the answer is kept. */
+async function geocodePlace(name) {
+  const key = name.trim().toLowerCase();
+  if (!key) return null;
+  if (geoCache[key]) return geoCache[key];
+
+  const res = await fetch(NOMINATIM + '?format=json&limit=1&q=' + encodeURIComponent(name), {
+    headers: { 'Accept': 'application/json' }
+  });
+  if (!res.ok) throw new Error('geocoder returned ' + res.status);
+  const hits = await res.json();
+  if (!hits.length) return null;
+
+  const hit = {
+    lat: parseFloat(hits[0].lat),
+    lon: parseFloat(hits[0].lon),
+    // display_name runs "Las Vegas, Clark County, Nevada, United States" —
+    // the first part is the only bit worth saying aloud.
+    label: String(hits[0].display_name || name).split(',')[0].trim()
+  };
+  geoCache[key] = hit;
+  try { localStorage.setItem('jarvis.geocache', JSON.stringify(geoCache)); } catch (_) {}
+  return hit;
+}
 
 function leadQuery(kind, lat, lon, radius) {
   const parts = (LEAD_KINDS[kind] || LEAD_KINDS.all)
@@ -3042,26 +3081,53 @@ async function findLeads(kindOverride) {
   const radius = parseInt($('leadRadius').value, 10) || 5000;
   const note = $('leadNote');
 
-  if (!J.coords) {
-    note.hidden = false;
-    note.className = 'note';
-    note.textContent = 'I need a position fix first — approve the location prompt.';
-    return new Promise(resolve => acquirePosition((err) => {
-      if (err || !J.coords) { note.textContent = err || 'No position, so I cannot search near you.'; resolve(null); }
-      else resolve(findLeads(kind));
-    }));
-  }
-
   note.hidden = false;
   note.className = 'note calm';
-  note.textContent = 'Asking OpenStreetMap…';
   $('leadTag').textContent = 'searching';
+
+  // Where to search: a named place by default, or this device on request.
+  let centre = null, where = '';
+  if (useDeviceLocation) {
+    if (!J.coords) {
+      note.textContent = 'I need a position fix — approve the location prompt.';
+      return new Promise(resolve => acquirePosition((err) => {
+        if (err || !J.coords) { note.textContent = err || 'No position fix, so I cannot search around you.'; resolve(null); }
+        else resolve(findLeads(kind));
+      }));
+    }
+    centre = { lat: J.coords.lat, lon: J.coords.lng };
+    where = 'you';                 // reads as "around you"
+  } else {
+    const typed = ($('leadPlace').value || '').trim() || leadPlace || DEFAULT_PLACE;
+    note.textContent = 'Finding ' + typed + '…';
+    try {
+      const found = await geocodePlace(typed);
+      if (!found) {
+        note.className = 'note';
+        note.textContent = 'I could not find a place called "' + typed + '". Try adding the state or country.';
+        $('leadTag').textContent = 'no place';
+        return 'I could not find ' + typed + ' on the map.';
+      }
+      centre = found;
+      where = found.label;
+      leadPlace = typed;
+      try { localStorage.setItem('jarvis.leadPlace', typed); } catch (_) {}
+    } catch (e) {
+      note.className = 'note';
+      note.textContent = 'Could not reach the place lookup (' + ((e && e.message) || e) + ').';
+      $('leadTag').textContent = 'failed';
+      return 'The place lookup did not answer.';
+    }
+  }
+
+  note.className = 'note calm';
+  note.textContent = 'Asking OpenStreetMap about ' + (where === 'you' ? 'your area' : where) + '…';
 
   try {
     const res = await fetch(OVERPASS, {
       method: 'POST',
       headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: 'data=' + encodeURIComponent(leadQuery(kind, J.coords.lat, J.coords.lon, radius)),
+      body: 'data=' + encodeURIComponent(leadQuery(kind, centre.lat, centre.lon, radius)),
       signal: AbortSignal.timeout ? AbortSignal.timeout(40000) : undefined
     });
     if (res.status === 429 || res.status === 504) throw new Error('busy');
@@ -3075,12 +3141,13 @@ async function findLeads(kindOverride) {
 
     renderLeads();
     if (!leads.length) {
-      note.textContent = 'Nothing came back. Try a wider radius, or a different kind of business.';
-      return 'No businesses without a website in that radius. Try casting wider.';
+      note.className = 'note';
+      note.textContent = 'Nothing came back for ' + (where === 'you' ? 'your area' : where) + '. Try a wider radius, or a different kind of business.';
+      return 'No businesses without a website within that radius of ' + where + '. Try casting wider.';
     }
     note.hidden = true;
     const withPhone = leads.filter(l => l.phone).length;
-    return leads.length + ' businesses with no website on record. ' +
+    return leads.length + ' businesses around ' + where + ' with no website on record. ' +
       withPhone + ' of them have a phone number. They are on the display — tick them off as you go.';
   } catch (e) {
     $('leadTag').textContent = 'failed';
@@ -3093,8 +3160,20 @@ async function findLeads(kindOverride) {
   }
 }
 
+$('leadPlace').value = leadPlace;
+
 $('btnFindLeads').addEventListener('click', async () => {
+  useDeviceLocation = false;
   const line = await findLeads();
+  if (line) say('jarvis', line);
+});
+
+$('leadPlaceForm').addEventListener('submit', (e) => e.preventDefault());
+
+$('btnUseHere').addEventListener('click', async () => {
+  useDeviceLocation = true;
+  const line = await findLeads();
+  useDeviceLocation = false;
   if (line) say('jarvis', line);
 });
 
@@ -3479,8 +3558,17 @@ async function respond(text) {
       : /\b(autos?|cars?|mechanics?|ty[re]es?|tires?|garages?)\b/i.test(text) ? 'auto'
       : null;
     if (kind) $('leadKind').value = kind;
+
+    // "...in Henderson" overrides the saved place for this search
+    const inPlace = text.match(/\bin\s+([A-Za-z][A-Za-z .'-]{2,40})\s*$/);
+    if (inPlace && !/\b(vegas|here|town|area)\b/i.test(inPlace[1])) {
+      $('leadPlace').value = inPlace[1].trim();
+    }
+    useDeviceLocation = /\b(near me|around me|near here|round here)\b/i.test(text);
+
     setMode('thinking');
     const line = await findLeads(kind);
+    useDeviceLocation = false;
     if (line) say('jarvis', line);
     setMode(listening ? 'listening' : 'idle');
     return;
