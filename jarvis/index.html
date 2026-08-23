@@ -549,6 +549,18 @@ label.toggle input { accent-color: var(--cyan); width: 14px; height: 14px; curso
           <code>localhost:3000/jarvis/</code> after <code>npm start</code>, which also gets you Claude.</p>
       </div>
       <p class="note calm" id="brainNote" hidden></p>
+      <div id="handoff" hidden>
+        <p class="hint" style="margin:0 0 6px"><b>For Claude.</b> He could not answer this one — hand it over and Claude will answer as JARVIS.</p>
+        <div class="composer">
+          <input id="handoffText" readonly aria-label="Question to hand to Claude">
+          <button id="btnHandoff">Copy</button>
+        </div>
+        <p class="hint" id="handoffHint" style="margin:6px 0 0" hidden></p>
+        <form class="composer" id="returnForm" style="margin-top:8px">
+          <input id="returnText" placeholder="Paste Claude's answer — JARVIS will say it" aria-label="Claude's answer">
+          <button type="submit">Speak</button>
+        </form>
+      </div>
       <form class="composer" id="composer" autocomplete="off">
         <input id="textIn" placeholder="Type to Jarvis — or say “Jarvis, …”" aria-label="Message to Jarvis">
         <button type="submit">Send</button>
@@ -578,8 +590,13 @@ label.toggle input { accent-color: var(--cyan); width: 14px; height: 14px; curso
       </div>
       <div id="brainLive" hidden>
         <div class="row"><span class="k">Source</span><span class="v good" id="brainSource">—</span></div>
-        <div class="row"><span class="k">Model</span><span class="v" id="brainModel">claude-opus-5</span></div>
-        <button id="btnForgetKey" class="ghost" style="margin-top:10px">Forget key</button>
+        <select id="modelPick" aria-label="Which model answers" style="margin-top:8px">
+          <option value="claude-opus-5">Opus 5 — sharpest, ~1–2¢ a question</option>
+          <option value="claude-sonnet-5">Sonnet 5 — balanced, ~½¢</option>
+          <option value="claude-haiku-4-5">Haiku 4.5 — quickest, ~⅕¢</option>
+        </select>
+        <label class="toggle"><span>Let him search the web</span><input type="checkbox" id="optSearch" checked></label>
+        <button id="btnForgetKey" class="ghost" style="margin-top:6px">Forget key</button>
       </div>
     </section>
 
@@ -601,6 +618,16 @@ label.toggle input { accent-color: var(--cyan); width: 14px; height: 14px; curso
         <button id="btnReadMail" style="margin-top:10px" hidden>▸ Read them out</button>
       </div>
       <p class="note" id="mailNote" hidden></p>
+      <p class="diag" id="mailDiag" hidden></p>
+      <div id="gmailSetup" hidden>
+        <p class="hint" style="margin:0 0 8px">Connect Gmail with a Google client ID of your own. It is stored in this browser and used only to sign you in to Google.</p>
+        <form class="composer" id="gmailForm">
+          <input id="gmailClientId" placeholder="…apps.googleusercontent.com" autocomplete="off" spellcheck="false" aria-label="Google OAuth client ID">
+          <button type="submit">Save</button>
+        </form>
+        <button id="btnGmailConnect" style="margin-top:8px" hidden>◎ Connect Gmail</button>
+        <button id="btnGmailForget" class="ghost" style="margin-top:8px" hidden>Forget client ID</button>
+      </div>
     </section>
 
     <section class="panel">
@@ -1868,7 +1895,20 @@ function contextForClaude() {
    the bring-your-own-key case. The key never leaves this browser except
    in the request to Anthropic itself. */
 const DIRECT_URL = 'https://api.anthropic.com/v1/messages';
-const DIRECT_MODEL = 'claude-opus-5';
+const MODELS = ['claude-opus-5', 'claude-sonnet-5', 'claude-haiku-4-5'];
+
+let chosenModel = 'claude-opus-5';
+try {
+  const saved = localStorage.getItem('jarvis.model');
+  if (MODELS.indexOf(saved) !== -1) chosenModel = saved;
+} catch (_) {}
+
+/* Without this he answers from training alone, so anything about "now"
+   comes back confidently out of date. Server-side tool: Anthropic runs
+   the search, the results arrive in the same response. */
+const SEARCH_TOOL = { type: 'web_search_20260209', name: 'web_search', max_uses: 4 };
+let searchOn = true;
+try { searchOn = localStorage.getItem('jarvis.search') !== 'off'; } catch (_) {}
 
 /* Mirrors the persona in server/jarvis.js — replies are spoken aloud,
    so they must be speech, not formatted prose. */
@@ -1902,8 +1942,13 @@ function renderBrain() {
   $('brainTag').textContent = live ? 'claude' : 'local';
   $('brainSetup').hidden = live;
   $('brainLive').hidden = !live;
-  if (live) $('brainSource').textContent = source;
+  if (live) {
+    $('brainSource').textContent = source;
+    $('modelPick').value = chosenModel;
+    $('optSearch').checked = searchOn;
+  }
   $('brainEmbedded').hidden = live || !embedded;
+  if (live) $('handoff').hidden = true;   // no hand-off needed when he can ask directly
   $('mastBrain').innerHTML = (live ? 'claude' : 'local') + '<small>brain</small>';
   if (live) { const n = $('brainNote'); if (n) n.hidden = true; }
 }
@@ -1920,6 +1965,19 @@ $('keyForm').addEventListener('submit', (e) => {
   say('jarvis', 'Connected. Ask me anything now.');
 });
 
+$('modelPick').addEventListener('change', (e) => {
+  if (MODELS.indexOf(e.target.value) === -1) return;
+  chosenModel = e.target.value;
+  try { localStorage.setItem('jarvis.model', chosenModel); } catch (_) {}
+  say('sys', 'Answering with ' + chosenModel + '.', true);
+});
+
+$('optSearch').addEventListener('change', (e) => {
+  searchOn = e.target.checked;
+  try { localStorage.setItem('jarvis.search', searchOn ? 'on' : 'off'); } catch (_) {}
+  say('sys', searchOn ? 'Web search enabled.' : 'Web search off — answers come from training only.', true);
+});
+
 $('btnForgetKey').addEventListener('click', () => {
   userKey = '';
   try { localStorage.removeItem('jarvis.key'); } catch (_) {}
@@ -1928,11 +1986,16 @@ $('btnForgetKey').addEventListener('click', () => {
   say('sys', 'Key forgotten — removed from this browser.', true);
 });
 
-async function askClaudeDirect(text) {
-  setMode('thinking');
-  const messages = J.history.slice(-12)
-    .filter(m => m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string')
-    .concat([{ role: 'user', content: text + '\n\n<telemetry>\n' + contextForClaude() + '\n</telemetry>' }]);
+async function anthropicCall(messages) {
+  const body = {
+    model: chosenModel,
+    max_tokens: 1024,
+    system: JARVIS_SYSTEM,
+    thinking: { type: 'adaptive' },
+    output_config: { effort: 'low' },
+    messages
+  };
+  if (searchOn) body.tools = [SEARCH_TOOL];
 
   const res = await fetch(DIRECT_URL, {
     method: 'POST',
@@ -1942,14 +2005,7 @@ async function askClaudeDirect(text) {
       'anthropic-version': '2023-06-01',
       'anthropic-dangerous-direct-browser-access': 'true'
     },
-    body: JSON.stringify({
-      model: DIRECT_MODEL,
-      max_tokens: 1024,
-      system: JARVIS_SYSTEM,
-      thinking: { type: 'adaptive' },
-      output_config: { effort: 'low' },
-      messages
-    })
+    body: JSON.stringify(body)
   });
 
   if (!res.ok) {
@@ -1959,8 +2015,23 @@ async function askClaudeDirect(text) {
     if (res.status === 429) throw new Error('Rate limited — give it a moment.');
     throw new Error(detail || ('Anthropic returned ' + res.status));
   }
+  return res.json();
+}
 
-  const data = await res.json();
+async function askClaudeDirect(text) {
+  setMode('thinking');
+  let messages = J.history.slice(-12)
+    .filter(m => m && (m.role === 'user' || m.role === 'assistant') && typeof m.content === 'string')
+    .concat([{ role: 'user', content: text + '\n\n<telemetry>\n' + contextForClaude() + '\n</telemetry>' }]);
+
+  // A long search can pause the turn; hand its own output back to continue.
+  let data = null;
+  for (let round = 0; round < 4; round++) {
+    data = await anthropicCall(messages);
+    if (data.stop_reason !== 'pause_turn') break;
+    messages = messages.concat([{ role: 'assistant', content: data.content }]);
+  }
+
   if (data.stop_reason === 'refusal') return 'I would rather not answer that one.';
   return (data.content || [])
     .filter(b => b.type === 'text')
@@ -1979,7 +2050,9 @@ async function askClaude(text) {
     body: JSON.stringify({
       message: text,
       history: J.history.slice(-12),
-      telemetry: contextForClaude()
+      telemetry: contextForClaude(),
+      model: chosenModel,
+      search: searchOn
     })
   });
   if (!res.ok) {
@@ -2111,23 +2184,235 @@ function showMailNote(text, bad) {
   n.textContent = text;
 }
 
-async function initMail() {
-  if (!(window.claude && typeof window.claude.use === 'function')) {
+/* The same treatment the microphone gets: say what the runtime actually
+   reported, so a failure can be read rather than guessed at. */
+function showMailDiag(text) {
+  const d = $('mailDiag');
+  d.hidden = false;
+  d.textContent = text;
+}
+
+/* ---------------- Gmail, signed in directly ----------------
+   Where there is no Claude connector to borrow, the page signs in to
+   Google itself. The access token lives in memory only and lasts about
+   an hour; it is never written to storage. Only the client ID — which
+   is not a secret — is remembered. Read-only scope. */
+const GOOGLE_SCOPE = 'https://www.googleapis.com/auth/gmail.readonly';
+const GMAIL_API = 'https://gmail.googleapis.com/gmail/v1/users/me/messages';
+
+let gClientId = '';
+try { gClientId = localStorage.getItem('jarvis.gclient') || ''; } catch (_) {}
+let gTokenClient = null, gToken = null, gTokenExpires = 0, gTimer = 0;
+
+function loadGoogleScript() {
+  return new Promise((resolve, reject) => {
+    if (window.google && window.google.accounts && window.google.accounts.oauth2) return resolve();
+    const s = document.createElement('script');
+    s.src = 'https://accounts.google.com/gsi/client';
+    s.async = true;
+    s.onload = resolve;
+    s.onerror = () => reject(new Error('blocked'));
+    document.head.appendChild(s);
+  });
+}
+
+function renderGmailSetup() {
+  const on = !!gClientId;
+  $('gmailSetup').hidden = false;
+  $('gmailClientId').value = gClientId;
+  $('btnGmailConnect').hidden = !on;
+  $('btnGmailForget').hidden = !on;
+}
+
+/* Ask Google for a token. Needs a real click the first time; afterwards
+   it can usually refresh without one. */
+function requestGoogleToken(silent) {
+  return new Promise((resolve, reject) => {
+    if (!gTokenClient) return reject(new Error('not initialised'));
+    gTokenClient.callback = (resp) => {
+      if (resp && resp.access_token) {
+        gToken = resp.access_token;
+        gTokenExpires = Date.now() + ((resp.expires_in || 3600) - 60) * 1000;
+        resolve(gToken);
+      } else {
+        reject(new Error((resp && resp.error) || 'no token'));
+      }
+    };
+    gTokenClient.error_callback = (err) => reject(new Error((err && err.type) || 'popup closed'));
+    try { gTokenClient.requestAccessToken({ prompt: silent ? '' : 'consent' }); }
+    catch (e) { reject(e); }
+  });
+}
+
+async function googleFetch(url) {
+  if (!gToken || Date.now() > gTokenExpires) await requestGoogleToken(true);
+  let res = await fetch(url, { headers: { Authorization: 'Bearer ' + gToken } });
+  if (res.status === 401) {                 // token died early — one retry
+    await requestGoogleToken(true);
+    res = await fetch(url, { headers: { Authorization: 'Bearer ' + gToken } });
+  }
+  if (!res.ok) {
+    let msg = '';
+    try { msg = (await res.json()).error.message || ''; } catch (_) {}
+    const err = new Error(msg || ('Gmail returned ' + res.status));
+    err.status = res.status;
+    throw err;
+  }
+  return res.json();
+}
+
+const headerOf = (msg, name) => {
+  const hs = (msg.payload && msg.payload.headers) || [];
+  for (let i = 0; i < hs.length; i++) if (hs[i].name.toLowerCase() === name) return hs[i].value;
+  return '';
+};
+
+async function loadGoogleMail() {
+  // The list gives ids only; each message's headers come separately.
+  const list = await googleFetch(GMAIL_API + '?q=' + encodeURIComponent('is:unread in:inbox') + '&maxResults=10');
+  const ids = (list.messages || []).map(m => m.id);
+  const detail = await Promise.all(ids.map(id =>
+    googleFetch(GMAIL_API + '/' + id + '?format=metadata&metadataHeaders=From&metadataHeaders=Subject&metadataHeaders=Date')
+      .catch(() => null)));
+
+  const items = detail.filter(Boolean).map(m => ({
+    from: senderName(headerOf(m, 'from')),
+    subject: cleanText(headerOf(m, 'subject')) || '(no subject)',
+    snippet: cleanText(m.snippet),
+    when: m.internalDate ? new Date(parseInt(m.internalDate, 10)) : null
+  }));
+  items.sort((a, b) => (b.when ? b.when.getTime() : 0) - (a.when ? a.when.getTime() : 0));
+
+  mail.items = items;
+  mail.estimate = typeof list.resultSizeEstimate === 'number' ? list.resultSizeEstimate : items.length;
+  mail.at = Date.now();
+  mail.state = 'ok';
+  $('mailNote').hidden = true;
+  $('gmailSetup').hidden = true;
+  showMailDiag('signed in to Google · ' + items.length + ' fetched');
+  renderMail();
+}
+
+async function connectGoogleMail() {
+  if (!gClientId) return;
+  mail.state = 'connecting';
+  renderMail();
+  try {
+    await loadGoogleScript();
+  } catch (_) {
     mail.state = 'unavailable';
     renderMail();
-    showMailNote('Mail works in the Claude-hosted copy of JARVIS, which can use the Gmail connector on your account. This copy has no way to reach it.', false);
+    showMailNote('Google\'s sign-in script could not load here — an embedded page usually blocks it. Use the published site or localhost.', true);
+    showMailDiag('accounts.google.com script blocked');
+    return;
+  }
+  try {
+    gTokenClient = window.google.accounts.oauth2.initTokenClient({
+      client_id: gClientId,
+      scope: GOOGLE_SCOPE,
+      callback: () => {}
+    });
+    await requestGoogleToken(false);
+    await loadGoogleMail();
+    clearInterval(gTimer);
+    gTimer = setInterval(() => { loadGoogleMail().catch(() => {}); }, 120000);
+  } catch (e) {
+    mail.state = 'unavailable';
+    renderMail();
+    const m = String((e && e.message) || e);
+    // Each of these needs something different from you.
+    if (/access_denied/i.test(m))
+      showMailNote('Google refused the sign-in. If the app is still in Testing, add your own address as a test user.', true);
+    else if (/popup|closed|idpiframe/i.test(m))
+      showMailNote('The Google window closed before finishing. Press Connect and complete the sign-in.', true);
+    else if (/origin|redirect_uri|invalid_client/i.test(m))
+      showMailNote('Google rejected this client ID for this address. Its authorised JavaScript origin must match this site exactly.', true);
+    else if (/disabled|has not been used|API/i.test(m))
+      showMailNote('The Gmail API is not switched on for that project. Enable it, wait a minute, then try again.', true);
+    else
+      showMailNote('Gmail sign-in failed: ' + m, true);
+    showMailDiag('google error: ' + m);
+  }
+}
+
+function initGoogleMail() {
+  renderGmailSetup();
+  mail.state = gClientId ? 'press connect' : 'no client id';
+  renderMail();
+  if (!gClientId) {
+    showMailNote('To read mail here, JARVIS needs a Google client ID of your own — see jarvis/README.md for the five steps.', false);
+  }
+}
+
+$('gmailForm').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const v = $('gmailClientId').value.trim();
+  if (!v) return;
+  gClientId = v;
+  try { localStorage.setItem('jarvis.gclient', v); } catch (_) {}
+  renderGmailSetup();
+  $('mailNote').hidden = true;
+  say('sys', 'Client ID saved. Press Connect Gmail.', true);
+});
+
+$('btnGmailConnect').addEventListener('click', connectGoogleMail);
+
+$('btnGmailForget').addEventListener('click', () => {
+  gClientId = ''; gToken = null; gTokenExpires = 0;
+  clearInterval(gTimer);
+  try { localStorage.removeItem('jarvis.gclient'); } catch (_) {}
+  mail.items = []; mail.estimate = 0; mail.state = 'no client id';
+  renderGmailSetup();
+  renderMail();
+  say('sys', 'Google client ID forgotten.', true);
+});
+
+async function initMail() {
+  // Two routes to the same inbox. The Claude-hosted copy borrows the
+  // connector already on the account; everywhere else signs in to Google
+  // directly. Whichever answers fills the same panel.
+  if (!(window.claude && typeof window.claude.use === 'function')) {
+    showMailDiag('no connector runtime — using Google sign-in');
+    initGoogleMail();
     return;
   }
   mcpApi = await window.claude.use('mcp');
   if (!mcpApi) {
-    mail.state = 'unavailable';
-    renderMail();
-    showMailNote('Connector access was not granted to this view.', false);
+    showMailDiag('claude.use("mcp") resolved null — using Google sign-in');
+    initGoogleMail();
     return;
   }
 
   mail.state = 'connecting';
   renderMail();
+  showMailDiag('connector runtime ready — asking which connectors are visible');
+
+  // Which connectors can this frame actually see? Reported verbatim, since
+  // "no mail" and "no Gmail connector" are different problems.
+  try {
+    const seen = await mcpApi.listTools();
+    const servers = (seen && seen.servers) || [];
+    if (!servers.length) {
+      showMailDiag('no connectors visible to this page');
+    } else {
+      showMailDiag(servers.map(s => {
+        const n = (s.tools || []).length;
+        return s.server + ' (' + s.authStatus + ', ' + n + (n === 1 ? ' tool)' : ' tools)');
+      }).join(' · '));
+    }
+    const gmail = servers.filter(s => s.server === MAIL_SERVER)[0];
+    if (!gmail) {
+      mail.state = 'unavailable';
+      renderMail();
+      showMailNote(mailProblem('server_not_connected'), true);
+      return;
+    }
+    if (gmail.authStatus === 'needs_reauth') {
+      showMailNote(mailProblem('needs_reauth'), true);
+    }
+  } catch (e) {
+    showMailDiag('listTools failed: ' + ((e && e.code) || 'unknown'));
+  }
 
   // Display data that should stay current: watchTool replays, refreshes
   // and coalesces, and hands every failure to the same handler.
@@ -2149,6 +2434,8 @@ async function initMail() {
       mail.state = code === 'server_unavailable' ? 'retrying' : 'unavailable';
       renderMail();
       showMailNote(mailProblem(code, ev.error && ev.error.server), true);
+      showMailDiag('watch error: ' + (code || 'unknown') +
+        (ev.error && ev.error.message ? ' — ' + ev.error.message : ''));
     }
   }, { refetchInterval: 120000 });
 }
@@ -2185,6 +2472,43 @@ const OFFLINE_LINES = [
   'Out of reach on local systems.',
   'I would only be guessing at that one.'
 ];
+
+/* ---------------- handing a question to Claude ----------------
+   Nothing in a published page can call Claude on its own, so when
+   JARVIS runs out of road the question is put somewhere it can be
+   taken across in one gesture rather than retyped. */
+function offerHandoff(question) {
+  const box = $('handoff');
+  box.hidden = false;
+  $('handoffText').value = question;
+  $('handoffHint').hidden = true;
+}
+
+$('btnHandoff').addEventListener('click', async () => {
+  const field = $('handoffText');
+  const hint = $('handoffHint');
+  hint.hidden = false;
+  try {
+    // Clipboard access is often refused inside an embedded frame.
+    await navigator.clipboard.writeText(field.value);
+    hint.textContent = 'Copied. Paste it to Claude and he will answer as JARVIS.';
+  } catch (_) {
+    field.focus();
+    field.select();
+    hint.textContent = 'This frame will not let a page use the clipboard — the question is selected, so press Ctrl+C (Cmd+C on a Mac).';
+  }
+});
+
+/* The other half of the hand-off: Claude's answer comes back and is
+   spoken in JARVIS's own voice, so the exchange still sounds like him. */
+$('returnForm').addEventListener('submit', (e) => {
+  e.preventDefault();
+  const answer = $('returnText').value.trim();
+  if (!answer) return;
+  $('returnText').value = '';
+  $('handoff').hidden = true;
+  say('jarvis', answer);
+});
 
 function showBrainNote() {
   const note = $('brainNote');
@@ -2245,12 +2569,13 @@ async function respond(text) {
     // Say the how-to-fix once. After that it lives on screen in the
     // console panel — repeating setup instructions at every question is
     // no use to anyone who has already heard them.
+    offerHandoff(text);
     if (!offlineExplained) {
       offlineExplained = true;
       showBrainNote();
-      say('jarvis', 'That is beyond what I can answer on my own. I handle the machine — time, power, uplink, timers, notes, sums, sun and moon — but for open conversation I need Claude on the line. Put a key in the Brain panel and I will have him.');
+      say('jarvis', 'That one is for Claude. I have put it in the hand-off box below the console — take it to him and he will answer as me. Or give me a key in the Brain panel and I will ask him myself.');
     } else {
-      say('jarvis', OFFLINE_LINES[offlineIndex++ % OFFLINE_LINES.length]);
+      say('jarvis', OFFLINE_LINES[offlineIndex++ % OFFLINE_LINES.length] + ' It is in the hand-off box.');
     }
     setMode(listening ? 'listening' : 'idle');
     return;

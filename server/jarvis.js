@@ -17,6 +17,14 @@ const express = require('express');
 
 const MODEL = process.env.JARVIS_MODEL || 'claude-opus-5';
 
+/* The browser may pick from these and nothing else — an open model field
+   would let any page on this origin bill the key against any model. */
+const ALLOWED_MODELS = ['claude-opus-5', 'claude-sonnet-5', 'claude-haiku-4-5'];
+
+/* Server-side search: Anthropic runs it, results come back in the same
+   response. Without it, anything about "now" is answered from training. */
+const SEARCH_TOOL = { type: 'web_search_20260209', name: 'web_search', max_uses: 4 };
+
 /* Jarvis is a *voice* — replies are spoken aloud by the browser,
    so the system prompt asks for speech, not prose formatting. */
 const SYSTEM = [
@@ -86,15 +94,29 @@ function buildRouter() {
       ? message + '\n\n<telemetry>\n' + telemetry + '\n</telemetry>'
       : message;
 
+    const model = ALLOWED_MODELS.indexOf(body.model) !== -1 ? body.model : MODEL;
+    const search = body.search !== false;
+
     try {
-      const response = await client.messages.create({
-        model: MODEL,
-        max_tokens: 1024,               // spoken replies are short by design
-        system: SYSTEM,
-        thinking: { type: 'adaptive' },
-        output_config: { effort: 'low' },  // a voice assistant is judged on latency
-        messages: history.concat([{ role: 'user', content: userContent }])
-      });
+      let messages = history.concat([{ role: 'user', content: userContent }]);
+      let response = null;
+
+      // A long search can pause the turn; hand its output back to continue.
+      for (let round = 0; round < 4; round++) {
+        const params = {
+          model,
+          max_tokens: 1024,               // spoken replies are short by design
+          system: SYSTEM,
+          thinking: { type: 'adaptive' },
+          output_config: { effort: 'low' },  // a voice assistant is judged on latency
+          messages
+        };
+        if (search) params.tools = [SEARCH_TOOL];
+
+        response = await client.messages.create(params);
+        if (response.stop_reason !== 'pause_turn') break;
+        messages = messages.concat([{ role: 'assistant', content: response.content }]);
+      }
 
       const reply = response.content
         .filter(b => b.type === 'text')

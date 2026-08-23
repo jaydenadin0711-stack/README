@@ -113,11 +113,36 @@ calls — which the panel says when it detects one.
 Ask **"Jarvis, any new mail?"** and he reads out who it's from and what it's
 about; the Mail panel lists the unread ones and refreshes every couple of minutes.
 
-This works **only in the Claude-hosted copy** of JARVIS, which is the one place a
-page can use the Gmail connector already on your Claude account. There's no
-password here and no token this page can see — the call runs with your
-credentials, held by Claude. Elsewhere the panel says so and everything else
-carries on as normal.
+There are two routes to the same inbox, and JARVIS picks whichever is available:
+
+- **Claude-hosted copy** — borrows the Gmail connector already on your Claude
+  account. No password, no token this page can see; the call runs with your
+  credentials, held by Claude. Nothing to set up.
+- **Anywhere else** (the published site, localhost) — signs in to Google directly
+  with a client ID of your own. Setup below, once.
+
+### Setting up Google sign-in (once, ~10 minutes)
+
+You need a Google **OAuth client ID**. It isn't a secret — it identifies the app,
+it doesn't grant access to anything on its own.
+
+1. Go to **console.cloud.google.com** and create a project (any name).
+2. **APIs & Services → Library**, search **Gmail API**, press **Enable**.
+3. **APIs & Services → OAuth consent screen**: choose **External**, fill in the
+   app name and your email. Under **Test users**, add your own Gmail address —
+   without this, Google refuses the sign-in.
+4. **APIs & Services → Credentials → Create credentials → OAuth client ID**,
+   type **Web application**. Under **Authorised JavaScript origins** add the
+   exact address you'll open JARVIS from, with no trailing slash:
+   - `https://<your-user>.github.io` for the published site
+   - `http://localhost:3000` if you also run it locally
+5. Copy the client ID (it ends `.apps.googleusercontent.com`), paste it into the
+   **Mail** panel, press **Save**, then **Connect Gmail**.
+
+The access token Google returns lives in memory only, lasts about an hour, and is
+never written to storage — only the client ID is remembered. The scope is
+read-only. If sign-in fails, the panel names the likely cause: a missing test
+user, a mismatched origin, or the Gmail API not switched on.
 
 It reads unread inbox mail only (`is:unread in:inbox`) and never sends, replies,
 deletes or labels anything — the page declares one read tool and nothing else.
@@ -171,7 +196,21 @@ flares while speaking, and turns amber with a counter-rotating ring while thinki
 | Variable | Effect |
 |---|---|
 | `ANTHROPIC_API_KEY` | Turns the Claude bridge on. Without it the HUD runs on its local command set. |
-| `JARVIS_MODEL` | Which model answers. Defaults to `claude-opus-5`. |
+| `JARVIS_MODEL` | Which model answers by default. Defaults to `claude-opus-5`. |
+
+### Which model, and whether he can search
+
+The Brain panel picks the model per browser — Opus 5 (sharpest, roughly 1–2¢ a
+question), Sonnet 5 (about half that), or Haiku 4.5 (about a fifth). The choice
+is remembered on that device. The bridge accepts only those three from the
+browser and falls back to `JARVIS_MODEL` for anything else, so a page can't bill
+your key against a model you didn't choose.
+
+**Web search** is on by default. Without it he answers from training alone, which
+means anything about "right now" comes back confidently out of date. Anthropic
+runs the search and returns results in the same response; a long search can pause
+the turn, which both the bridge and the browser path continue automatically.
+Searches add a little cost per use, so the toggle is there if you'd rather not.
 
 The bridge sends a short telemetry snapshot (time, battery, network, hardware,
 timer and note counts) with each message so answers can account for the state of
