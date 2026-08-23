@@ -39,6 +39,26 @@ on the server — the browser never sees it.
 > no `SpeechRecognition` at all and Safari's is patchy. Everything except voice
 > *input* works everywhere.
 
+## Installing it as an app
+
+Open the published site in Chrome or Edge and an **install icon** appears in the
+address bar — or press **Install as an app** in the console panel. You get a
+desktop icon, its own window with no address bar or tabs, and an entry in the
+Start menu and Alt-Tab like any other program. On Android it goes on the home
+screen and opens fullscreen; on iPhone use Share → Add to Home Screen, though
+Safari's speech recognition is unreliable, so voice may not work there.
+
+A service worker keeps a copy on your machine, so **it opens with no connection
+at all** — the display, voice, earnings, goals, notes and timers all keep working.
+Mail, leads and Claude need the internet, as you'd expect. A new version is picked
+up whenever you're online and applies on the next launch.
+
+The bridge (`/api/…`) is never cached, or a stale "no Claude here" would keep
+being served after you'd connected one.
+
+None of this applies to the embedded copy, which asks for neither the manifest nor
+the offline store — there they'd only be two 404s.
+
 ## Getting the microphone working
 
 Press **Start listening** and the browser asks for the mic — allow it once and

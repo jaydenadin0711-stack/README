@@ -679,6 +679,7 @@ label.toggle input { accent-color: var(--cyan); width: 14px; height: 14px; curso
         <button id="btnTalk">🎙 Hold to talk</button>
         <button id="btnStop" class="ghost">■ Silence</button>
         <button id="btnClear" class="ghost">Clear log</button>
+        <button id="btnInstall" hidden>⤓ Install as an app</button>
       </div>
       <p class="note" id="micNote" hidden></p>
       <p class="diag" id="micDiag" hidden></p>
@@ -3771,6 +3772,65 @@ function renderClock() {
 }
 renderClock();
 setInterval(renderClock, 1000);
+
+/* ============================================================
+   9b. INSTALLING AS AN APP
+   The manifest and the offline copy belong to the page served from
+   your own site. Embedded in someone else's, neither applies, so
+   neither is asked for — that would only produce a 404 apiece.
+   ============================================================ */
+const standalone = matchMedia('(display-mode: standalone)').matches ||
+                   window.navigator.standalone === true;
+
+if (!embedded && (location.protocol === 'https:' || location.hostname === 'localhost')) {
+  const link = document.createElement('link');
+  link.rel = 'manifest';
+  link.href = 'manifest.webmanifest';
+  document.head.appendChild(link);
+
+  const theme = document.createElement('meta');
+  theme.name = 'theme-color';
+  theme.content = '#01060a';
+  document.head.appendChild(theme);
+
+  const apple = document.createElement('link');
+  apple.rel = 'apple-touch-icon';
+  apple.href = 'icon-192.png';
+  document.head.appendChild(apple);
+
+  if ('serviceWorker' in navigator) {
+    addEventListener('load', () => {
+      navigator.serviceWorker.register('sw.js')
+        .then(() => { if (!standalone) say('sys', 'Offline copy stored — JARVIS opens without a connection.', true); })
+        .catch(() => { /* nothing to do; the page works regardless */ });
+    });
+  }
+}
+
+/* Chrome offers the install only when it decides the page qualifies, and
+   gives us the prompt to fire on a click of our own. */
+let installPrompt = null;
+addEventListener('beforeinstallprompt', (e) => {
+  e.preventDefault();
+  installPrompt = e;
+  $('btnInstall').hidden = false;
+});
+
+$('btnInstall').addEventListener('click', async () => {
+  if (!installPrompt) return;
+  installPrompt.prompt();
+  const choice = await installPrompt.userChoice.catch(() => null);
+  installPrompt = null;
+  $('btnInstall').hidden = true;
+  if (choice && choice.outcome === 'accepted') {
+    say('jarvis', 'Installed. You will find me in your apps from now on.');
+  }
+});
+
+addEventListener('appinstalled', () => {
+  $('btnInstall').hidden = true;
+  say('sys', 'JARVIS installed as an app.', true);
+});
 
 /* ============================================================
    10. BOOT
