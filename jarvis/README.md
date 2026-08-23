@@ -73,6 +73,9 @@ word for one sentence. There's a text box too, for when a mic isn't practical.
 | "put 200 toward the Rolex" | adds to that goal's own fund |
 | "set the Rolex target to 9000" | changes what a goal is aiming at |
 | "goals" | reads each one back with how far off it is |
+| "find businesses with no website" | prospect list from OpenStreetMap — free, no key |
+| "find barbers with no website" | same, narrowed to one trade |
+| "open instagram" / "pull up google maps" | opens the site in a new tab |
 | "what time is it" / "what's the date" | spoken time and date |
 | "status report" | full spoken diagnostic of power, uplink, hardware, frame rate |
 | "what's my battery" | charge, source, and time remaining |
@@ -180,6 +183,35 @@ at $10,000 as a placeholder; set yours with *"set the Rolex target to 9000"*.
 Add or remove goals in the panel. Everything is stored in that browser and goes
 nowhere else — though when you ask JARVIS something that needs Claude, the totals
 ride along in the telemetry note so he can answer sensibly about them.
+
+## Leads
+
+**Leads** finds businesses near you with no website recorded, for cold outreach.
+It queries OpenStreetMap's public Overpass endpoint — no key, no account, no
+billing, and nothing about you is sent beyond the coordinates being searched.
+
+Pick a trade and a radius, or just say *"find barbers with no website"*. You get
+name, type, phone and address where OSM has them; tick each one off as you
+contact it (that survives reloads), and **Copy list** puts the lot on your
+clipboard tab-separated, so it pastes straight into a spreadsheet.
+
+**What this list actually means:** OSM has no website for that business. Not the
+same as the business having none — some will have a page nobody added to the map.
+Expect a decent share of genuine prospects and some already sorted. It's a list to
+work through, not a verified fact.
+
+If the search fails, the panel says which it is: the free server throttling heavy
+use, a timeout from too wide a radius, or no connection.
+
+## Opening sites
+
+*"Open Instagram"*, *"pull up Google Maps"*, *"open dropkickcreative.com"* — the
+common ones are built in, and anything that looks like a domain works too.
+
+A web page **cannot start a desktop application** — no browser allows that — so
+this opens the website, which for Facebook or Instagram amounts to the same
+thing. Pop-ups opened without a click are often blocked; when that happens JARVIS
+puts a link on screen instead of failing silently.
 
 ## What's actually on the display
 
