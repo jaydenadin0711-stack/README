@@ -459,6 +459,30 @@ a.btn:focus-visible { outline: 2px solid var(--cyan); outline-offset: 2px; }
 .goal .drop:hover { color: var(--red); background: none; }
 .meter > i.green { background: linear-gradient(90deg, #1c7a55, var(--green)); }
 
+/* ---------- drafts ---------- */
+#draftBox {
+  margin-bottom: 10px;
+  padding: 10px;
+  background: #020f16;
+  border: 1px solid var(--line);
+  border-left: 2px solid var(--cyan);
+}
+#draftText {
+  display: block;
+  width: 100%;
+  min-height: 150px;
+  max-height: 340px;
+  resize: vertical;
+  font-family: var(--mono);
+  font-size: 12.5px;
+  line-height: 1.65;
+  color: var(--text-strong);
+  background: #01090e;
+  border: 1px solid var(--line-soft);
+  padding: 10px 12px;
+}
+#draftText:focus { outline: none; border-color: var(--cyan-dim); }
+
 .dot {
   display: inline-block;
   width: 6px; height: 6px;
@@ -637,6 +661,18 @@ label.toggle input { accent-color: var(--cyan); width: 14px; height: 14px; curso
           <code>localhost:3000/jarvis/</code> after <code>npm start</code>, which also gets you Claude.</p>
       </div>
       <p class="note calm" id="brainNote" hidden></p>
+      <div id="draftBox" hidden>
+        <div class="panel-head" style="margin-bottom:8px">
+          <span>Draft</span><span class="tag" id="draftCount">—</span>
+        </div>
+        <textarea id="draftText" spellcheck="true" aria-label="Draft text, editable"></textarea>
+        <div class="controls" style="margin-top:8px">
+          <button id="btnCopyDraft">Copy</button>
+          <button id="btnSpeakDraft" class="ghost">▸ Read it out</button>
+          <button id="btnCloseDraft" class="ghost">Dismiss</button>
+        </div>
+        <p class="hint" id="draftHint" style="margin:6px 0 0" hidden></p>
+      </div>
       <div id="handoff" hidden>
         <p class="hint" style="margin:0 0 6px"><b>For Claude.</b> He could not answer this one — hand it over and Claude will answer as JARVIS.</p>
         <div class="composer">
@@ -1116,7 +1152,10 @@ function stamp() {
   return pad2(d.getHours()) + ':' + pad2(d.getMinutes()) + ':' + pad2(d.getSeconds());
 }
 
-function say(who, text, quiet) {
+/* `spoken` lets the transcript hold the whole thing while he says
+   something shorter — the difference between showing you a draft and
+   reciting one at you. */
+function say(who, text, quiet, spoken) {
   const row = document.createElement('div');
   row.className = 'msg ' + who;
   const label = who === 'you' ? 'you' : who === 'jarvis' ? 'jarvis' : 'sys';
@@ -1131,8 +1170,44 @@ function say(who, text, quiet) {
   logEl.scrollTop = logEl.scrollHeight;
   logCount++;
   $('logTag').textContent = logCount + (logCount === 1 ? ' entry' : ' entries');
-  if (who === 'jarvis' && !quiet) speak(text);
+  if (who === 'jarvis' && !quiet) speak(spoken || text);
 }
+
+/* ---------------- drafts ----------------
+   Anything long enough to be a piece of writing goes in a box you can
+   edit and copy, rather than being read out and scrolled away. */
+const DRAFT_ASK = /\b(write|draft|compose|rewrite|reword|word|script|caption|post|email|message|text|quote|proposal|letter|bio|description|copy|pitch|ad)\b/i;
+
+function looksLikeDraft(question, reply) {
+  if (reply.length > 320) return true;
+  return DRAFT_ASK.test(question) && reply.length > 140;
+}
+
+function showDraft(text) {
+  const words = text.trim().split(/\s+/).length;
+  $('draftText').value = text;
+  $('draftCount').textContent = words + (words === 1 ? ' word' : ' words');
+  $('draftHint').hidden = true;
+  $('draftBox').hidden = false;
+  return words;
+}
+
+$('btnCopyDraft').addEventListener('click', async () => {
+  const field = $('draftText');
+  const hint = $('draftHint');
+  hint.hidden = false;
+  try {
+    await navigator.clipboard.writeText(field.value);
+    hint.textContent = 'Copied — paste it wherever you need it.';
+  } catch (_) {
+    field.focus();
+    field.select();
+    hint.textContent = 'This frame will not let a page use the clipboard — the text is selected, so press Ctrl+C (Cmd+C on a Mac).';
+  }
+});
+
+$('btnSpeakDraft').addEventListener('click', () => speak($('draftText').value));
+$('btnCloseDraft').addEventListener('click', () => { $('draftBox').hidden = true; });
 
 /* ============================================================
    3. SPEECH OUT
@@ -1912,6 +1987,10 @@ function diagnostics() {
   return 'All systems nominal. ' + sentences.join('. ') + '.';
 }
 
+/* Returned when a command has already done everything, including any
+   speaking — respond() must not add a line of its own. */
+const HANDLED = ' handled';
+
 /* -- the local intent table -- */
 function localBrain(raw) {
   const q = raw.toLowerCase().replace(/[?!.]+$/, '').trim();
@@ -1933,7 +2012,13 @@ function localBrain(raw) {
   if (/\b(date|day is it|today)\b/.test(q))
     return 'Today is ' + now.toLocaleDateString(undefined, { weekday: 'long', month: 'long', day: 'numeric', year: 'numeric' }) + '.';
 
-  if (/\b(battery|power|charge)\b/.test(q)) {
+  // "charge" and "power" belong to plenty of sentences that have nothing
+  // to do with this machine — "what should I charge for a logo" among
+  // them — so they only count alongside something that pins them down.
+  if (/\bbattery\b/.test(q) ||
+      /\b(charging|plugged in|on mains)\b/.test(q) ||
+      /\b(power|charge)\b.*\b(level|left|remaining|percent|status|state)\b/.test(q) ||
+      /\bhow much (power|charge)\b/.test(q)) {
     if (!battery) return 'This browser does not expose battery information.';
     const pct = Math.round(battery.level * 100);
     let s = 'Battery is at ' + pct + ' percent';
@@ -2022,7 +2107,11 @@ function localBrain(raw) {
     return diagnostics();
   }
 
-  if (/\b(memory|ram|heap|cpu|cores|hardware|specs?)\b/.test(q)) {
+  // Likewise "memory" and "specs" — a memory card and print specs are
+  // not questions about the hardware this runs on.
+  if (/\b(hardware|cpu|processor|cores|ram|heap)\b/.test(q) ||
+      /\b(this|my)\s+(machine|computer|laptop|pc)\b/.test(q) ||
+      /\b(system|device)\s+(memory|specs?)\b/.test(q)) {
     const bits = [];
     if (navigator.hardwareConcurrency) bits.push(navigator.hardwareConcurrency + ' logical cores');
     if (navigator.deviceMemory) bits.push('at least ' + navigator.deviceMemory + ' gigabytes of memory');
@@ -2111,6 +2200,17 @@ function localBrain(raw) {
   if (mathAsk !== q || /^[\d\s+\-*/^().]+$/.test(q)) {
     const r = calc(mathAsk);
     if (r !== null) return String(r);
+  }
+
+  if (/\b(read (it|that|the draft)( out| aloud)?|read it back)\b/.test(q)) {
+    const d = $('draftText').value.trim();
+    if (!d) return 'There is no draft to read.';
+    speak(d);
+    return HANDLED;   // spoken directly — a reply line would cut it off
+  }
+  if (/\b(clear|dismiss|close)\b.*\bdraft\b/.test(q)) {
+    $('draftBox').hidden = true;
+    return 'Draft dismissed.';
   }
 
   if (/\b(mute|be quiet|shut up|stop talking|silence)\b/.test(q)) {
@@ -2206,6 +2306,11 @@ const JARVIS_SYSTEM = [
   'Your replies are read aloud by a speech synthesiser, so:',
   '  • Write plain spoken English — no markdown, bullet points, headings, asterisks, emoji or code fences.',
   '  • Keep it to one to three sentences unless the user asks for depth.',
+  '',
+  'The exception: when asked to write, draft, rewrite or word something —',
+  'an email, a quote, a caption, a listing — give the finished piece in full.',
+  'Write only the piece itself: no preamble, no "here is", no sign-off from you.',
+  'Still no markdown; it is shown as plain text and may be read aloud.',
   '  • Say numbers the way a person would say them out loud.',
   '  • Never describe what you are about to do; just answer.',
   '',
@@ -3084,6 +3189,10 @@ async function respond(text) {
 
   const local = localBrain(text);
 
+  if (local === HANDLED) {
+    setMode(listening ? 'listening' : 'idle');
+    return;
+  }
   if (local === null && /\b(mute|be quiet|shut up|stop talking|silence)\b/i.test(text)) {
     say('sys', 'Voice muted.', true);
     setMode(listening ? 'listening' : 'idle');
@@ -3117,7 +3226,13 @@ async function respond(text) {
   try {
     const reply = await askClaude(text);
     J.history.push({ role: 'user', content: text }, { role: 'assistant', content: reply });
-    say('jarvis', reply);
+    if (looksLikeDraft(text, reply)) {
+      const words = showDraft(reply);
+      say('jarvis', reply, false,
+        'That is ' + words + ' words — it is in the draft box, ready to copy. Say read it out if you want to hear it.');
+    } else {
+      say('jarvis', reply);
+    }
   } catch (err) {
     say('sys', 'Claude error: ' + err.message, true);
     say('jarvis', /key/i.test(err.message)
