@@ -2985,11 +2985,32 @@ try { leadsDone = JSON.parse(localStorage.getItem('jarvis.leadsDone') || '{}'); 
 try { geoCache = JSON.parse(localStorage.getItem('jarvis.geocache') || '{}'); } catch (_) { geoCache = {}; }
 try { leadPlace = localStorage.getItem('jarvis.leadPlace') || DEFAULT_PLACE; } catch (_) {}
 
+/* The places this is actually used from, so the common search needs no
+   lookup at all — one less service to be unreachable. */
+const KNOWN_PLACES = {
+  'las vegas': { lat: 36.1699, lon: -115.1398, label: 'Las Vegas' },
+  'las vegas, nevada': { lat: 36.1699, lon: -115.1398, label: 'Las Vegas' },
+  'las vegas nv': { lat: 36.1699, lon: -115.1398, label: 'Las Vegas' },
+  'vegas': { lat: 36.1699, lon: -115.1398, label: 'Las Vegas' },
+  'henderson': { lat: 36.0395, lon: -114.9817, label: 'Henderson' },
+  'henderson, nevada': { lat: 36.0395, lon: -114.9817, label: 'Henderson' },
+  'north las vegas': { lat: 36.1989, lon: -115.1175, label: 'North Las Vegas' },
+  'summerlin': { lat: 36.1800, lon: -115.3300, label: 'Summerlin' },
+  'paradise': { lat: 36.0972, lon: -115.1467, label: 'Paradise' },
+  'spring valley': { lat: 36.1080, lon: -115.2450, label: 'Spring Valley' },
+  'enterprise': { lat: 36.0122, lon: -115.2400, label: 'Enterprise' },
+  'boulder city': { lat: 35.9786, lon: -114.8319, label: 'Boulder City' },
+  'the strip': { lat: 36.1147, lon: -115.1728, label: 'the Strip' },
+  'downtown las vegas': { lat: 36.1716, lon: -115.1391, label: 'downtown Las Vegas' }
+};
+
 /* Turn a place name into coordinates, once. OpenStreetMap's geocoder is
-   free and asks that it not be hammered, so the answer is kept. */
+   free and asks that it not be hammered, so the answer is kept — and the
+   places above skip it entirely. */
 async function geocodePlace(name) {
-  const key = name.trim().toLowerCase();
+  const key = name.trim().toLowerCase().replace(/[.]/g, '');
   if (!key) return null;
+  if (KNOWN_PLACES[key]) return KNOWN_PLACES[key];
   if (geoCache[key]) return geoCache[key];
 
   const res = await fetch(NOMINATIM + '?format=json&limit=1&q=' + encodeURIComponent(name), {
@@ -3114,9 +3135,15 @@ async function findLeads(kindOverride) {
       try { localStorage.setItem('jarvis.leadPlace', typed); } catch (_) {}
     } catch (e) {
       note.className = 'note';
-      note.textContent = 'Could not reach the place lookup (' + ((e && e.message) || e) + ').';
       $('leadTag').textContent = 'failed';
-      return 'The place lookup did not answer.';
+      // Embedded, every outside request is refused — including this one.
+      if (embedded) {
+        note.textContent = 'Embedded here, this page cannot reach OpenStreetMap at all. Leads work on the published site or on localhost.';
+        return 'I cannot reach the map from this copy. Open JARVIS on your own site and I will find them there.';
+      }
+      note.textContent = 'Could not reach the place lookup (' + ((e && e.message) || e) +
+        '). Try one of the Vegas names, which need no lookup: Las Vegas, Henderson, North Las Vegas, Summerlin, Paradise.';
+      return 'The place lookup did not answer. Try a plain Vegas name — those need no lookup at all.';
     }
   }
 
@@ -3147,14 +3174,23 @@ async function findLeads(kindOverride) {
     }
     note.hidden = true;
     const withPhone = leads.filter(l => l.phone).length;
-    return leads.length + ' businesses around ' + where + ' with no website on record. ' +
-      withPhone + ' of them have a phone number. They are on the display — tick them off as you go.';
+    const n = leads.length;
+    return n + (n === 1 ? ' business around ' : ' businesses around ') + where +
+      ' with no website on record. ' +
+      (withPhone === 0 ? 'None of them list a phone number.'
+        : withPhone === 1 ? 'One of them lists a phone number.'
+        : withPhone + ' of them list a phone number.') +
+      ' They are on the display — tick them off as you go.';
   } catch (e) {
     $('leadTag').textContent = 'failed';
     note.className = 'note';
     const m = String((e && e.message) || e);
     if (/busy/.test(m)) note.textContent = 'OpenStreetMap\'s free server is busy — it throttles heavy use. Wait a minute and try again.';
     else if (/abort|timeout/i.test(m)) note.textContent = 'The search took too long. A smaller radius usually fixes it.';
+    else if (embedded) {
+      note.textContent = 'Embedded here, this page cannot reach OpenStreetMap at all. Leads work on the published site or on localhost.';
+      return 'I cannot reach the map from this copy. Open JARVIS on your own site and I will find them there.';
+    }
     else note.textContent = 'Could not reach OpenStreetMap (' + m + ').';
     return 'The lead search did not come back. The panel says why.';
   }
