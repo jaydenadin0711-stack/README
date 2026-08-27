@@ -15,6 +15,13 @@ Multi-page e-commerce website built for **Twin City to Sin City Cards (TCSC)**. 
 
 Products live in **`data/products.json`** — edit that one file to add/remove products, change prices, or mark items `"featured": true` for the home page. No code changes needed. The current inventory (slabs, wax, Pokémon, singles, mystery boxes, supplies) is realistic sample stock — **swap in TCSC's real products before launch.**
 
+## Also in here: Skimos Coffee Shop
+
+A separate four-page static site at **`/skimos-coffee/`** for Skimos Coffee
+Shop (Henderson & Las Vegas, NV) — home, menu, about, and locations/hours. No
+build step, no dependency on the store above it. See
+`skimos-coffee/README.md` for what's real vs. placeholder in it.
+
 ## Also in here: J.A.R.V.I.S.
 
 A voice assistant with a heads-up display, at **`/jarvis/`** — talk to it and it
