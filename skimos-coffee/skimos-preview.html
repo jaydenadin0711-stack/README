@@ -1,0 +1,458 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Skimos Coffee Shop — Preview</title>
+<meta name="description" content="One-file preview of the Skimos Coffee Shop site: home, menu, about, and visit-us, bundled with a tab switcher.">
+<link rel="icon" href="data:,">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600;9..144,700&family=Work+Sans:wght@400;500;600;700&display=swap">
+<style>
+:root {
+  --cream: #f2e9d8;
+  --cream-2: #ece0c9;
+  --paper: #faf5ea;
+  --ink: #2b1d13;
+  --ink-soft: #4a382a;
+  --espresso: #2c1a10;
+  --rust: #b6522f;
+  --rust-dark: #93401f;
+  --olive: #5c6b41;
+  --line: #d8c7a5;
+  --shadow-offset: 5px;
+}
+
+* { box-sizing: border-box; }
+html { scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  background: var(--cream);
+  color: var(--ink);
+  font-family: 'Work Sans', system-ui, sans-serif;
+  font-size: 17px;
+  line-height: 1.55;
+  background-image: radial-gradient(rgba(43,29,19,0.035) 1px, transparent 1px);
+  background-size: 3px 3px;
+}
+
+h1, h2, h3, .display {
+  font-family: 'Fraunces', Georgia, serif;
+  font-weight: 600;
+  color: var(--espresso);
+  line-height: 1.08;
+  margin: 0 0 0.4em;
+  text-wrap: balance;
+}
+h1 { font-size: clamp(2.2rem, 5vw, 3.4rem); letter-spacing: -0.01em; }
+h2 { font-size: clamp(1.6rem, 3.2vw, 2.2rem); }
+h3 { font-size: 1.2rem; }
+p { margin: 0 0 1em; color: var(--ink-soft); max-width: 65ch; }
+a { color: var(--rust-dark); }
+
+.wrap { max-width: 1120px; margin: 0 auto; padding: 0 24px; }
+
+/* preview banner */
+.preview-banner {
+  background: var(--espresso);
+  color: var(--cream);
+  text-align: center;
+  font-size: 0.82rem;
+  padding: 7px 12px;
+  letter-spacing: 0.02em;
+}
+.preview-banner strong { color: #f0b487; }
+
+/* nav (now a tab switcher, not links to other files) */
+.site-nav { position: sticky; top: 0; z-index: 40; background: var(--paper); border-bottom: 2px solid var(--espresso); }
+.site-nav .wrap { display: flex; align-items: center; justify-content: space-between; height: 74px; flex-wrap: wrap; gap: 8px; }
+.brand { display: flex; align-items: baseline; gap: 10px; text-decoration: none; color: var(--espresso); }
+.brand strong { font-family: 'Fraunces', serif; font-size: 1.5rem; font-weight: 700; }
+.brand span { font-size: 0.72rem; text-transform: uppercase; letter-spacing: 0.14em; color: var(--rust-dark); }
+
+.nav-links { display: flex; gap: 6px; list-style: none; margin: 0; padding: 0; }
+.tab-btn {
+  font: inherit; font-weight: 600; font-size: 0.95rem; color: var(--ink);
+  background: none; border: 2px solid transparent; border-radius: 4px;
+  padding: 9px 14px; cursor: pointer;
+}
+.tab-btn:hover { border-color: var(--line); }
+.tab-btn[aria-current="true"] { background: var(--espresso); color: var(--paper); }
+
+/* buttons */
+.btn {
+  display: inline-block; text-decoration: none; font-weight: 600; font: inherit;
+  padding: 12px 22px; border-radius: 4px; border: 2px solid var(--espresso);
+  color: var(--espresso); background: var(--paper); cursor: pointer;
+  box-shadow: var(--shadow-offset) var(--shadow-offset) 0 var(--line);
+  transition: transform 0.12s ease;
+}
+.btn:hover { transform: translate(-2px, -2px); }
+.btn-primary { background: var(--rust); border-color: var(--espresso); color: var(--paper); box-shadow: var(--shadow-offset) var(--shadow-offset) 0 var(--espresso); }
+.btn-row { display: flex; gap: 16px; flex-wrap: wrap; margin-top: 1.6em; }
+
+/* hero */
+.hero { padding: 60px 0 48px; border-bottom: 2px solid var(--line); }
+.hero .wrap { display: grid; grid-template-columns: 1.15fr 0.85fr; gap: 48px; align-items: center; }
+.eyebrow { display: inline-block; font-size: 0.78rem; text-transform: uppercase; letter-spacing: 0.14em; color: var(--rust-dark); font-weight: 700; margin-bottom: 14px; }
+.hero-art { width: 100%; max-width: 300px; justify-self: center; }
+
+section { padding: 56px 0; }
+section.tight { padding: 36px 0; }
+.section-head { max-width: 640px; margin-bottom: 36px; }
+
+.band { background: var(--cream-2); border-top: 2px solid var(--line); border-bottom: 2px solid var(--line); }
+.band-dark { background: var(--espresso); color: var(--cream); }
+.band-dark h2, .band-dark h3 { color: var(--cream); }
+.band-dark p { color: #d8c9b6; }
+.band-dark a { color: #f0b487; }
+
+.grid-cards { display: grid; grid-template-columns: repeat(auto-fit, minmax(220px, 1fr)); gap: 20px; }
+.card { background: var(--paper); border: 2px solid var(--espresso); border-radius: 6px; padding: 20px 18px; box-shadow: var(--shadow-offset) var(--shadow-offset) 0 var(--line); }
+.card .price { float: right; font-family: 'Fraunces', serif; font-weight: 600; color: var(--rust-dark); }
+.card h3 { margin-bottom: 6px; }
+.card p { margin-bottom: 0; font-size: 0.95rem; }
+
+.locations { display: grid; grid-template-columns: 1fr 1fr; gap: 24px; }
+.location-card { background: var(--paper); border: 2px solid var(--espresso); border-radius: 6px; overflow: hidden; box-shadow: var(--shadow-offset) var(--shadow-offset) 0 var(--espresso); }
+.location-card .lc-body { padding: 22px; }
+.map-stub {
+  height: 150px; display: flex; align-items: center; justify-content: center; gap: 10px;
+  background: var(--cream-2); border-bottom: 2px solid var(--espresso); color: var(--ink-soft);
+  font-size: 0.85rem; text-align: center; padding: 0 20px;
+}
+
+.hours-table { width: 100%; border-collapse: collapse; margin: 12px 0; font-size: 0.95rem; }
+.hours-table td { padding: 4px 0; border-bottom: 1px dashed var(--line); font-variant-numeric: tabular-nums; }
+.hours-table td:last-child { text-align: right; font-weight: 600; }
+
+.tag-open, .tag-closed {
+  display: inline-block; font-size: 0.78rem; font-weight: 700; text-transform: uppercase;
+  letter-spacing: 0.06em; padding: 3px 9px; border-radius: 999px; color: var(--paper); margin-bottom: 10px;
+}
+.tag-open { background: var(--olive); }
+.tag-closed { background: var(--rust-dark); }
+
+.menu-section { margin-bottom: 40px; }
+.menu-section h2 { border-bottom: 2px solid var(--line); padding-bottom: 8px; }
+.menu-item { display: flex; justify-content: space-between; gap: 20px; padding: 13px 0; border-bottom: 1px dashed var(--line); }
+.menu-item:last-child { border-bottom: none; }
+.menu-item .name { font-family: 'Fraunces', serif; font-weight: 600; font-size: 1.05rem; color: var(--espresso); }
+.menu-item .desc { font-size: 0.92rem; margin-top: 2px; }
+.menu-item .price { white-space: nowrap; font-weight: 700; color: var(--rust-dark); align-self: flex-start; font-variant-numeric: tabular-nums; }
+
+.note { font-size: 0.88rem; color: var(--ink-soft); background: var(--cream-2); border-left: 3px solid var(--rust); padding: 12px 16px; margin-top: 8px; max-width: none; }
+
+.timeline { margin: 22px 0; padding-left: 0; list-style: none; }
+.timeline li { padding: 10px 0 10px 18px; border-left: 2px solid var(--rust); margin-left: 6px; position: relative; }
+.timeline li::before { content: ''; position: absolute; left: -7px; top: 16px; width: 12px; height: 12px; background: var(--rust); border-radius: 50%; border: 2px solid var(--paper); }
+.timeline .yr { font-weight: 700; color: var(--espresso); margin-right: 8px; }
+
+.pull-quote { font-family: 'Fraunces', serif; font-size: 1.4rem; font-weight: 500; color: var(--espresso); border-left: 4px solid var(--rust); padding-left: 20px; margin: 30px 0; max-width: 60ch; }
+
+footer { background: var(--espresso); color: #cbb89f; padding: 44px 0 26px; font-size: 0.92rem; }
+footer .wrap { display: grid; grid-template-columns: 1.3fr 1fr 1fr; gap: 32px; }
+footer h4 { color: var(--paper); font-family: 'Fraunces', serif; font-size: 1rem; margin-bottom: 10px; }
+footer p { color: #cbb89f; }
+footer a { color: #f0b487; text-decoration: none; }
+footer a:hover { text-decoration: underline; }
+footer .fine { border-top: 1px solid #4a382a; margin-top: 30px; padding-top: 16px; font-size: 0.8rem; color: #9c8a75; max-width: none; }
+
+.tab-panel[hidden] { display: none; }
+
+a:focus-visible, button:focus-visible { outline: 2px solid var(--rust-dark); outline-offset: 2px; }
+
+@media (max-width: 860px) {
+  .hero .wrap { grid-template-columns: 1fr; }
+  .hero-art { order: -1; max-width: 200px; }
+  .locations { grid-template-columns: 1fr; }
+  footer .wrap { grid-template-columns: 1fr; }
+  .nav-links { gap: 2px; }
+  .tab-btn { padding: 8px 9px; font-size: 0.85rem; }
+}
+</style>
+</head>
+<body>
+
+<div class="preview-banner">Single-file preview &mdash; <strong>this bundles all four pages with tabs</strong>, the real site is four separate HTML files in <code>/skimos-coffee/</code></div>
+
+<nav class="site-nav">
+  <div class="wrap">
+    <span class="brand"><strong>Skimos</strong><span>Coffee Shop</span></span>
+    <ul class="nav-links">
+      <li><button class="tab-btn" data-tab="home" aria-current="true">Home</button></li>
+      <li><button class="tab-btn" data-tab="menu">Menu</button></li>
+      <li><button class="tab-btn" data-tab="about">About</button></li>
+      <li><button class="tab-btn" data-tab="visit">Visit Us</button></li>
+    </ul>
+  </div>
+</nav>
+
+<!-- ============ HOME ============ -->
+<div class="tab-panel" data-panel="home">
+
+  <header class="hero">
+    <div class="wrap">
+      <div>
+        <span class="eyebrow">Henderson &amp; Las Vegas, NV</span>
+        <h1>Started as a coffee cart. Still run like one.</h1>
+        <p>Veronica Croaker began pouring cups out of a cart before Skimos had walls. Eight-plus years later there are two of them, the beans are USDA certified organic, and the person behind the counter still knows what you usually get.</p>
+        <div class="btn-row">
+          <button class="btn btn-primary" data-goto="menu">See the menu</button>
+          <button class="btn" data-goto="visit">Hours &amp; locations</button>
+        </div>
+      </div>
+      <svg class="hero-art" viewBox="0 0 220 220" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+        <path d="M40 90 q3 -8 12 -6 q60 -6 108 3 q9 1 8 10 l-9 62 q-2 14 -18 15 l-64 2 q-16 0 -19 -15 z" stroke="#2c1a10" stroke-width="4" fill="#f2e9d8"/>
+        <path d="M162 96 q26 -4 26 18 q0 22 -27 22" stroke="#2c1a10" stroke-width="4" fill="none"/>
+        <path d="M64 88 q5 -22 -6 -30" stroke="#b6522f" stroke-width="4" stroke-linecap="round" fill="none"/>
+        <path d="M92 88 q7 -26 -7 -36" stroke="#b6522f" stroke-width="4" stroke-linecap="round" fill="none"/>
+        <path d="M120 88 q5 -22 -6 -30" stroke="#b6522f" stroke-width="4" stroke-linecap="round" fill="none"/>
+        <ellipse cx="90" cy="170" rx="60" ry="7" fill="#d8c7a5"/>
+      </svg>
+    </div>
+  </header>
+
+  <section>
+    <div class="wrap">
+      <div class="section-head">
+        <span class="eyebrow">On the counter this week</span>
+        <h2>What people actually order</h2>
+      </div>
+      <div class="grid-cards">
+        <div class="card"><span class="price">$4.75</span><h3>Mazapán Iced Latte</h3><p>The one regulars text each other about. Espresso, milk, and a Mexican peanut candy syrup that shouldn't work in coffee and does.</p></div>
+        <div class="card"><span class="price">$4.95</span><h3>Iced Honey White Mocha</h3><p>Less sweet than it sounds: white chocolate cut with real honey instead of syrup, over cold brew or espresso, your call.</p></div>
+        <div class="card"><span class="price">$3.85</span><h3>Rasa Mocha</h3><p>A house mocha with a little more spice in the chocolate than a normal mocha. Ask for it dirty if you need the extra shot.</p></div>
+        <div class="card"><span class="price">$7.99</span><h3>Avocado Egg Salad Toast</h3><p>Thick-cut bread, mashed avocado, egg salad on top. Filling enough that "just a coffee and a toast" turns into lunch.</p></div>
+      </div>
+      <div class="btn-row"><button class="btn" data-goto="menu">Full menu &amp; prices</button></div>
+    </div>
+  </section>
+
+  <section class="band">
+    <div class="wrap">
+      <div class="section-head"><span class="eyebrow">Two shops</span><h2>Henderson or the south Strip</h2></div>
+      <div class="locations">
+        <div class="location-card"><div class="lc-body">
+          <span data-hours="henderson"></span>
+          <h3>Henderson — the original</h3>
+          <p>1533 W Sunset Rd, Suite 200<br>Henderson, NV 89014<br><a href="tel:+17029103659">(702) 910-3659</a></p>
+        </div></div>
+        <div class="location-card"><div class="lc-body">
+          <span data-hours="vegas"></span>
+          <h3>Las Vegas — Vegas Pointe Plaza</h3>
+          <p>9175 S Las Vegas Blvd, Suite 100<br>Las Vegas, NV 89123<br><a href="tel:+17029544677">(702) 954-4677</a></p>
+        </div></div>
+      </div>
+      <div class="btn-row"><button class="btn btn-primary" data-goto="visit">Maps, hours, everything</button></div>
+    </div>
+  </section>
+
+  <section class="band-dark">
+    <div class="wrap" style="max-width:720px;">
+      <span class="eyebrow" style="color:#f0b487;">Where the beans come from</span>
+      <h2>Organic, and roasted by people who'd tell us if it wasn't good</h2>
+      <p>The coffee is USDA certified organic, roasted by Olympia Coffee up in Washington. In 2021, iHeartRadio named Skimos Nevada's Best Coffee Shop. We bring it up more than we probably should, because a cart-to-two-storefronts business doesn't get many chances to brag.</p>
+      <p><button class="btn" data-goto="about" style="background:transparent;color:#f0b487;border-color:#f0b487;box-shadow:none;padding:0;">Read the longer version of how this started &rarr;</button></p>
+    </div>
+  </section>
+</div>
+
+<!-- ============ MENU ============ -->
+<div class="tab-panel" data-panel="menu" hidden>
+  <header class="hero" style="padding-bottom:20px;">
+    <div class="wrap" style="grid-template-columns:1fr;">
+      <div>
+        <span class="eyebrow">Same menu at both counters</span>
+        <h1>The Menu</h1>
+        <p>Beans are USDA organic, roasted by Olympia Coffee. Everything below can be made hot or iced unless it's obviously one or the other. There's usually a chalkboard special too. Ask whoever's on bar.</p>
+      </div>
+    </div>
+  </header>
+  <section class="tight">
+    <div class="wrap">
+      <div class="menu-section">
+        <h2>Coffee &amp; Espresso</h2>
+        <div class="menu-item"><div><div class="name">Drip Coffee</div><div class="desc">A rotating single-origin, brewed a pot at a time, not a bulk urn.</div></div><div class="price">$2.75</div></div>
+        <div class="menu-item"><div><div class="name">Espresso</div><div class="desc">Single or double.</div></div><div class="price">$2.95</div></div>
+        <div class="menu-item"><div><div class="name">Cortado</div><div class="desc">Equal parts espresso and steamed milk, no foam to speak of.</div></div><div class="price">$3.50</div></div>
+        <div class="menu-item"><div><div class="name">Cappuccino</div><div class="desc">Foam that holds a spoon up.</div></div><div class="price">$3.75</div></div>
+        <div class="menu-item"><div><div class="name">Latte</div><div class="desc">Hot or iced, any milk you'd like.</div></div><div class="price">$3.25</div></div>
+        <div class="menu-item"><div><div class="name">Cold Brew</div><div class="desc">Steeped overnight, served over ice.</div></div><div class="price">$3.65</div></div>
+        <div class="menu-item"><div><div class="name">Mocha</div><div class="desc">Espresso, steamed milk, real chocolate, not syrup dust.</div></div><div class="price">$3.55</div></div>
+        <div class="menu-item"><div><div class="name">Rasa Mocha</div><div class="desc">The house mocha, with more spice in the chocolate than you'd expect.</div></div><div class="price">$3.85</div></div>
+      </div>
+      <div class="menu-section">
+        <h2>Specialty Lattes</h2>
+        <div class="menu-item"><div><div class="name">Mazapán Iced Latte</div><div class="desc">Espresso, milk, Mexican peanut candy syrup. The one people come back specifically for.</div></div><div class="price">$4.75</div></div>
+        <div class="menu-item"><div><div class="name">Iced Honey White Mocha</div><div class="desc">White chocolate cut with real honey instead of straight syrup.</div></div><div class="price">$4.95</div></div>
+        <div class="menu-item"><div><div class="name">Mexican Mocha Latte</div><div class="desc">Cinnamon and a little heat in the chocolate. Hot, iced, or frappé.</div></div><div class="price">$4.65</div></div>
+        <div class="menu-item"><div><div class="name">Honey Lavender Latte</div><div class="desc">Floral, not perfumey. The honey keeps it grounded. Hot, iced, or frappé.</div></div><div class="price">$4.65</div></div>
+        <div class="menu-item"><div><div class="name">Toasted Coconut Latte</div><div class="desc">Toasted, not the sunscreen-coconut syrup you're picturing. Hot, iced, or frappé.</div></div><div class="price">$4.65</div></div>
+      </div>
+      <div class="menu-section">
+        <h2>Toast &amp; Food</h2>
+        <div class="menu-item"><div><div class="name">Greek Avocado Toast</div><div class="desc">Avocado, feta, tomato, a hit of olive oil.</div></div><div class="price">$7.49</div></div>
+        <div class="menu-item"><div><div class="name">Serrano Toast</div><div class="desc">Avocado toast with fresh serrano for people who want it to fight back a little.</div></div><div class="price">$7.49</div></div>
+        <div class="menu-item"><div><div class="name">Avocado Egg Salad Toast</div><div class="desc">Mashed avocado and egg salad, thick-cut bread. Doubles as lunch.</div></div><div class="price">$7.99</div></div>
+        <div class="menu-item"><div><div class="name">Peanut-Butter Banana Toast</div><div class="desc">Simple on purpose.</div></div><div class="price">$5.49</div></div>
+        <div class="menu-item"><div><div class="name">Breakfast Wrap</div><div class="desc">Eggs, cheese, your choice of bacon or veggie, wrapped up to eat one-handed.</div></div><div class="price">$8.25</div></div>
+      </div>
+      <div class="menu-section">
+        <h2>Pastries &amp; Extras</h2>
+        <div class="menu-item"><div><div class="name">Muffin of the Day</div><div class="desc">Changes with whatever came out of the case that morning.</div></div><div class="price">$3.95</div></div>
+        <div class="menu-item"><div><div class="name">Croissant</div><div class="desc">Plain or filled. Ask what's in today.</div></div><div class="price">$3.75</div></div>
+        <div class="menu-item"><div><div class="name">Extra Shot / Flavor Syrup</div><div class="desc">Add to anything.</div></div><div class="price">$0.75</div></div>
+      </div>
+      <p class="note">Prices are current as of this build and can run a little different between the Henderson and Las Vegas counters; the person ringing you up always has the real number. Menu items shown here are drawn from Skimos' known lineup; the full seasonal board only exists on the chalkboard in the shop.</p>
+    </div>
+  </section>
+</div>
+
+<!-- ============ ABOUT ============ -->
+<div class="tab-panel" data-panel="about" hidden>
+  <header class="hero" style="padding-bottom:20px;">
+    <div class="wrap" style="grid-template-columns:1fr;">
+      <div style="max-width:680px;">
+        <span class="eyebrow">The short version and the long one</span>
+        <h1>A cart, then a shop, then a second shop</h1>
+      </div>
+    </div>
+  </header>
+  <section class="tight">
+    <div class="wrap" style="max-width:680px;">
+      <p>Veronica Croaker is from Mexico City. Skimos didn't start as a business plan. It started as a coffee cart, the kind you'd wheel out and set up wherever people already were, before there was a lease or an espresso machine bolted to a counter.</p>
+      <p>Somewhere in there it worked. Not overnight, either: eight-plus years, if you're counting the way local news did when they covered the second location opening. Henderson came first. The Las Vegas shop, tucked into Vegas Pointe Plaza on South Las Vegas Boulevard, came after Henderson had already proven the cart-turned-cafe thing wasn't a fluke.</p>
+      <p class="pull-quote">It's still a small, woman-owned shop. It just happens to have two addresses now instead of one folding table.</p>
+      <p>The coffee itself is USDA certified organic, roasted by Olympia Coffee out of Washington state, not a house-brand blend with a made-up origin story on the bag. In 2021, iHeartRadio named Skimos Nevada's Best Coffee Shop, which is the kind of thing a small operation doesn't get handed for free.</p>
+      <ul class="timeline">
+        <li><span class="yr">Early days</span> A coffee cart, run by Veronica Croaker, no fixed address.</li>
+        <li><span class="yr">Henderson</span> The cart becomes a storefront at 1533 W Sunset Rd.</li>
+        <li><span class="yr">2021</span> Named Nevada's Best Coffee Shop by iHeartRadio.</li>
+        <li><span class="yr">Eight years in</span> A second location opens in Vegas Pointe Plaza on South Las Vegas Boulevard.</li>
+      </ul>
+      <p>Neither shop is trying to be a chain. The menu has the same handful of specialty drinks at both counters (the mazapán latte, the honey white mocha, the avocado toast people photograph before they eat) because that's what got regulars in the door in the first place. Changing it wouldn't make sense.</p>
+      <div class="btn-row">
+        <button class="btn btn-primary" data-goto="menu">See what's on the menu</button>
+        <button class="btn" data-goto="visit">Find the nearest shop</button>
+      </div>
+    </div>
+  </section>
+</div>
+
+<!-- ============ VISIT ============ -->
+<div class="tab-panel" data-panel="visit" hidden>
+  <header class="hero" style="padding-bottom:20px;">
+    <div class="wrap" style="grid-template-columns:1fr;">
+      <div style="max-width:680px;">
+        <span class="eyebrow">Two counters, one coffee</span>
+        <h1>Visit Us</h1>
+        <p>Both shops run the same menu and the same standards. Pick whichever one is on your way.</p>
+      </div>
+    </div>
+  </header>
+  <section class="tight">
+    <div class="wrap">
+      <div class="locations">
+        <div class="location-card">
+          <div class="map-stub">Henderson map lives here on the real site (Google Maps embed, blocked in this preview's sandbox)</div>
+          <div class="lc-body">
+            <span data-hours="henderson"></span>
+            <h3>Henderson — the original</h3>
+            <p>1533 W Sunset Rd, Suite 200<br>Henderson, NV 89014</p>
+            <p><a href="tel:+17029103659">(702) 910-3659</a></p>
+            <table class="hours-table">
+              <tr><td>Monday – Friday</td><td>6:00am – 8:00pm</td></tr>
+              <tr><td>Saturday – Sunday</td><td>7:00am – 9:00pm</td></tr>
+            </table>
+            <a class="btn btn-primary" href="https://www.google.com/maps/search/?api=1&query=Skimos+Coffee+Shop+1533+W+Sunset+Rd+Suite+200+Henderson+NV+89014" target="_blank" rel="noopener">Get directions</a>
+          </div>
+        </div>
+        <div class="location-card">
+          <div class="map-stub">Las Vegas map lives here on the real site (Google Maps embed, blocked in this preview's sandbox)</div>
+          <div class="lc-body">
+            <span data-hours="vegas"></span>
+            <h3>Las Vegas — Vegas Pointe Plaza</h3>
+            <p>9175 S Las Vegas Blvd, Suite 100<br>Las Vegas, NV 89123</p>
+            <p><a href="tel:+17029544677">(702) 954-4677</a></p>
+            <table class="hours-table">
+              <tr><td>Monday – Saturday</td><td>7:00am – 7:00pm</td></tr>
+              <tr><td>Sunday</td><td>8:00am – 7:00pm</td></tr>
+            </table>
+            <a class="btn btn-primary" href="https://www.google.com/maps/search/?api=1&query=Skimos+Coffee+Shop+9175+S+Las+Vegas+Blvd+Suite+100+Las+Vegas+NV+89123" target="_blank" rel="noopener">Get directions</a>
+          </div>
+        </div>
+      </div>
+    </div>
+  </section>
+  <section class="band tight">
+    <div class="wrap" style="max-width:680px;">
+      <h2>Catering, events, or just a question</h2>
+      <p>There's no online ordering yet. Call the shop you're closer to, or reach out on Instagram or Facebook and someone will get back to you. For anything time-sensitive (a big order, an event), calling ahead beats a DM.</p>
+      <div class="btn-row">
+        <a class="btn" href="tel:+17029103659">Call Henderson</a>
+        <a class="btn" href="tel:+17029544677">Call Las Vegas</a>
+        <a class="btn" href="https://www.instagram.com/skimoscoffee/" target="_blank" rel="noopener">Message on Instagram</a>
+      </div>
+    </div>
+  </section>
+</div>
+
+<footer>
+  <div class="wrap">
+    <div>
+      <h4>Skimos Coffee Shop</h4>
+      <p>Woman-owned. Henderson, NV, since a coffee cart; Las Vegas since a few years after that.</p>
+      <p><a href="https://www.instagram.com/skimoscoffee/" target="_blank" rel="noopener">Instagram</a> · <a href="https://www.facebook.com/skimoscoffee/" target="_blank" rel="noopener">Facebook</a></p>
+    </div>
+    <div>
+      <h4>Henderson</h4>
+      <p>1533 W Sunset Rd, Suite 200<br>Henderson, NV 89014<br>(702) 910-3659<br>Mon–Fri 6am–8pm<br>Sat–Sun 7am–9pm</p>
+    </div>
+    <div>
+      <h4>Las Vegas</h4>
+      <p>9175 S Las Vegas Blvd, Suite 100<br>Las Vegas, NV 89123<br>(702) 954-4677<br>Mon–Sat 7am–7pm<br>Sun 8am–7pm</p>
+    </div>
+  </div>
+  <p class="fine">© <span data-year></span> Skimos Coffee Shop. Hours shift on holidays, so call ahead if you're driving across town for it.</p>
+</footer>
+
+<script>
+document.addEventListener('DOMContentLoaded', function () {
+  var buttons = document.querySelectorAll('.tab-btn');
+  var panels = document.querySelectorAll('.tab-panel');
+
+  function show(name) {
+    panels.forEach(function (p) { p.hidden = p.getAttribute('data-panel') !== name; });
+    buttons.forEach(function (b) { b.setAttribute('aria-current', b.getAttribute('data-tab') === name ? 'true' : 'false'); });
+    window.scrollTo({ top: 0, behavior: 'instant' in window ? 'instant' : 'auto' });
+  }
+
+  buttons.forEach(function (b) {
+    b.addEventListener('click', function () { show(b.getAttribute('data-tab')); });
+  });
+  document.querySelectorAll('[data-goto]').forEach(function (b) {
+    b.addEventListener('click', function () { show(b.getAttribute('data-goto')); });
+  });
+
+  var yearEl = document.querySelector('[data-year]');
+  if (yearEl) yearEl.textContent = new Date().getFullYear();
+
+  var hours = {
+    henderson: { 0: [7, 21], 1: [6, 20], 2: [6, 20], 3: [6, 20], 4: [6, 20], 5: [6, 20], 6: [7, 21] },
+    vegas:     { 0: [8, 19], 1: [7, 19], 2: [7, 19], 3: [7, 19], 4: [7, 19], 5: [7, 19], 6: [7, 19] }
+  };
+  document.querySelectorAll('[data-hours]').forEach(function (el) {
+    var range = hours[el.getAttribute('data-hours')];
+    if (!range) return;
+    var now = new Date();
+    var todayRange = range[now.getDay()];
+    var openNow = now.getHours() + now.getMinutes() / 60;
+    var isOpen = openNow >= todayRange[0] && openNow < todayRange[1];
+    el.textContent = isOpen ? 'Open now' : 'Closed now';
+    el.classList.add(isOpen ? 'tag-open' : 'tag-closed');
+  });
+});
+</script>
+</body>
+</html>
