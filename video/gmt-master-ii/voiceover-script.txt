@@ -1,0 +1,17 @@
+GMT-MASTER II — voiceover script (30s)
+Read slowly and calmly, like you're letting someone in on a secret. Leave a clear
+one-second pause between lines: the mixer uses those pauses to put each line under
+its caption.
+
+ 1. Some watches tell the time.                                    (0.6s)
+ 2. This one tells two.                                            (3.4s)
+ 3. Born in the cockpit, for pilots crossing the world overnight.  (6.4s)
+ 4. Two time zones. One glance.                                    (9.8s)
+ 5. Oystersteel. Five-piece Jubilee links.                         (12.8s)
+ 6. Sealed by the Oysterclasp.                                     (15.8s)
+ 7. When the lights go down, it keeps shining.                     (18.8s)
+ 8. Wherever you land, you're already on time.                     (21.9s)
+ 9. GMT-Master Two. Rolex.                                         (26.4s, on the logo)
+
+Each line has to fit before the next one starts. Line 3 is the longest,
+with about 3 seconds for it.

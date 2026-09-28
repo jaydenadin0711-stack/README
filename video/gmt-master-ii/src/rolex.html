@@ -1,0 +1,358 @@
+<!doctype html>
+<html><head><meta charset="utf-8">
+<style>
+@font-face{font-family:CG;src:url(cormorant-normal-600.woff2) format('woff2');font-weight:600}
+@font-face{font-family:CGI;src:url(cormorant-italic-500.woff2) format('woff2');font-weight:500;font-style:italic}
+@font-face{font-family:J;src:url(jost-normal-500.woff2) format('woff2');font-weight:500}
+html,body{margin:0;background:#000}
+</style></head><body>
+<canvas id="out" width="1080" height="1920"></canvas>
+<script>
+const W = 1080, H = 1920, CX = W / 2, CY = H / 2, PI = Math.PI, TAU = PI * 2;
+const GOLD = '#C9A55A', GREEN = '#006039';
+const clamp = (x, a = 0, b = 1) => Math.min(b, Math.max(a, x));
+const lerp = (a, b, t) => a + (b - a) * t;
+const eIO = t => -(Math.cos(PI * clamp(t)) - 1) / 2;
+const eOut = t => 1 - Math.pow(1 - clamp(t), 3);
+const eOutExpo = t => t >= 1 ? 1 : 1 - Math.pow(2, -10 * clamp(t));
+const eIn = t => Math.pow(clamp(t), 3);
+const hit = (t, at, dec) => t < at ? 0 : Math.exp(-(t - at) / dec);
+
+const out = document.getElementById('out');
+const mk = () => { const c = document.createElement('canvas'); c.width = W; c.height = H; return c; };
+const scene = mk(), ctx = scene.getContext('2d');
+const mask = mk(), mctx = mask.getContext('2d');
+const tmp = mk(), tctx = tmp.getContext('2d');
+let fx;
+
+// ---------- assets
+const NAMES = ['bezel', 'dial', 'cockpit', 'mountain', 'jubilee', 'clasp', 'lume', 'airport'];
+const IMG = {}, BG = {};
+const loadImg = src => new Promise(r => { const i = new Image(); i.onload = () => r(i); i.src = src; });
+let LOGO, crownMask;
+async function load() {
+  for (const n of NAMES) {
+    IMG[n] = await loadImg(`img/${n}.jpg`);
+    const c = mk(), g = c.getContext('2d');
+    const s = Math.max(W / IMG[n].width, H / IMG[n].height) * 1.25;
+    g.filter = 'blur(38px) brightness(0.42) saturate(1.25)';
+    g.drawImage(IMG[n], CX - IMG[n].width * s / 2, CY - IMG[n].height * s / 2, IMG[n].width * s, IMG[n].height * s);
+    BG[n] = c;
+  }
+  LOGO = await loadImg('img/logo.png');
+  // crown alpha mask for the shimmer
+  crownMask = document.createElement('canvas'); crownMask.width = 307; crownMask.height = 334;
+  const g = crownMask.getContext('2d'); g.drawImage(LOGO, 475, 103, 307, 334, 0, 0, 307, 334);
+  const d = g.getImageData(0, 0, 307, 334);
+  for (let i = 0; i < d.data.length; i += 4) { const m = Math.min(d.data[i], d.data[i + 1], d.data[i + 2]); d.data[i + 3] = clamp((235 - m) / 90) * 255; d.data[i] = d.data[i + 1] = d.data[i + 2] = 255; }
+  g.putImageData(d, 0, 0);
+  await Promise.all([document.fonts.load('600 60px CG'), document.fonts.load('italic 500 60px CGI'), document.fonts.load('500 30px J')]);
+}
+
+// ---------- shots: [name, start, end, zoom0, zoom1, [dx0,dy0], [dx1,dy1], rot0, rot1]
+const SHOTS = [
+  ['bezel', 0.0, 3.0, 1.28, 1.12, [110, 40], [60, 0], -0.05, 0.015],
+  ['dial', 3.0, 6.0, 1.08, 1.42, [0, 0], [-40, -160], 0, 0],
+  ['cockpit', 6.0, 9.5, 1.06, 1.2, [0, 20], [-120, 60], 0, 0],
+  ['mountain', 9.5, 12.5, 1.14, 1.04, [-60, 0], [-190, 20], 0, 0],
+  ['jubilee', 12.5, 15.5, 1.3, 1.3, [150, 0], [-150, -40], 0.03, -0.03],
+  ['clasp', 15.5, 18.0, 1.12, 1.26, [-60, 20], [-140, 40], 0, 0],
+  ['lume', 18.0, 21.5, 1.25, 1.06, [0, 0], [0, 0], 0, 0],
+  ['airport', 21.5, 25.0, 1.1, 1.22, [-140, 0], [-250, 40], 0, 0],
+];
+const MONTAGE = [['bezel', 25.0], ['dial', 25.25], ['jubilee', 25.5], ['clasp', 25.75]];
+
+const CAPS = [
+  [0.6, 2.8, 'Some watches tell the time.', 'OYSTER PERPETUAL'],
+  [3.4, 5.8, 'This one tells two.', '24-HOUR HAND'],
+  [6.35, 9.3, 'Born in the cockpit,\nfor pilots crossing the world overnight.', 'SINCE 1955'],
+  [9.8, 12.3, 'Two time zones. One glance.', 'CERACHROM BEZEL'],
+  [12.8, 15.3, 'Oystersteel.\nFive-piece Jubilee links.', 'OYSTERSTEEL'],
+  [15.8, 17.8, 'Sealed by the Oysterclasp.', 'OYSTERCLASP'],
+  [18.8, 21.3, 'When the lights go down,\nit keeps shining.', 'CHROMALIGHT'],
+  [21.9, 24.9, 'Wherever you land,', 'GMT-MASTER II'],
+  [23.3, 24.9, '\nyou’re already on time.', null],
+];
+
+// ---------- drawing
+function drawShot(s, t, alpha = 1, tf = null, filter = null) {
+  const [n, st, en, z0, z1, d0, d1, r0, r1] = s;
+  const p = (t - st) / (en - st);
+  const e = eIO(clamp(p, -0.2, 1.2));
+  const z = lerp(z0, z1, e) * (tf?.s || 1);
+  const dx = lerp(d0[0], d1[0], e) + (tf?.x || 0), dy = lerp(d0[1], d1[1], e) + (tf?.y || 0);
+  const rot = lerp(r0, r1, e);
+  const img = IMG[n];
+  ctx.save(); ctx.globalAlpha = alpha;
+  if (tf) { ctx.translate(CX + (tf.x || 0), CY + (tf.y || 0)); ctx.scale(tf.s || 1, tf.s || 1); ctx.translate(-CX, -CY); }
+  const bz = 1 + (z - 1) * .4;
+  if (filter) ctx.filter = filter;
+  ctx.drawImage(BG[n], CX - W * bz / 2, CY - H * bz / 2, W * bz, H * bz);
+  ctx.filter = 'none';
+  ctx.restore();
+  // main image, feathered top/bottom
+  const w = W * z, h = w * img.height / img.width;
+  const cx = CX + dx, cy = CY - 40 + dy;
+  mctx.setTransform(1, 0, 0, 1, 0, 0); mctx.globalCompositeOperation = 'source-over'; mctx.clearRect(0, 0, W, H);
+  if (filter) mctx.filter = filter;
+  mctx.save(); mctx.translate(cx, cy); mctx.rotate(rot); mctx.drawImage(img, -w / 2, -h / 2, w, h); mctx.restore();
+  mctx.filter = 'none';
+  mctx.globalCompositeOperation = 'destination-in';
+  const top = cy - h / 2, bot = cy + h / 2, f = h * .17;
+  const gr = mctx.createLinearGradient(0, top, 0, bot);
+  gr.addColorStop(0, 'rgba(0,0,0,0)'); gr.addColorStop(f / h, 'rgba(0,0,0,1)'); gr.addColorStop(1 - f / h, 'rgba(0,0,0,1)'); gr.addColorStop(1, 'rgba(0,0,0,0)');
+  mctx.fillStyle = gr; mctx.fillRect(0, 0, W, H);
+  ctx.save(); ctx.globalAlpha = alpha;
+  ctx.drawImage(mask, 0, 0);
+  ctx.restore();
+}
+function glint(t, at, dur, alpha = .35, ang = -.5) {
+  const p = (t - at) / dur; if (p < 0 || p > 1) return;
+  ctx.save(); ctx.globalCompositeOperation = 'screen'; ctx.translate(CX, CY); ctx.rotate(ang);
+  const x = lerp(-1400, 1400, eIO(p));
+  const g = ctx.createLinearGradient(x - 220, 0, x + 220, 0);
+  g.addColorStop(0, 'rgba(255,255,255,0)'); g.addColorStop(.5, `rgba(255,248,230,${alpha * Math.sin(p * PI)})`); g.addColorStop(1, 'rgba(255,255,255,0)');
+  ctx.fillStyle = g; ctx.fillRect(-1600, -1600, 3200, 3200); ctx.restore();
+}
+function leak(a, x = CX + 260, y = CY - 400) {
+  if (a <= 0) return;
+  ctx.save(); ctx.globalCompositeOperation = 'screen';
+  for (const [dx, dy, r, c] of [[0, 0, 900, '255,170,80'], [-300, 500, 700, '255,110,60'], [200, 300, 500, '255,220,160']]) {
+    const g = ctx.createRadialGradient(x + dx, y + dy, 0, x + dx, y + dy, r);
+    g.addColorStop(0, `rgba(${c},${.55 * a})`); g.addColorStop(1, `rgba(${c},0)`);
+    ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  }
+  ctx.restore();
+}
+function shade() {
+  const g = ctx.createLinearGradient(0, 0, 0, H);
+  g.addColorStop(0, 'rgba(0,0,0,.55)'); g.addColorStop(.2, 'rgba(0,0,0,0)'); g.addColorStop(.7, 'rgba(0,0,0,0)'); g.addColorStop(1, 'rgba(0,0,0,.75)');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+}
+function caption(t) {
+  for (const [a, b, txt, label] of CAPS) {
+    if (t < a - .05 || t > b + .05) continue;
+    const outA = 1 - clamp((t - (b - .35)) / .35);
+    const lines = txt.split('\n');
+    lines.forEach((ln, li) => {
+      if (!ln) return;
+      const words = ln.split(' ');
+      ctx.save();
+      const small = ln.length > 28;
+      ctx.font = small ? 'italic 500 54px CGI' : '600 68px CG';
+      ctx.textBaseline = 'middle';
+      const total = ctx.measureText(ln).width, sp = ctx.measureText(' ').width;
+      let x = CX - total / 2; const y = 1560 + li * 88;
+      words.forEach((w, wi) => {
+        const wa = eOut((t - a - wi * .09 - li * .3) / .45) * outA;
+        ctx.globalAlpha = wa; ctx.fillStyle = '#fff';
+        ctx.shadowColor = 'rgba(0,0,0,.6)'; ctx.shadowBlur = 18;
+        ctx.fillText(w, x, y + (1 - wa) * 22 * (outA < 1 ? 0 : 1));
+        x += ctx.measureText(w).width + sp;
+      });
+      ctx.restore();
+    });
+    if (label) {
+      const la = eOut((t - a + .2) / .5) * outA;
+      ctx.save(); ctx.globalAlpha = la; ctx.font = '500 26px J'; ctx.letterSpacing = '12px'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+      ctx.fillStyle = GOLD; ctx.fillText(label, CX + 6, 300);
+      const lw = ctx.measureText(label).width / 2 + 40, ext = 90 * eOutExpo((t - a + .1) / .8);
+      ctx.fillRect(CX - lw - ext, 299, ext, 2); ctx.fillRect(CX + lw, 299, ext, 2);
+      ctx.restore();
+    }
+  }
+}
+function gmtRing(t, a, r = 380, spin = 0) {
+  if (a <= 0) return;
+  ctx.save(); ctx.globalAlpha = a; ctx.translate(CX, CY - 40); ctx.rotate(spin);
+  ctx.strokeStyle = GOLD; ctx.lineWidth = 2;
+  const draw = eIO(t / .9);
+  ctx.beginPath(); ctx.arc(0, 0, r, -PI / 2, -PI / 2 + TAU * draw); ctx.stroke();
+  ctx.beginPath(); ctx.arc(0, 0, r - 60, -PI / 2, -PI / 2 + TAU * draw); ctx.stroke();
+  ctx.font = '500 22px J'; ctx.fillStyle = GOLD; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  for (let i = 0; i < 24; i++) {
+    if (i / 24 > draw) break;
+    const ang = -PI / 2 + i / 24 * TAU;
+    if (i % 2 === 0) { ctx.save(); ctx.rotate(ang + PI / 2); ctx.fillText(i === 0 ? '▼' : String(i), 0, -r + 30); ctx.restore(); }
+    else { ctx.beginPath(); ctx.arc(Math.cos(ang) * (r - 30), Math.sin(ang) * (r - 30), 3, 0, TAU); ctx.fill(); }
+  }
+  ctx.restore();
+}
+
+// ---------- end card
+function endCard(t) {
+  const lt = t - 26;
+  ctx.fillStyle = '#ffffff'; ctx.fillRect(0, 0, W, H);
+  const g = ctx.createRadialGradient(CX, CY, 200, CX, CY, 1200);
+  g.addColorStop(0, 'rgba(255,255,255,0)'); g.addColorStop(1, 'rgba(226,221,208,.85)');
+  ctx.fillStyle = g; ctx.fillRect(0, 0, W, H);
+  const z = 1 + lt * .008;
+  ctx.save(); ctx.translate(CX, CY); ctx.scale(z, z); ctx.translate(-CX, -CY);
+  ctx.globalCompositeOperation = 'multiply';
+  // crown
+  const ca = eOut((lt - .1) / .8), cs = 1.25 * lerp(1.08, 1, eOut((lt - .1) / 1.4));
+  const cw = 307 * cs, ch = 334 * cs, cy = CY - 190 + (1 - ca) * 30;
+  ctx.globalAlpha = ca;
+  ctx.drawImage(LOGO, 475, 103, 307, 334, CX - cw / 2, cy - ch / 2, cw, ch);
+  // wordmark: reveal from centre outwards
+  const wa = eOutExpo((lt - .65) / 1.0);
+  const ws = 1.12, ww = 760 * ws, wh = 137 * ws, wy = CY + 150;
+  ctx.globalAlpha = clamp((lt - .6) / .5);
+  ctx.save(); ctx.beginPath(); ctx.rect(CX - ww / 2 * wa - 4, wy - wh, ww * wa + 8, wh * 2); ctx.clip();
+  ctx.drawImage(LOGO, 254, 464, 760, 137, CX - ww / 2, wy - wh / 2, ww, wh);
+  ctx.restore();
+  ctx.globalCompositeOperation = 'source-over';
+  // crown shimmer
+  const sp = (lt - .5) / 1.1;
+  if (sp > 0 && sp < 1) {
+    tctx.setTransform(1, 0, 0, 1, 0, 0); tctx.globalCompositeOperation = 'source-over'; tctx.clearRect(0, 0, W, H);
+    tctx.drawImage(crownMask, CX - cw / 2, cy - ch / 2, cw, ch);
+    tctx.globalCompositeOperation = 'source-in';
+    const x = lerp(CX - cw, CX + cw, sp);
+    const sg = tctx.createLinearGradient(x - 90, cy + 120, x + 90, cy - 120);
+    sg.addColorStop(0, 'rgba(255,245,210,0)'); sg.addColorStop(.5, 'rgba(255,248,225,.95)'); sg.addColorStop(1, 'rgba(255,245,210,0)');
+    tctx.fillStyle = sg; tctx.fillRect(0, 0, W, H);
+    ctx.globalCompositeOperation = 'screen'; ctx.globalAlpha = .9; ctx.drawImage(tmp, 0, 0);
+    ctx.globalCompositeOperation = 'source-over';
+  }
+  // line + model name
+  ctx.globalAlpha = 1;
+  const la = eOut((lt - 1.4) / .7);
+  ctx.fillStyle = GOLD; const lw = 160 * eOutExpo((lt - 1.3) / 1);
+  ctx.fillRect(CX - lw, wy + 125, lw * 2, 2);
+  ctx.globalAlpha = la; ctx.font = '500 32px J'; ctx.letterSpacing = '16px'; ctx.textAlign = 'center'; ctx.textBaseline = 'middle';
+  ctx.fillStyle = GREEN; ctx.fillText('GMT-MASTER II', CX + 8, wy + 190);
+  ctx.globalAlpha = eOut((lt - 1.9) / .7); ctx.font = '500 20px J'; ctx.letterSpacing = '12px'; ctx.fillStyle = GOLD;
+  ctx.fillText('OYSTER PERPETUAL', CX + 6, wy + 245);
+  ctx.restore();
+}
+
+// ---------- timeline
+function composite(t) {
+  ctx.setTransform(1, 0, 0, 1, 0, 0); ctx.globalAlpha = 1; ctx.globalCompositeOperation = 'source-over'; ctx.filter = 'none';
+  ctx.fillStyle = '#000'; ctx.fillRect(0, 0, W, H);
+  const S = SHOTS;
+  if (t < 3.0) {                                  // intro: gold 24h ring draws, bezel rises through it
+    const a = eOut((t - .45) / .9);
+    drawShot(S[0], t, a);
+    gmtRing(t, 1 - eIn((t - .6) / .8), 380 + eIn((t - .6) / .8) * 300, t * .15);
+    glint(t, 1.2, 1.4, .3);
+  } else if (t < 3.5) {                           // push through: A zooms past, B settles in
+    const p = eIO((t - 3.0) / .5);
+    drawShot(S[0], t, 1, { s: 1 + p * .5 });
+    drawShot(S[1], t, p, { s: lerp(1.2, 1, p) });
+  } else if (t < 6.0) {
+    drawShot(S[1], t);
+    glint(t, 4.3, 1.1, .22, -.9);
+  } else if (t < 9.5) {                           // warm light-leak dissolve into the cockpit
+    const p = clamp((t - 6.0) / .7);
+    if (p < 1) drawShot(S[1], t, 1);
+    drawShot(S[2], t, eIO(p));
+    leak(Math.sin(p * PI) * 1.0 + .12);
+  } else if (t < 12.5) {                          // horizontal whip pan
+    const p = clamp((t - 9.5) / .35);
+    if (p < 1) {
+      const e = eIO(p);
+      for (let k = 0; k < 5; k++) {
+        const o = e + (k - 2) * .04;
+        drawShot(S[2], t, .28, { x: -o * W });
+        drawShot(S[3], t, .28, { x: (1 - o) * W });
+      }
+    } else drawShot(S[3], t);
+    leak(.15, CX - 200, CY - 600);
+  } else if (t < 15.5) {                          // gold line opens onto the bracelet
+    const p = clamp((t - 12.5) / .7);
+    drawShot(S[3], t);
+    const e = eIO(p), hh = e * H / 2;
+    ctx.save(); ctx.beginPath(); ctx.rect(0, CY - hh, W, hh * 2); ctx.clip();
+    drawShot(S[4], t); ctx.restore();
+    if (p < 1) { ctx.fillStyle = GOLD; ctx.globalAlpha = 1 - e * .6; ctx.fillRect(0, CY - hh - 2, W, 3); ctx.fillRect(0, CY + hh - 1, W, 3); ctx.globalAlpha = 1; }
+    glint(t, 13.4, 1.6, .28, -.35);
+  } else if (t < 18.0) {                          // vertical whip onto the clasp
+    const p = clamp((t - 15.5) / .35);
+    if (p < 1) {
+      const e = eIO(p);
+      for (let k = 0; k < 5; k++) {
+        const o = e + (k - 2) * .04;
+        drawShot(S[4], t, .28, { y: -o * H * .6 });
+        drawShot(S[5], t, .28, { y: (1 - o) * H * .6 });
+      }
+    } else drawShot(S[5], t);
+    glint(t, 16.35, .6, .6, -.6);                 // the snap
+    fx.flash += hit(t, 16.5, .07) * .25;
+  } else if (t < 21.5) {                          // lights go down: lume builds out of black
+    const pOut = clamp((t - 18.0) / .35);
+    if (pOut < 1) drawShot(S[5], t, 1 - pOut);
+    const b = lerp(.05, 1.25, eIO((t - 18.4) / 2.2));
+    drawShot(S[6], t, clamp((t - 18.2) / .6), null, `brightness(${b}) saturate(${lerp(.6, 1.35, eIO((t - 18.4) / 2.2))})`);
+    fx.bloom += .5 * eIO((t - 18.6) / 2) + .15;
+  } else if (t < 25.0) {                          // cyan bloom flash into the airport
+    const p = clamp((t - 21.5) / .5);
+    if (p < 1) drawShot(S[6], t, 1, null, 'brightness(1.3) saturate(1.35)');
+    drawShot(S[7], t, eIO(p));
+    fx.flash += Math.sin(clamp((t - 21.35) / .45) * PI) * .35;
+    leak(.12, CX + 300, CY - 500);
+  } else if (t < 26.0) {                          // montage on the ticks
+    const i = Math.min(3, Math.floor((t - 25) / .25)), [n, at] = MONTAGE[i];
+    const s = SHOTS.find(x => x[0] === n);
+    const lt = t - at;
+    drawShot([n, 0, 1, 1.35, 1.15, [0, 0], [0, 0], 0, 0], lt * 1.2, 1, { s: 1 + .08 * (1 - eOut(lt / .25)) });
+    fx.flash += hit(t, at, .035) * .45;
+    fx.ca += .006 * hit(t, at, .08);
+  } else {
+    endCard(t);
+    fx.flash += hit(t, 26, .22);
+    fx.vig = .25; fx.grain = .02;
+  }
+  if (t >= 12.5 && t < 18.2) fx.bloom -= .1;            // bright steel-on-white shots: keep them crisp
+  if (t < 26) { shade(); caption(t); }
+}
+
+// ---------- WebGL post: bloom, gentle CA, grain, vignette, flash
+const gl = out.getContext('webgl2', { preserveDrawingBuffer: true, antialias: false });
+const VS = `#version 300 es
+in vec2 p; out vec2 uv; void main(){ uv = p*.5+.5; uv.y = 1.-uv.y; gl_Position = vec4(p,0,1); }`;
+const FS = `#version 300 es
+precision highp float; in vec2 uv; out vec4 o;
+uniform sampler2D T; uniform float uT, uCA, uFlash, uBloom, uGrain, uFade, uVig;
+float h(vec2 p){ return fract(sin(dot(p, vec2(127.1,311.7)))*43758.5453); }
+void main(){
+  vec2 d = uv-.5;
+  vec3 c = vec3(texture(T, uv + d*uCA).r, texture(T, uv).g, texture(T, uv - d*uCA).b);
+  vec3 bl = vec3(0.); vec2 px = vec2(1./1080., 1./1920.);
+  for (int i=0;i<8;i++){ float a = float(i)*.785+.3; vec2 o2 = vec2(cos(a),sin(a));
+    bl += textureLod(T, uv+o2*px*16., 4.).rgb + textureLod(T, uv+o2*px*40., 5.5).rgb*1.1 + textureLod(T, uv+o2*px*90., 7.).rgb*.8; }
+  bl /= 8.;
+  c += bl*(.12+uBloom)*smoothstep(.2,.95,bl);
+  // warm filmic grade: lift blacks slightly, gentle S
+  c = pow(c, vec3(1.02, 1.0, .98));
+  c *= 1. - dot(d,d)*uVig;
+  c += (h(uv*1000.+uT*13.)-.5)*uGrain;
+  c = mix(c, vec3(1.), clamp(uFlash,0.,1.));
+  c *= 1.-uFade;
+  o = vec4(clamp(c,0.,1.),1.);
+}`;
+function sh(tp, s) { const x = gl.createShader(tp); gl.shaderSource(x, s); gl.compileShader(x); if (!gl.getShaderParameter(x, gl.COMPILE_STATUS)) throw gl.getShaderInfoLog(x); return x; }
+const prog = gl.createProgram(); gl.attachShader(prog, sh(gl.VERTEX_SHADER, VS)); gl.attachShader(prog, sh(gl.FRAGMENT_SHADER, FS)); gl.linkProgram(prog); gl.useProgram(prog);
+const vb = gl.createBuffer(); gl.bindBuffer(gl.ARRAY_BUFFER, vb); gl.bufferData(gl.ARRAY_BUFFER, new Float32Array([-1, -1, 1, -1, -1, 1, 1, 1]), gl.STATIC_DRAW);
+const loc = gl.getAttribLocation(prog, 'p'); gl.enableVertexAttribArray(loc); gl.vertexAttribPointer(loc, 2, gl.FLOAT, false, 0, 0);
+const tex = gl.createTexture(); gl.bindTexture(gl.TEXTURE_2D, tex);
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR_MIPMAP_LINEAR); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE); gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+const U = n => gl.getUniformLocation(prog, n);
+
+function render(t) {
+  fx = { ca: .0018, flash: 0, bloom: 0, grain: .035, fade: 0, vig: .85 };
+  composite(t);
+  gl.viewport(0, 0, W, H);
+  gl.bindTexture(gl.TEXTURE_2D, tex);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA, gl.RGBA, gl.UNSIGNED_BYTE, scene);
+  gl.generateMipmap(gl.TEXTURE_2D);
+  gl.uniform1f(U('uT'), t); gl.uniform1f(U('uCA'), fx.ca); gl.uniform1f(U('uFlash'), fx.flash);
+  gl.uniform1f(U('uBloom'), fx.bloom); gl.uniform1f(U('uGrain'), fx.grain); gl.uniform1f(U('uFade'), fx.fade); gl.uniform1f(U('uVig'), fx.vig);
+  gl.drawArrays(gl.TRIANGLE_STRIP, 0, 4);
+}
+window.ready = load();
+window.frame = (t, q = .93) => { render(t); return out.toDataURL('image/jpeg', q); };
+if (location.search.includes('play')) window.ready.then(() => { const a = new Audio('rolex.wav'); a.play(); const loop = () => { render(a.currentTime); requestAnimationFrame(loop); }; loop(); });
+</script></body></html>

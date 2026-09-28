@@ -5,3 +5,5 @@ npm-debug.log*
 .DS_Store
 video/src/frames/
 video/src/nova.wav
+video/gmt-master-ii/src/frames/
+video/gmt-master-ii/src/*.wav
