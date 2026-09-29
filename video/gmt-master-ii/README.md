@@ -17,14 +17,18 @@
 
 ## Voiceover
 
-The voiceover isn't in the cut yet. Record `voiceover-script.txt` in one take, leaving a clear pause between lines, then run:
+`gmt-master-ii-vo.mp4` is the same cut with narration. The voice is the Kokoro `bm_george` British male voice, run offline through sherpa-onnx. The model comes from the `n8n-nodes-ttsbro@0.1.6` npm package.
 
 ```sh
-cd src && python3 score.py && python3 mix_vo.py ../voiceover.m4a score.wav rolex.wav
-ffmpeg -i ../gmt-master-ii.mp4 -i rolex.wav -map 0:v -map 1:a -c:v copy -c:a aac -b:a 256k ../gmt-master-ii-vo.mp4
+cd src
+npm pack n8n-nodes-ttsbro@0.1.6 && tar xzf n8n-nodes-ttsbro-0.1.6.tgz package/kokoro-int8-en-v0_19 && mkdir -p tts && mv package/kokoro-int8-en-v0_19 tts/kokoro
+pip install sherpa-onnx
+python3 vo.py 9 0.92          # one clip per line -> vo/9_*.wav (the committed clips re-ran lines 2 and 4 faster)
+python3 score.py && python3 mix_lines.py   # -> rolex_vo.wav, score ducked under the voice
+ffmpeg -i ../gmt-master-ii.mp4 -i rolex_vo.wav -map 0:v -map 1:a -c:v copy -c:a aac -b:a 256k ../gmt-master-ii-vo.mp4
 ```
 
-The mixer splits the take on those pauses, puts each line under its caption and ducks the music under the voice.
+To use your own recording, read `voiceover-script.txt` in one take with pauses between the lines, then run `python3 mix_vo.py take.m4a score.wav rolex_vo.wav`.
 
 ## Rebuild the picture
 
