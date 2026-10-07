@@ -1,0 +1,929 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<title>ScanCalc Simulator</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&family=Kalam:wght@400;700&display=swap">
+<style>
+/* Layout: a desk. The 3D calculator on the left, a worksheet on the right,
+   the four scan stages underneath. Stacks to one column on phones. */
+:root {
+  /* page (themed) */
+  --bg: #e4e7e2;
+  --desk: #d6dbd4;
+  --fg: #1d2320;
+  --muted: #59625c;
+  --panel: #eef0ec;
+  --line: rgba(29, 35, 32, 0.14);
+  --accent-ink: #a8540f;
+  --btn: #1d2320;
+  --btn-fg: #f3f4f1;
+
+  /* the device (a physical object — same in both themes) */
+  --shell: #2b2f36;
+  --shell-hi: #3b4049;
+  --shell-side: #1b1d22;
+  --key: #3d434d;
+  --key-fn: #4f5764;
+  --key-fg: #eef1f4;
+  --scan: #f0913a;
+  --scan-fg: #241304;
+  --scr-bg: #0a1620;
+  --scr-fg: #d3ecf5;
+  --scr-dim: #6c8896;
+
+  /* the worksheet (paper and pen — same in both themes) */
+  --paper: #fbfbf6;
+  --rule: #c3d6ea;
+  --margin: #e5a0a0;
+  --ink: #1e3a8a;
+  --pencil: #6b6f76;
+
+  --f-display: "Bricolage Grotesque", "Avenir Next", system-ui, sans-serif;
+  --f-body: "Instrument Sans", "Segoe UI", system-ui, sans-serif;
+  --f-mono: "JetBrains Mono", ui-monospace, "SFMono-Regular", Menlo, monospace;
+  --f-hand: "Kalam", "Comic Sans MS", "Bradley Hand", cursive;
+}
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme="light"]) {
+    --bg: #15181a; --desk: #1d2124; --fg: #e5e9e6; --muted: #9aa39e; --panel: #1f2427;
+    --line: rgba(229, 233, 230, 0.14); --accent-ink: #f2a861; --btn: #e5e9e6; --btn-fg: #15181a;
+    color-scheme: dark;
+  }
+}
+:root[data-theme="dark"] {
+  --bg: #15181a; --desk: #1d2124; --fg: #e5e9e6; --muted: #9aa39e; --panel: #1f2427;
+  --line: rgba(229, 233, 230, 0.14); --accent-ink: #f2a861; --btn: #e5e9e6; --btn-fg: #15181a;
+  color-scheme: dark;
+}
+
+* { box-sizing: border-box; }
+html, body { margin: 0; }
+body {
+  background: var(--bg);
+  color: var(--fg);
+  font: 15px/1.55 var(--f-body);
+  padding-block: 28px 48px;
+  padding-inline: 16px;
+  overflow-x: hidden;
+}
+.wrap { max-width: 1120px; margin: 0 auto; display: grid; gap: 22px; }
+
+/* ---------- header ---------- */
+.top { display: flex; flex-wrap: wrap; align-items: end; justify-content: space-between; gap: 16px 32px; }
+.top-text { min-width: 0; max-width: 62ch; }
+.eyebrow { font: 600 12px/1 var(--f-mono); letter-spacing: 0.12em; text-transform: uppercase; color: var(--accent-ink); margin: 0 0 10px; }
+h1 { font: 800 clamp(34px, 6vw, 56px)/0.95 var(--f-display); letter-spacing: -0.02em; margin: 0 0 12px; text-wrap: balance; }
+.lede { margin: 0; color: var(--muted); }
+.views { display: flex; gap: 6px; padding: 4px; background: var(--panel); border: 1px solid var(--line); border-radius: 999px; }
+.views button {
+  font: 600 13px/1 var(--f-body); color: var(--fg); background: transparent; border: 0;
+  padding: 10px 16px; border-radius: 999px; cursor: pointer;
+}
+.views button:hover { background: var(--line); }
+.views button[aria-pressed="true"] { background: var(--btn); color: var(--btn-fg); }
+button:focus-visible { outline: 2px solid var(--scan); outline-offset: 2px; }
+
+/* ---------- desk ---------- */
+.desk {
+  display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 8px 24px; align-items: center;
+  background: radial-gradient(120% 90% at 30% 20%, var(--panel), var(--desk));
+  border: 1px solid var(--line); border-radius: 28px; padding: 20px 24px;
+}
+.calc-col, .paper-col { min-width: 0; display: grid; justify-items: center; gap: 10px; }
+.hint { margin: 0; font: 500 12px/1.3 var(--f-mono); color: var(--muted); letter-spacing: 0.04em; }
+
+/* ---------- the 3D device ---------- */
+.scene {
+  width: 100%; height: 660px; display: grid; place-items: center; position: relative;
+  perspective: 1500px; perspective-origin: 50% 40%; cursor: grab; touch-action: pan-y; user-select: none;
+}
+.scene.dragging { cursor: grabbing; }
+/* the wrappers are flat planes through the middle of the box; let clicks fall through them to the faces */
+.float { pointer-events: none; transform-style: preserve-3d; animation: float 6s ease-in-out infinite; }
+@keyframes float { 0%, 100% { transform: translateY(-6px); } 50% { transform: translateY(6px); } }
+.calc { --W: 270px; --H: 560px; --D: 46px; width: var(--W); height: var(--H); position: relative; transform-style: preserve-3d; }
+.calc.smooth { transition: transform 0.9s cubic-bezier(0.22, 0.8, 0.24, 1); }
+.face { pointer-events: auto; position: absolute; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
+.front, .back { inset: 0; border-radius: 24px; }
+.front {
+  transform: translateZ(calc(var(--D) / 2));
+  background: linear-gradient(160deg, var(--shell-hi), var(--shell) 40%, #24272d);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.12), inset 0 -2px 0 rgba(0,0,0,0.35);
+  padding: 18px 18px 20px; display: flex; flex-direction: column; gap: 12px;
+}
+.back {
+  transform: rotateY(180deg) translateZ(calc(var(--D) / 2));
+  background: linear-gradient(200deg, #33373f, var(--shell) 45%, #22252b);
+  box-shadow: inset 0 1px 0 rgba(255,255,255,0.1);
+}
+.side { background: linear-gradient(90deg, var(--shell-side), #2a2d34 50%, var(--shell-side)); }
+.right, .left { width: var(--D); height: calc(var(--H) - 28px); top: 14px; left: calc((var(--W) - var(--D)) / 2); }
+.right { transform: rotateY(90deg) translateZ(calc(var(--W) / 2 - 1px)); }
+.left { transform: rotateY(-90deg) translateZ(calc(var(--W) / 2 - 1px)); }
+.topf, .bottomf { width: calc(var(--W) - 28px); height: var(--D); left: 14px; top: calc((var(--H) - var(--D)) / 2);
+  background: linear-gradient(180deg, var(--shell-side), #2a2d34 50%, var(--shell-side)); }
+.topf { transform: rotateX(90deg) translateZ(calc(var(--H) / 2 - 1px)); }
+.bottomf { transform: rotateX(-90deg) translateZ(calc(var(--H) / 2 - 1px)); }
+
+.brand { display: flex; justify-content: space-between; align-items: baseline; color: #aeb4bd; padding: 0 4px; }
+.brand b { font: 800 15px/1 var(--f-display); color: #e9ecef; letter-spacing: -0.01em; }
+.brand b span { color: var(--scan); }
+.brand small { font: 600 10px/1 var(--f-mono); letter-spacing: 0.14em; }
+
+/* screen */
+.bezel { background: #0d0f12; border-radius: 12px; padding: 7px; box-shadow: inset 0 2px 4px rgba(0,0,0,0.7), 0 1px 0 rgba(255,255,255,0.08); }
+.screen {
+  height: 184px; border-radius: 6px; background: var(--scr-bg); color: var(--scr-fg);
+  font-family: var(--f-mono); position: relative; overflow: hidden; display: flex; flex-direction: column;
+  box-shadow: inset 0 0 24px rgba(0,0,0,0.6);
+}
+.screen::after { content: ""; position: absolute; inset: 0; pointer-events: none;
+  background: linear-gradient(125deg, rgba(255,255,255,0.08), transparent 38%); }
+.status { display: flex; justify-content: space-between; align-items: center; padding: 6px 9px 0; font-size: 9.5px; color: var(--scr-dim); letter-spacing: 0.08em; }
+.status .ind { display: flex; gap: 7px; align-items: center; }
+.batt { width: 18px; height: 8px; border: 1px solid var(--scr-dim); border-radius: 2px; position: relative; padding: 1px; }
+.batt::before { content: ""; display: block; height: 100%; width: 78%; background: #6fd39a; }
+.batt::after { content: ""; position: absolute; right: -3px; top: 2px; width: 2px; height: 3px; background: var(--scr-dim); }
+.view { flex: 1; min-height: 0; display: flex; flex-direction: column; padding: 4px 10px 8px; }
+.view[hidden] { display: none !important; }
+
+.v-calc { justify-content: flex-end; text-align: right; gap: 4px; }
+.expr { font-size: 15px; color: var(--scr-fg); word-break: break-all; min-height: 20px; line-height: 1.3; }
+.expr .cur { display: inline-block; width: 7px; height: 15px; background: var(--scan); vertical-align: -2px; animation: blink 1s steps(1) infinite; }
+@keyframes blink { 50% { opacity: 0; } }
+.out { font-size: 34px; font-weight: 700; line-height: 1.1; font-variant-numeric: tabular-nums; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.out.preview { color: var(--scr-dim); font-size: 22px; }
+.out.err { color: #ff8a7a; }
+
+.v-vf { padding: 4px 8px 8px; gap: 5px; }
+.vf-frame { flex: 1; position: relative; border-radius: 4px; overflow: hidden; background: #3b3f45; }
+.vf-paper {
+  position: absolute; inset: -14% -10%; transform: rotate(-3deg);
+  background-color: #e9e9e1;
+  background-image: linear-gradient(transparent 0 23px, #a9bfd4 23px 24px);
+  background-size: 100% 24px;
+  display: grid; place-items: center; animation: handshake 2.6s ease-in-out infinite;
+  filter: contrast(0.92) brightness(0.96);
+}
+.vf-paper::before { content: ""; position: absolute; top: 0; bottom: 0; left: 18%; width: 1px; background: #d49898; }
+.vf-text { font: 700 19px/1.1 var(--f-hand); color: var(--ink); white-space: nowrap; position: relative; }
+@keyframes handshake { 0%,100% { transform: rotate(-3deg) translate(0,0); } 30% { transform: rotate(-2.4deg) translate(2px,-1px); } 65% { transform: rotate(-3.4deg) translate(-2px,1px); } }
+.vf-corners { position: absolute; inset: 14% 8%; pointer-events: none; }
+.vf-corners i { position: absolute; width: 14px; height: 14px; border: 2px solid var(--scan); }
+.vf-corners i:nth-child(1) { top: 0; left: 0; border-right: 0; border-bottom: 0; }
+.vf-corners i:nth-child(2) { top: 0; right: 0; border-left: 0; border-bottom: 0; }
+.vf-corners i:nth-child(3) { bottom: 0; left: 0; border-right: 0; border-top: 0; }
+.vf-corners i:nth-child(4) { bottom: 0; right: 0; border-left: 0; border-top: 0; }
+.vf-rec { position: absolute; top: 6px; left: 7px; font-size: 9px; color: #fff; display: flex; gap: 4px; align-items: center; letter-spacing: 0.1em; }
+.vf-rec::before { content: ""; width: 6px; height: 6px; border-radius: 50%; background: #ff5a4a; animation: blink 1s steps(1) infinite; }
+.vf-hint { font-size: 9.5px; color: var(--scr-dim); text-align: center; letter-spacing: 0.04em; }
+.vf-flash { position: absolute; inset: 0; background: #fff; opacity: 0; pointer-events: none; }
+.vf-flash.go { animation: flash 0.5s ease-out; }
+@keyframes flash { 0% { opacity: 0.95; } 100% { opacity: 0; } }
+
+.v-read { align-items: center; justify-content: center; gap: 10px; }
+.spin { width: 30px; height: 30px; border-radius: 50%; border: 3px solid rgba(211,236,245,0.18); border-top-color: var(--scan); animation: rot 0.8s linear infinite; }
+@keyframes rot { to { transform: rotate(360deg); } }
+.read-txt { font-size: 12px; letter-spacing: 0.08em; }
+.read-sub { font-size: 9.5px; color: var(--scr-dim); }
+
+.v-res { gap: 3px; padding-top: 2px; }
+.rs-label { font-size: 8.5px; letter-spacing: 0.14em; color: var(--scr-dim); }
+.rs-read { font-size: 11.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rs-ans { font-size: 22px; font-weight: 700; color: var(--scan); line-height: 1.15; }
+.rs-steps { flex: 1; min-height: 0; overflow-y: auto; margin: 2px 0 0; padding: 4px 0 0 16px; font-size: 10px; line-height: 1.4; border-top: 1px solid rgba(211,236,245,0.15); scrollbar-width: none; }
+.rs-steps::-webkit-scrollbar { display: none; }
+.rs-steps li { margin-bottom: 3px; }
+.rs-steps li::marker { color: var(--scan); }
+.rs-steps b { color: #fff; font-weight: 600; }
+.rs-foot { font-size: 8.5px; color: var(--scr-dim); display: flex; justify-content: space-between; letter-spacing: 0.04em; }
+
+/* keys */
+.keys-top { display: grid; grid-template-columns: 1.3fr 1fr 1fr; gap: 8px; }
+.keys { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+.key {
+  height: 42px; border: 0; border-radius: 10px; cursor: pointer;
+  font: 600 16px/1 var(--f-body); color: var(--key-fg);
+  background: linear-gradient(180deg, #4a515c, var(--key) 55%, #343941);
+  box-shadow: 0 3px 0 #15171b, 0 4px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.14);
+  transition: transform 0.06s, box-shadow 0.06s;
+}
+.key.fn { background: linear-gradient(180deg, #5d6674, var(--key-fn) 55%, #434a55); font-size: 14px; }
+.key.small { font-size: 11.5px; letter-spacing: 0.06em; }
+.key.scan { background: linear-gradient(180deg, #ffb169, var(--scan) 55%, #d9792a); color: var(--scan-fg); font: 800 13px/1 var(--f-display); letter-spacing: 0.08em; box-shadow: 0 3px 0 #7c3f0d, 0 4px 6px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.4); }
+.key.eq { background: linear-gradient(180deg, #e8ebef, #cfd4db 55%, #b8bec7); color: #1b1e23; font-size: 20px; box-shadow: 0 3px 0 #6d737c, 0 4px 6px rgba(0,0,0,0.35), inset 0 1px 0 #fff; }
+.key:active, .key.down { transform: translateY(3px); box-shadow: 0 0 0 #15171b, 0 1px 2px rgba(0,0,0,0.35), inset 0 1px 0 rgba(255,255,255,0.1); }
+
+/* back details */
+.cam-plate { position: absolute; top: 26px; left: 50%; transform: translateX(-50%); width: 150px; height: 74px; border-radius: 37px;
+  background: linear-gradient(180deg, #1a1c21, #23262c); box-shadow: inset 0 2px 5px rgba(0,0,0,0.7), 0 1px 0 rgba(255,255,255,0.08);
+  display: flex; align-items: center; justify-content: center; gap: 22px; }
+.lens { width: 58px; height: 58px; border-radius: 50%; position: relative;
+  background:
+    radial-gradient(circle at 36% 34%, rgba(255,255,255,0.75) 0 4%, transparent 6%),
+    radial-gradient(circle at 60% 66%, rgba(120,170,255,0.35) 0 6%, transparent 9%),
+    radial-gradient(circle, #04060a 0 30%, #17283c 31% 42%, #06080b 43% 58%, #5b616b 59% 66%, #2b2e34 67% 100%);
+  box-shadow: 0 0 0 2px #0e1013, 0 2px 4px rgba(0,0,0,0.6); }
+.ledcol { display: grid; gap: 8px; justify-items: center; }
+.led { width: 13px; height: 13px; border-radius: 50%; background: radial-gradient(circle at 40% 35%, #fffef4, #cfc8b0 60%, #8e8873); box-shadow: inset 0 0 2px rgba(0,0,0,0.5); transition: box-shadow 0.15s, background 0.15s; }
+.led.on { background: #fff; box-shadow: 0 0 18px 8px rgba(255,255,255,0.95), 0 0 60px 26px rgba(255,248,220,0.6); }
+.mic { width: 4px; height: 4px; border-radius: 50%; background: #0b0c0e; }
+.back-tag { position: absolute; top: 112px; width: 100%; text-align: center; font: 600 9px/1 var(--f-mono); letter-spacing: 0.18em; color: #7d848e; }
+.door { position: absolute; left: 26px; right: 26px; top: 190px; bottom: 96px; border-radius: 16px;
+  border: 1px solid rgba(0,0,0,0.55); box-shadow: inset 0 1px 0 rgba(255,255,255,0.06), 0 1px 0 rgba(255,255,255,0.05);
+  display: grid; place-content: center; text-align: center; gap: 6px; }
+.door .logo { font: 800 26px/1 var(--f-display); color: #4b515a; letter-spacing: -0.02em; text-shadow: 0 1px 0 rgba(255,255,255,0.06), 0 -1px 0 rgba(0,0,0,0.5); }
+.door .logo span { color: #6a4a2c; }
+.door .spec { font: 500 9px/1.6 var(--f-mono); color: #747b85; letter-spacing: 0.1em; }
+.screw { position: absolute; width: 10px; height: 10px; border-radius: 50%; background: radial-gradient(circle at 40% 35%, #8a9099, #3c4047); }
+.screw::after { content: ""; position: absolute; left: 2px; right: 2px; top: 4px; height: 2px; background: #2a2d32; }
+.screw.a { top: 10px; left: 10px; } .screw.b { top: 10px; right: 10px; } .screw.c { bottom: 10px; left: 10px; } .screw.d { bottom: 10px; right: 10px; }
+.foot { position: absolute; width: 34px; height: 12px; border-radius: 8px; background: #16181c; box-shadow: inset 0 1px 0 rgba(255,255,255,0.06); }
+.foot.a { top: 150px; left: 22px; } .foot.b { top: 150px; right: 22px; } .foot.c { bottom: 30px; left: 22px; } .foot.d { bottom: 30px; right: 22px; }
+.reg { position: absolute; bottom: 56px; width: 100%; text-align: center; font: 500 7.5px/1.5 var(--f-mono); color: #5f656e; letter-spacing: 0.08em; }
+
+/* sides */
+.pwr { position: absolute; top: 70px; left: 50%; transform: translateX(-50%); width: 14px; height: 40px; border-radius: 4px; background: #0d0e11; }
+.pwr::after { content: ""; position: absolute; left: 2px; right: 2px; top: 3px; height: 16px; border-radius: 3px; background: #6fd39a; }
+.shutter { position: absolute; top: 250px; left: 50%; transform: translateX(-50%) translateZ(3px); width: 22px; height: 64px; border-radius: 11px; border: 0; cursor: pointer;
+  background: linear-gradient(90deg, #c46f25, var(--scan), #c46f25); box-shadow: 0 0 0 3px #111316; }
+.shutter:active { transform: translateX(-50%) translateZ(0); }
+.side-lbl { position: absolute; left: 50%; transform: translateX(-50%) rotate(90deg); font: 600 7px/1 var(--f-mono); color: #6b727c; letter-spacing: 0.2em; white-space: nowrap; }
+.usb { position: absolute; top: 50%; left: 50%; transform: translate(-50%, -50%); width: 34px; height: 11px; border-radius: 6px; background: #08090b; box-shadow: inset 0 0 0 2px #3b3f46; }
+.grille { position: absolute; top: 50%; transform: translateY(-50%); display: flex; gap: 4px; }
+.grille i { width: 4px; height: 4px; border-radius: 50%; background: #0b0c0e; }
+
+.shadow { position: absolute; bottom: 14px; left: 50%; width: 260px; height: 34px; transform: translateX(-50%); border-radius: 50%;
+  background: radial-gradient(closest-side, rgba(0,0,0,0.32), transparent); filter: blur(4px); pointer-events: none; animation: shadow 6s ease-in-out infinite; }
+@keyframes shadow { 0%,100% { transform: translateX(-50%) scale(0.94); opacity: 0.8; } 50% { transform: translateX(-50%) scale(1); opacity: 1; } }
+
+/* ---------- worksheet ---------- */
+.paper {
+  width: min(100%, 380px); aspect-ratio: 8.5 / 10.5; position: relative; overflow: hidden;
+  background-color: var(--paper);
+  background-image: linear-gradient(transparent 0 31px, var(--rule) 31px 32px);
+  background-size: 100% 32px; background-position: 0 70px;
+  box-shadow: 0 1px 1px rgba(0,0,0,0.08), 0 14px 28px -10px rgba(0,0,0,0.35);
+  transform: rotate(1.6deg); border-radius: 2px; color: var(--ink);
+  font-family: var(--f-hand); transition: transform 0.6s cubic-bezier(0.22, 0.8, 0.24, 1);
+}
+.paper::before { content: ""; position: absolute; top: 0; bottom: 0; left: 46px; width: 1.5px; background: var(--margin); }
+.paper .holes { position: absolute; left: 14px; top: 0; bottom: 0; display: flex; flex-direction: column; justify-content: space-around; }
+.paper .holes i { width: 14px; height: 14px; border-radius: 50%; background: var(--desk); box-shadow: inset 0 1px 2px rgba(0,0,0,0.3); }
+.p-head { position: absolute; top: 18px; left: 60px; right: 18px; display: flex; justify-content: space-between; font: 400 15px/1.2 var(--f-hand); color: var(--pencil); }
+.p-head u { text-decoration: none; display: inline-block; min-width: 86px; border-bottom: 1px solid var(--pencil); }
+.p-title { position: absolute; top: 74px; left: 60px; right: 18px; font: 700 19px/32px var(--f-hand); color: var(--pencil); }
+.p-num { position: absolute; top: 138px; left: 60px; font: 700 22px/32px var(--f-hand); }
+.p-prob { position: absolute; top: 166px; left: 60px; right: 12px; font: 700 clamp(25px, 7.4vw, 33px)/1.2 var(--f-hand); transform: rotate(-1.4deg); transform-origin: left; white-space: nowrap; }
+.p-inst { position: absolute; top: 230px; left: 60px; font: 400 18px/32px var(--f-hand); color: var(--pencil); }
+.p-doodle { position: absolute; right: 22px; bottom: 26px; font: 400 15px/1.1 var(--f-hand); color: var(--pencil); transform: rotate(-6deg); opacity: 0.85; text-align: right; }
+.reticle { position: absolute; left: 50px; right: 6px; top: 150px; height: 112px; pointer-events: none; opacity: 0; transition: opacity 0.3s; }
+.reticle i { position: absolute; width: 22px; height: 22px; border: 3px solid var(--scan); }
+.reticle i:nth-child(1) { top: 0; left: 0; border-right: 0; border-bottom: 0; }
+.reticle i:nth-child(2) { top: 0; right: 0; border-left: 0; border-bottom: 0; }
+.reticle i:nth-child(3) { bottom: 0; left: 0; border-right: 0; border-top: 0; }
+.reticle i:nth-child(4) { bottom: 0; right: 0; border-left: 0; border-top: 0; }
+.reticle .beam { position: absolute; left: 4px; right: 4px; height: 2px; background: var(--scan); box-shadow: 0 0 12px 2px var(--scan); top: 0; animation: beam 1.6s ease-in-out infinite alternate; }
+@keyframes beam { to { top: calc(100% - 2px); } }
+.paper.aimed .reticle { opacity: 1; }
+.paper.aimed { transform: rotate(0deg) scale(1.02); }
+.p-flash { position: absolute; inset: 0; background: radial-gradient(circle at 50% 40%, #fff, rgba(255,255,255,0.4) 60%, transparent); opacity: 0; pointer-events: none; }
+.p-flash.go { animation: flash 0.6s ease-out; }
+
+.paper-actions { display: flex; gap: 10px; flex-wrap: wrap; justify-content: center; }
+.btn { font: 600 14px/1 var(--f-body); padding: 12px 18px; border-radius: 999px; border: 1px solid var(--line); background: var(--panel); color: var(--fg); cursor: pointer; }
+.btn:hover { border-color: var(--fg); }
+.btn.primary { background: var(--btn); color: var(--btn-fg); border-color: var(--btn); }
+.btn.primary:hover { opacity: 0.9; }
+
+/* ---------- the four stages ---------- */
+.flow { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; list-style: none; margin: 0; padding: 0; counter-reset: s; }
+.flow li { counter-increment: s; padding: 14px 16px 16px; border-radius: 16px; border: 1px solid var(--line); background: var(--panel); min-width: 0; transition: border-color 0.3s, box-shadow 0.3s; }
+.flow li::before { content: counter(s); display: inline-grid; place-items: center; width: 24px; height: 24px; border-radius: 50%; font: 700 12px/1 var(--f-mono); border: 1.5px solid var(--muted); color: var(--muted); margin-bottom: 8px; }
+.flow h3 { margin: 0 0 4px; font: 700 15px/1.25 var(--f-display); }
+.flow p { margin: 0; font-size: 13.5px; color: var(--muted); }
+.flow li.on { border-color: var(--scan); box-shadow: 0 0 0 3px color-mix(in srgb, var(--scan) 25%, transparent); }
+.flow li.on::before { background: var(--scan); border-color: var(--scan); color: var(--scan-fg); }
+.flow li.done::before { content: "✓"; border-color: var(--accent-ink); color: var(--accent-ink); }
+
+.note { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1fr); gap: 12px 32px; font-size: 14px; color: var(--muted); border-top: 1px solid var(--line); padding-top: 18px; }
+.note h4 { margin: 0 0 4px; font: 700 13px/1.3 var(--f-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--fg); }
+.note p { margin: 0; }
+kbd { font: 600 12px/1 var(--f-mono); padding: 2px 6px; border-radius: 5px; border: 1px solid var(--line); background: var(--panel); color: var(--fg); }
+
+@media (max-width: 860px) {
+  .desk { grid-template-columns: minmax(0, 1fr); padding: 14px 12px 22px; }
+  .flow { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+  .note { grid-template-columns: minmax(0, 1fr); }
+}
+@media (max-width: 420px) {
+  .scene { height: 600px; }
+  .calc { transform-origin: 50% 50%; }
+  .float { scale: 0.9; }
+  .flow { grid-template-columns: minmax(0, 1fr); }
+  .p-prob { font-size: 26px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .float, .shadow, .vf-paper, .reticle .beam { animation: none; }
+  .calc.smooth { transition-duration: 0.25s; }
+}
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header class="top">
+    <div class="top-text">
+      <p class="eyebrow">SC‑1 prototype · simulator</p>
+      <h1>ScanCalc</h1>
+      <p class="lede">A normal calculator on the front, a camera on the back. Turn it around, do some math on the keys, then scan the worksheet and watch it read the problem, solve it and hand the answer to <b>ANS</b>.</p>
+    </div>
+    <div class="views" role="group" aria-label="Turn the calculator">
+      <button type="button" id="vFront" aria-pressed="true">Front</button>
+      <button type="button" id="vBack" aria-pressed="false">Back</button>
+      <button type="button" id="vSide" aria-pressed="false">Side</button>
+      <button type="button" id="vSpin" aria-pressed="false">Spin</button>
+    </div>
+  </header>
+
+  <section class="desk" aria-label="Desk">
+    <div class="calc-col">
+      <div class="scene" id="scene">
+        <div class="float">
+          <div class="calc smooth" id="calc">
+
+            <!-- FRONT -->
+            <div class="face front">
+              <div class="brand"><b>Scan<span>Calc</span></b><small>SC‑1</small></div>
+              <div class="bezel">
+                <div class="screen" id="screen" aria-live="polite">
+                  <div class="status"><span id="stMode">CALC</span><span class="ind"><span>WiFi</span><span class="batt"></span></span></div>
+
+                  <div class="view v-calc" id="vCalc">
+                    <div class="expr" id="expr"><span class="cur"></span></div>
+                    <div class="out" id="out">0</div>
+                  </div>
+
+                  <div class="view v-vf" id="vVf" hidden>
+                    <div class="vf-frame">
+                      <div class="vf-paper"><span class="vf-text" id="vfText"></span></div>
+                      <div class="vf-corners"><i></i><i></i><i></i><i></i></div>
+                      <span class="vf-rec">CAM</span>
+                      <div class="vf-flash" id="vfFlash"></div>
+                    </div>
+                    <div class="vf-hint">Press SCAN or the side button to capture</div>
+                  </div>
+
+                  <div class="view v-read" id="vRead" hidden>
+                    <div class="spin"></div>
+                    <div class="read-txt">READING…</div>
+                    <div class="read-sub">sending photo · 312 KB</div>
+                  </div>
+
+                  <div class="view v-res" id="vRes" hidden>
+                    <div class="rs-label">I READ</div>
+                    <div class="rs-read" id="rsRead"></div>
+                    <div class="rs-ans" id="rsAns"></div>
+                    <ol class="rs-steps" id="rsSteps"></ol>
+                    <div class="rs-foot"><span>= use answer</span><span>▲▼ steps</span><span>⌫ retake</span></div>
+                  </div>
+                </div>
+              </div>
+
+              <div class="keys-top">
+                <button class="key scan" data-k="SCAN" type="button">SCAN</button>
+                <button class="key fn small" data-k="MODE" type="button">MODE</button>
+                <button class="key fn" data-k="DEL" type="button" aria-label="Delete">⌫</button>
+              </div>
+              <div class="keys">
+                <button class="key" data-k="7" type="button">7</button>
+                <button class="key" data-k="8" type="button">8</button>
+                <button class="key" data-k="9" type="button">9</button>
+                <button class="key fn" data-k="÷" type="button">÷</button>
+                <button class="key fn" data-k="(" type="button">(</button>
+                <button class="key" data-k="4" type="button">4</button>
+                <button class="key" data-k="5" type="button">5</button>
+                <button class="key" data-k="6" type="button">6</button>
+                <button class="key fn" data-k="×" type="button">×</button>
+                <button class="key fn" data-k=")" type="button">)</button>
+                <button class="key" data-k="1" type="button">1</button>
+                <button class="key" data-k="2" type="button">2</button>
+                <button class="key" data-k="3" type="button">3</button>
+                <button class="key fn" data-k="−" type="button">−</button>
+                <button class="key fn" data-k="^" type="button">xʸ</button>
+                <button class="key" data-k="0" type="button">0</button>
+                <button class="key" data-k="." type="button">.</button>
+                <button class="key fn" data-k="NEG" type="button" aria-label="Negative">±</button>
+                <button class="key fn" data-k="+" type="button">+</button>
+                <button class="key fn" data-k="√" type="button">√</button>
+                <button class="key fn small" data-k="AC" type="button">AC</button>
+                <button class="key fn" data-k="UP" type="button" aria-label="Up">▲</button>
+                <button class="key fn" data-k="DOWN" type="button" aria-label="Down">▼</button>
+                <button class="key eq" data-k="=" type="button">=</button>
+                <button class="key fn small" data-k="ANS" type="button">ANS</button>
+              </div>
+            </div>
+
+            <!-- BACK -->
+            <div class="face back">
+              <div class="cam-plate">
+                <div class="lens" title="12 MP autofocus camera"></div>
+                <div class="ledcol"><div class="led" id="led" title="Flash LED"></div><div class="mic"></div></div>
+              </div>
+              <div class="back-tag">12MP · AUTOFOCUS · FLASH</div>
+              <span class="foot a"></span><span class="foot b"></span><span class="foot c"></span><span class="foot d"></span>
+              <div class="door">
+                <span class="screw a"></span><span class="screw b"></span><span class="screw c"></span><span class="screw d"></span>
+                <div class="logo">Scan<span>Calc</span></div>
+                <div class="spec">BATTERY BAY<br>3.7V · 2000 mAh LiPo<br>RASPBERRY PI ZERO 2 W INSIDE</div>
+              </div>
+              <div class="reg">MODEL SC‑1 · PROTOTYPE · 5V ⎓ 1A USB‑C</div>
+            </div>
+
+            <!-- SIDES -->
+            <div class="face side right">
+              <div class="pwr" title="Power switch"></div>
+              <span class="side-lbl" style="top:132px">POWER</span>
+              <button class="shutter" id="shutter" type="button" title="Shutter button" aria-label="Shutter button"></button>
+              <span class="side-lbl" style="top:340px">SHUTTER</span>
+            </div>
+            <div class="face side left"></div>
+            <div class="face topf"></div>
+            <div class="face bottomf">
+              <div class="grille" style="left:30px"><i></i><i></i><i></i><i></i></div>
+              <div class="usb" title="USB‑C charging port"></div>
+              <div class="grille" style="right:30px"><i></i><i></i><i></i><i></i></div>
+            </div>
+
+          </div>
+        </div>
+        <div class="shadow"></div>
+      </div>
+      <p class="hint">Drag the calculator to turn it · keys work with your keyboard too</p>
+    </div>
+
+    <div class="paper-col">
+      <div class="paper" id="paper">
+        <div class="holes"><i></i><i></i><i></i></div>
+        <div class="p-head"><span>Name <u>&nbsp;</u></span><span>Period 3</span></div>
+        <div class="p-title" id="pTitle">Unit 4 · Practice</div>
+        <div class="p-num" id="pNum">#7</div>
+        <div class="p-prob" id="pProb"></div>
+        <div class="p-inst" id="pInst"></div>
+        <div class="reticle"><i></i><i></i><i></i><i></i><span class="beam"></span></div>
+        <div class="p-doodle">show your work!!<br>↓</div>
+        <div class="p-flash" id="pFlash"></div>
+      </div>
+      <div class="paper-actions">
+        <button class="btn" id="newProb" type="button">New problem</button>
+        <button class="btn primary" id="scanBtn" type="button">Scan this problem</button>
+      </div>
+    </div>
+  </section>
+
+  <ol class="flow" id="flow" aria-label="What happens when you scan">
+    <li><h3>Point the camera</h3><p>SCAN turns on the back camera. The screen becomes a viewfinder with a framing box.</p></li>
+    <li><h3>Take the photo</h3><p>Press SCAN again or the side shutter. The flash LED fires next to the lens.</p></li>
+    <li><h3>Read and solve</h3><p>The photo goes over Wi‑Fi to be read. It comes back as the problem, the answer and the steps.</p></li>
+    <li><h3>Answer to ANS</h3><p>Scroll the steps with ▲▼. Press = and the answer drops into the calculator as ANS.</p></li>
+  </ol>
+
+  <div class="note">
+    <div>
+      <h4>What's simulated</h4>
+      <p>This page writes the problem on the paper itself, so it already knows how to solve it, and it works with no internet. The real SC‑1 sends the photo to Claude, which can read handwriting and word problems it has never seen.</p>
+    </div>
+    <div>
+      <h4>Keyboard</h4>
+      <p><kbd>0–9</kbd> <kbd>+ − * /</kbd> <kbd>^</kbd> <kbd>( )</kbd> <kbd>Enter</kbd> = · <kbd>Backspace</kbd> ⌫ · <kbd>Esc</kbd> AC · <kbd>S</kbd> SCAN · <kbd>↑ ↓</kbd> steps</p>
+    </div>
+  </div>
+
+</div>
+
+<script>
+(function () {
+  'use strict';
+
+  /* ================= calculator engine (no eval) ================= */
+  var OPS = { '+': '+', '-': '−', '−': '−', '*': '×', '×': '×', 'x': '×', '/': '÷', '÷': '÷',
+              '^': '^', '(': '(', ')': ')', '√': '√', '%': '%', '²': '²' };
+
+  function tokenize(s) {
+    var t = [], i = 0;
+    while (i < s.length) {
+      var c = s[i];
+      if (c === ' ') { i++; continue; }
+      if (/[0-9.]/.test(c)) {
+        var j = i;
+        while (j < s.length && /[0-9.]/.test(s[j])) j++;
+        var str = s.slice(i, j);
+        if (str === '.' || (str.match(/\./g) || []).length > 1) throw new Error('Bad number');
+        t.push({ t: 'n', v: parseFloat(str) }); i = j; continue;
+      }
+      if (s.substr(i, 3) === 'ANS') { t.push({ t: 'n', v: 'ANS' }); i += 3; continue; }
+      if (OPS[c]) { t.push({ t: OPS[c] }); i++; continue; }
+      throw new Error('Bad character');
+    }
+    return t;
+  }
+
+  function evaluate(src, ans) {
+    var T = tokenize(src), p = 0;
+    ans = ans || 0;
+    function peek() { return T[p]; }
+    function is(k) { var x = T[p]; return x && x.t === k; }
+    function startsPrimary(x) { return x && (x.t === 'n' || x.t === '(' || x.t === '√'); }
+
+    function expr() {
+      var v = term();
+      while (is('+') || is('−')) { var o = T[p++].t, r = term(); v = o === '+' ? v + r : v - r; }
+      return v;
+    }
+    function term() {
+      var v = unary();
+      for (;;) {
+        if (is('×')) { p++; v *= unary(); }
+        else if (is('÷')) { p++; var r = unary(); if (r === 0) throw new Error('Divide by 0'); v /= r; }
+        else if (startsPrimary(peek())) { v *= unary(); }   // 2(3), 3√9, 2ANS
+        else break;
+      }
+      return v;
+    }
+    function unary() {
+      if (is('−')) { p++; return -unary(); }
+      if (is('+')) { p++; return unary(); }
+      return power();
+    }
+    function power() {
+      var b = postfix();
+      if (is('^')) { p++; b = Math.pow(b, unary()); }
+      return b;
+    }
+    function postfix() {
+      var v = primary();
+      for (;;) {
+        if (is('%')) { p++; v /= 100; }
+        else if (is('²')) { p++; v = v * v; }
+        else break;
+      }
+      return v;
+    }
+    function primary() {
+      var x = T[p++];
+      if (!x) throw new Error('Incomplete');
+      if (x.t === 'n') return x.v === 'ANS' ? ans : x.v;
+      if (x.t === '(') { var v = expr(); if (is(')')) p++; return v; }   // missing ) closes itself
+      if (x.t === '√') { var u = unary(); if (u < 0) throw new Error('√ of negative'); return Math.sqrt(u); }
+      throw new Error('Syntax');
+    }
+
+    var v = expr();
+    if (p < T.length) throw new Error('Syntax');
+    if (!isFinite(v)) throw new Error('Overflow');
+    return v;
+  }
+
+  function fmt(v) {
+    var r = parseFloat(v.toPrecision(12));
+    if (Object.is(r, -0)) r = 0;
+    var a = Math.abs(r), s;
+    if (a !== 0 && (a >= 1e12 || a < 1e-9)) s = r.toExponential(6).replace(/\.?0+e/, 'e');
+    else s = String(r);
+    return s.replace('-', '−');
+  }
+
+  /* ================= worksheet problem generator ================= */
+  function rand(a, b) { return a + Math.floor(Math.random() * (b - a + 1)); }
+  function randNZ(a, b) { var v; do { v = rand(a, b); } while (v === 0); return v; }
+  function pick(arr) { return arr[Math.floor(Math.random() * arr.length)]; }
+  function n(v) { return v < 0 ? '−' + (-v) : String(v); }
+  function lin(m, b) {                   // 3x + 7, x − 2, −x, 5
+    if (m === 0) return n(b);
+    var s = (m === 1 ? '' : m === -1 ? '−' : n(m)) + 'x';
+    if (b > 0) s += ' + ' + b;
+    if (b < 0) s += ' − ' + (-b);
+    return s;
+  }
+  function B(s) { return '<b>' + s + '</b>'; }
+
+  // Finish "m·x + b = r" the way a teacher would: undo the +b, then the ×m.
+  function finishLinear(m, b, r, steps) {
+    if (b !== 0) {
+      steps.push((b > 0 ? 'Subtract ' + b + ' from' : 'Add ' + (-b) + ' to') + ' both sides → ' + B(lin(m, 0) + ' = ' + n(r - b)));
+    }
+    if (m !== 1) steps.push('Divide both sides by ' + n(m) + ' → ' + B('x = ' + n((r - b) / m)));
+    return steps;
+  }
+
+  var KINDS = [
+    function orderOfOps() {
+      var e = rand(2, 5), k = rand(1, 3), diff = e * k;
+      var c = rand(diff + 1, diff + 9), d = c - diff, b = rand(2, 9), a = rand(2, 25);
+      var prod = b * diff, q = prod / e, ans = a + q;
+      return {
+        title: 'Order of operations', inst: 'Evaluate.',
+        problem: a + ' + ' + b + ' × (' + c + ' − ' + d + ') ÷ ' + e,
+        answer: ans, answerText: '= ' + n(ans),
+        steps: [
+          'Parentheses first: ' + c + ' − ' + d + ' = ' + B(diff),
+          'Multiply: ' + b + ' × ' + diff + ' = ' + B(prod),
+          'Divide: ' + prod + ' ÷ ' + e + ' = ' + B(q),
+          'Add: ' + a + ' + ' + q + ' = ' + B(ans)
+        ]
+      };
+    },
+    function exponents() {
+      var a = rand(2, 7), b = rand(1, 6), c = rand(2, 9), d = rand(2, 9);
+      var s = a + b, sq = s * s, m = c * d, ans = sq - m;
+      return {
+        title: 'Order of operations', inst: 'Evaluate.',
+        problem: '(' + a + ' + ' + b + ')² − ' + c + ' × ' + d,
+        answer: ans, answerText: '= ' + n(ans),
+        steps: [
+          'Parentheses first: ' + a + ' + ' + b + ' = ' + B(s),
+          'Exponent: ' + s + '² = ' + B(sq),
+          'Multiply: ' + c + ' × ' + d + ' = ' + B(m),
+          'Subtract: ' + sq + ' − ' + m + ' = ' + B(n(ans))
+        ]
+      };
+    },
+    function twoStep() {
+      var m = rand(2, 9), x = rand(-6, 12), b = randNZ(-15, 15), r = m * x + b;
+      return {
+        title: 'Two‑step equations', inst: 'Solve for x.', eq: true,
+        problem: lin(m, b) + ' = ' + n(r), lhs: lin(m, b), rhs: n(r),
+        answer: x, answerText: 'x = ' + n(x),
+        steps: finishLinear(m, b, r, []).concat(['Check: ' + n(m) + '(' + n(x) + ')' + (b > 0 ? ' + ' + b : ' − ' + (-b)) + ' = ' + n(r) + ' ✓'])
+      };
+    },
+    function parens() {
+      var m = rand(2, 6), k = randNZ(-9, 9), x = rand(-5, 12), r = m * (x + k);
+      var inner = lin(1, k);
+      return {
+        title: 'Equations with parentheses', inst: 'Solve for x.', eq: true,
+        problem: m + '(' + inner + ') = ' + n(r), lhs: m + '(' + inner + ')', rhs: n(r),
+        answer: x, answerText: 'x = ' + n(x),
+        steps: ['Divide both sides by ' + m + ' → ' + B(inner + ' = ' + n(r / m))]
+          .concat(finishLinear(1, k, r / m, []))
+          .concat(['Check: ' + m + '(' + n(x) + (k > 0 ? ' + ' + k : ' − ' + (-k)) + ') = ' + n(r) + ' ✓'])
+      };
+    },
+    function bothSides() {
+      var c = rand(1, 5), m = c + rand(1, 5), x = rand(-5, 10), b = randNZ(-12, 12);
+      var d = m * x + b - c * x;
+      var L = lin(m, b), R = lin(c, d), mm = m - c;
+      return {
+        title: 'Variables on both sides', inst: 'Solve for x.', eq: true,
+        problem: L + ' = ' + R, lhs: L, rhs: R,
+        answer: x, answerText: 'x = ' + n(x),
+        steps: ['Subtract ' + lin(c, 0) + ' from both sides → ' + B(lin(mm, b) + ' = ' + n(d))]
+          .concat(finishLinear(mm, b, d, []))
+          .concat(['Check: both sides equal ' + n(m * x + b) + ' when x = ' + n(x) + ' ✓'])
+      };
+    }
+  ];
+
+  function generate(kind) {
+    var f = typeof kind === 'number' ? KINDS[kind] : pick(KINDS);
+    return f();
+  }
+
+  window.ScanCalc = { evaluate: evaluate, fmt: fmt, generate: generate, kinds: KINDS.length };
+
+  /* ================= DOM ================= */
+  var $ = function (id) { return document.getElementById(id); };
+  var calcEl = $('calc'), scene = $('scene');
+  var views = { calc: $('vCalc'), vf: $('vVf'), read: $('vRead'), res: $('vRes') };
+  var flowItems = Array.prototype.slice.call($('flow').children);
+
+  /* ---------- rotation ---------- */
+  var rot = { x: -8, y: -24 };
+  function applyRot() { calcEl.style.transform = 'rotateX(' + rot.x + 'deg) rotateY(' + rot.y + 'deg)'; }
+  function nearest(target) {                     // turn the short way round
+    var k = Math.round((rot.y - target) / 360);
+    return target + 360 * k;
+  }
+  function turnTo(x, y, exact) {
+    calcEl.classList.add('smooth');
+    rot.x = x; rot.y = exact ? y : nearest(y);
+    applyRot();
+  }
+  function setView(id) {
+    ['vFront', 'vBack', 'vSide', 'vSpin'].forEach(function (b) { $(b).setAttribute('aria-pressed', String(b === id)); });
+  }
+  $('vFront').onclick = function () { setView('vFront'); turnTo(-8, -24); };
+  $('vBack').onclick = function () { setView('vBack'); turnTo(-8, 156); };
+  $('vSide').onclick = function () { setView('vSide'); turnTo(-6, -78); };
+  $('vSpin').onclick = function () { setView('vSpin'); turnTo(rot.x, rot.y + 360, true); setTimeout(function () { setView(''); }, 900); };
+  applyRot();
+
+  var drag = null;
+  scene.addEventListener('pointerdown', function (e) {
+    if (e.target.closest('button')) return;
+    drag = { x: e.clientX, y: e.clientY, rx: rot.x, ry: rot.y };
+    calcEl.classList.remove('smooth');
+    scene.classList.add('dragging');
+    scene.setPointerCapture(e.pointerId);
+    setView('');
+  });
+  scene.addEventListener('pointermove', function (e) {
+    if (!drag) return;
+    rot.y = drag.ry + (e.clientX - drag.x) * 0.55;
+    rot.x = Math.max(-70, Math.min(70, drag.rx - (e.clientY - drag.y) * 0.4));
+    applyRot();
+  });
+  function endDrag() { drag = null; scene.classList.remove('dragging'); }
+  scene.addEventListener('pointerup', endDrag);
+  scene.addEventListener('pointercancel', endDrag);
+
+  /* ---------- screen ---------- */
+  var mode = 'calc';
+  var st = { expr: '', out: '0', ans: 0, done: false, err: false, history: [], hIdx: -1 };
+  var prob = null, probNo = 7, lastResult = null, timers = [];
+
+  function show(v) {
+    mode = v;
+    Object.keys(views).forEach(function (k) { views[k].hidden = k !== v; });
+    $('stMode').textContent = { calc: 'CALC', vf: 'CAMERA', read: 'SCAN', res: 'RESULT' }[v];
+  }
+
+  function renderCalc() {
+    var ex = $('expr'), out = $('out');
+    ex.textContent = st.expr;
+    if (!st.done) { var cur = document.createElement('span'); cur.className = 'cur'; ex.appendChild(cur); }
+    out.className = 'out';
+    if (st.err) { out.textContent = st.out; out.classList.add('err'); return; }
+    if (st.done || !st.expr) { out.textContent = st.done ? st.out : '0'; return; }
+    try { out.textContent = fmt(evaluate(st.expr, st.ans)); out.classList.add('preview'); }
+    catch (e) { out.textContent = ''; }
+  }
+
+  function calcKey(k) {
+    if (/^[0-9.]$/.test(k)) {
+      if (st.done) st.expr = '';
+      st.expr += k;
+    } else if ('+−×÷^'.indexOf(k) !== -1) {
+      if (st.done && !st.err) st.expr = 'ANS';
+      st.expr += k;
+    } else if (k === '(' || k === '√') {
+      if (st.done) st.expr = '';
+      st.expr += k;
+    } else if (k === ')') {
+      if (st.done) st.expr = 'ANS';
+      st.expr += k;
+    } else if (k === 'NEG') {
+      if (st.done) st.expr = st.err ? '' : 'ANS';
+      st.expr += '−';
+    } else if (k === 'ANS') {
+      if (st.done) st.expr = '';
+      st.expr += 'ANS';
+    } else if (k === '=') {
+      if (!st.expr) return;
+      try {
+        var v = evaluate(st.expr, st.ans);
+        st.ans = v; st.out = fmt(v); st.err = false;
+        st.history.push(st.expr); st.hIdx = st.history.length;
+      } catch (e) { st.out = 'Error'; st.err = true; }
+      st.done = true;
+    } else if (k === 'DEL') {
+      st.done = false; st.err = false;
+      st.expr = /ANS$/.test(st.expr) ? st.expr.slice(0, -3) : st.expr.slice(0, -1);
+    } else if (k === 'AC') {
+      st.expr = ''; st.out = '0'; st.done = false; st.err = false;
+    } else if (k === 'UP' || k === 'DOWN') {
+      if (!st.history.length) return;
+      st.hIdx = Math.max(0, Math.min(st.history.length - 1, st.hIdx + (k === 'UP' ? -1 : 1)));
+      st.expr = st.history[st.hIdx]; st.done = false; st.err = false;
+    } else return;
+    if (k !== '=') st.done = false;
+    renderCalc();
+  }
+
+  /* ---------- paper ---------- */
+  function newProblem() {
+    if (mode === 'vf' || mode === 'read') cancelScan();
+    prob = generate();
+    probNo = rand(3, 24);
+    $('pTitle').textContent = 'Unit 4 · ' + prob.title;
+    $('pNum').textContent = '#' + probNo;
+    $('pProb').textContent = prob.problem;
+    $('pInst').textContent = prob.inst;
+    $('vfText').textContent = prob.problem;
+  }
+  $('newProb').onclick = newProblem;
+
+  /* ---------- scan flow ---------- */
+  function setFlow(stage) {
+    flowItems.forEach(function (li, i) {
+      li.classList.toggle('on', i === stage - 1);
+      li.classList.toggle('done', stage > 0 && i < stage - 1);
+    });
+  }
+  function later(fn, ms) { timers.push(setTimeout(fn, ms)); }
+  function clearTimers() { timers.forEach(clearTimeout); timers = []; }
+
+  function startScan() {
+    clearTimers();
+    show('vf');
+    setFlow(1);
+    $('paper').classList.add('aimed');
+    $('scanBtn').textContent = 'Take photo';
+    setView('vFront'); turnTo(-8, -24);
+  }
+  function cancelScan() {
+    clearTimers();
+    $('paper').classList.remove('aimed');
+    $('scanBtn').textContent = 'Scan this problem';
+    $('led').classList.remove('on');
+    setFlow(0);
+    show('calc'); renderCalc();
+  }
+  function capture() {
+    if (mode !== 'vf') return;
+    clearTimers();
+    mode = 'capturing';
+    setFlow(2);
+    $('scanBtn').textContent = 'Reading…';
+    setView('vBack'); turnTo(-6, 150);                       // show the camera side as it fires
+    later(function () {
+      $('led').classList.add('on');
+      $('pFlash').classList.remove('go'); void $('pFlash').offsetWidth; $('pFlash').classList.add('go');
+      $('vfFlash').classList.remove('go'); void $('vfFlash').offsetWidth; $('vfFlash').classList.add('go');
+    }, 800);
+    later(function () { $('led').classList.remove('on'); }, 1150);
+    later(function () {
+      $('paper').classList.remove('aimed');
+      show('read'); setFlow(3);
+      setView('vFront'); turnTo(-8, -24);
+    }, 1500);
+    later(showResult, 3300);
+  }
+  function showResult() {
+    lastResult = prob;
+    $('rsRead').textContent = prob.problem;
+    $('rsAns').textContent = prob.answerText;
+    var ol = $('rsSteps'); ol.innerHTML = '';
+    prob.steps.forEach(function (s) { var li = document.createElement('li'); li.innerHTML = s; ol.appendChild(li); });
+    ol.scrollTop = 0;
+    show('res'); setFlow(4);
+    $('scanBtn').textContent = 'Scan again';
+  }
+  function useAnswer() {
+    st.ans = lastResult.answer; st.expr = 'ANS'; st.out = fmt(lastResult.answer);
+    st.done = true; st.err = false;
+    setFlow(0);
+    $('scanBtn').textContent = 'Scan this problem';
+    show('calc'); renderCalc();
+    flowItems[3].classList.add('done');
+  }
+
+  $('scanBtn').onclick = function () { mode === 'vf' ? capture() : startScan(); };
+  $('shutter').onclick = function () { mode === 'vf' ? capture() : startScan(); };
+
+  /* ---------- key routing by screen ---------- */
+  function press(k) {
+    if (mode === 'capturing' || mode === 'read') return;
+    if (k === 'SCAN') { mode === 'vf' ? capture() : startScan(); return; }
+    if (mode === 'vf') { if (k === 'DEL' || k === 'AC') cancelScan(); return; }
+    if (mode === 'res') {
+      var ol = $('rsSteps');
+      if (k === 'UP') ol.scrollTop -= 28;
+      else if (k === 'DOWN') ol.scrollTop += 28;
+      else if (k === '=') useAnswer();
+      else if (k === 'DEL') startScan();
+      else if (k === 'AC' || k === 'MODE') { setFlow(0); $('scanBtn').textContent = 'Scan this problem'; show('calc'); renderCalc(); }
+      return;
+    }
+    if (k === 'MODE') { if (lastResult) { show('res'); } return; }
+    calcKey(k);
+  }
+
+  document.querySelectorAll('.key').forEach(function (b) {
+    b.addEventListener('click', function () { press(b.dataset.k); });
+  });
+
+  var KEYMAP = { Enter: '=', '=': '=', Backspace: 'DEL', Delete: 'AC', Escape: 'AC', ArrowUp: 'UP', ArrowDown: 'DOWN',
+                 '+': '+', '-': '−', '*': '×', 'x': '×', '/': '÷', '^': '^', '(': '(', ')': ')', '.': '.', 'r': '√', 's': 'SCAN', 'S': 'SCAN', 'a': 'ANS', 'm': 'MODE', ' ': 'SHUTTER' };
+  document.addEventListener('keydown', function (e) {
+    if (e.ctrlKey || e.metaKey || e.altKey) return;
+    if (e.target.closest && e.target.closest('button') && (e.key === 'Enter' || e.key === ' ')) return;
+    var k = /^[0-9]$/.test(e.key) ? e.key : KEYMAP[e.key];
+    if (!k) return;
+    e.preventDefault();
+    if (k === 'SHUTTER') { if (mode === 'vf') capture(); return; }
+    var btn = document.querySelector('.key[data-k="' + k + '"]');
+    if (btn) { btn.classList.add('down'); setTimeout(function () { btn.classList.remove('down'); }, 110); }
+    press(k);
+  });
+
+  newProblem();
+  renderCalc();
+})();
+</script>
+</body>
+</html>
