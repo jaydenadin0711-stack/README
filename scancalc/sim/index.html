@@ -6,7 +6,7 @@
 <title>ScanCalc Simulator</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&family=Kalam:wght@400;700&display=swap">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Bricolage+Grotesque:opsz,wght@12..96,600;12..96,800&family=Instrument+Sans:wght@400;500;600;700&family=JetBrains+Mono:wght@400;600;700&family=Kalam:wght@400;700&family=STIX+Two+Text:ital,wght@0,400;0,500;1,400&display=swap">
 <style>
 /* Layout: a desk. The 3D calculator on the left, a worksheet on the right,
    the four scan stages underneath. Stacks to one column on phones. */
@@ -61,6 +61,7 @@
 }
 
 * { box-sizing: border-box; }
+[hidden] { display: none !important; }
 html, body { margin: 0; }
 body {
   background: var(--bg);
@@ -98,14 +99,14 @@ button:focus-visible { outline: 2px solid var(--scan); outline-offset: 2px; }
 
 /* ---------- the 3D device ---------- */
 .scene {
-  width: 100%; height: 660px; display: grid; place-items: center; position: relative;
+  width: 100%; height: 720px; display: grid; place-items: center; position: relative;
   perspective: 1500px; perspective-origin: 50% 40%; cursor: grab; touch-action: pan-y; user-select: none;
 }
 .scene.dragging { cursor: grabbing; }
 /* the wrappers are flat planes through the middle of the box; let clicks fall through them to the faces */
 .float { pointer-events: none; transform-style: preserve-3d; animation: float 6s ease-in-out infinite; }
 @keyframes float { 0%, 100% { transform: translateY(-6px); } 50% { transform: translateY(6px); } }
-.calc { --W: 270px; --H: 560px; --D: 46px; width: var(--W); height: var(--H); position: relative; transform-style: preserve-3d; }
+.calc { --W: 270px; --H: 610px; --D: 46px; width: var(--W); height: var(--H); position: relative; transform-style: preserve-3d; }
 .calc.smooth { transition: transform 0.9s cubic-bezier(0.22, 0.8, 0.24, 1); }
 .face { pointer-events: auto; position: absolute; backface-visibility: hidden; -webkit-backface-visibility: hidden; }
 .front, .back { inset: 0; border-radius: 24px; }
@@ -170,7 +171,7 @@ button:focus-visible { outline: 2px solid var(--scan); outline-offset: 2px; }
   filter: contrast(0.92) brightness(0.96);
 }
 .vf-paper::before { content: ""; position: absolute; top: 0; bottom: 0; left: 18%; width: 1px; background: #d49898; }
-.vf-text { font: 700 19px/1.1 var(--f-hand); color: var(--ink); white-space: nowrap; position: relative; }
+.vf-text { font: 700 17px/1.15 var(--f-hand); color: var(--ink); white-space: pre; position: relative; text-align: center; }
 @keyframes handshake { 0%,100% { transform: rotate(-3deg) translate(0,0); } 30% { transform: rotate(-2.4deg) translate(2px,-1px); } 65% { transform: rotate(-3.4deg) translate(-2px,1px); } }
 .vf-corners { position: absolute; inset: 14% 8%; pointer-events: none; }
 .vf-corners i { position: absolute; width: 14px; height: 14px; border: 2px solid var(--scan); }
@@ -194,7 +195,9 @@ button:focus-visible { outline: 2px solid var(--scan); outline-offset: 2px; }
 .v-res { gap: 3px; padding-top: 2px; }
 .rs-label { font-size: 8.5px; letter-spacing: 0.14em; color: var(--scr-dim); }
 .rs-read { font-size: 11.5px; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-.rs-ans { font-size: 22px; font-weight: 700; color: var(--scan); line-height: 1.15; }
+.rs-ans { font-size: 22px; font-weight: 700; color: var(--scan); line-height: 1.15; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+.rs-ans.long { font-size: 15px; }
+.rs-ans.xlong { font-size: 12px; }
 .rs-steps { flex: 1; min-height: 0; overflow-y: auto; margin: 2px 0 0; padding: 4px 0 0 16px; font-size: 10px; line-height: 1.4; border-top: 1px solid rgba(211,236,245,0.15); scrollbar-width: none; }
 .rs-steps::-webkit-scrollbar { display: none; }
 .rs-steps li { margin-bottom: 3px; }
@@ -202,8 +205,19 @@ button:focus-visible { outline: 2px solid var(--scan); outline-offset: 2px; }
 .rs-steps b { color: #fff; font-weight: 600; }
 .rs-foot { font-size: 8.5px; color: var(--scr-dim); display: flex; justify-content: space-between; letter-spacing: 0.04em; }
 
+.v-fx { gap: 3px; padding-top: 2px; }
+.fx-cat { font-size: 8.5px; letter-spacing: 0.14em; color: var(--scan); }
+.fx-name { font-size: 11px; color: var(--scr-dim); }
+.fx-f { flex: 1; display: grid; place-items: center; text-align: center; font: 500 17px/1.35 "STIX Two Text", Georgia, serif; color: #fff; padding: 0 2px; }
+.fx-f sup, .fx-f sub, .fm-f sup, .fm-f sub { font-size: 0.68em; line-height: 0; }
+.fx-note { font-size: 9.5px; color: var(--scr-fg); line-height: 1.35; }
+.fx-foot { font-size: 8.5px; color: var(--scr-dim); display: flex; justify-content: space-between; letter-spacing: 0.04em; }
+
 /* keys */
 .keys-top { display: grid; grid-template-columns: 1.3fr 1fr 1fr; gap: 8px; }
+.keys-fn { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
+.key.mini { height: 32px; font-size: 13px; border-radius: 8px; }
+.key.mini i { font-family: "STIX Two Text", Georgia, serif; font-size: 16px; }
 .keys { display: grid; grid-template-columns: repeat(5, 1fr); gap: 8px; }
 .key {
   height: 42px; border: 0; border-radius: 10px; cursor: pointer;
@@ -277,9 +291,10 @@ button:focus-visible { outline: 2px solid var(--scan); outline-offset: 2px; }
 .p-head { position: absolute; top: 18px; left: 60px; right: 18px; display: flex; justify-content: space-between; font: 400 15px/1.2 var(--f-hand); color: var(--pencil); }
 .p-head u { text-decoration: none; display: inline-block; min-width: 86px; border-bottom: 1px solid var(--pencil); }
 .p-title { position: absolute; top: 74px; left: 60px; right: 18px; font: 700 19px/32px var(--f-hand); color: var(--pencil); }
-.p-num { position: absolute; top: 138px; left: 60px; font: 700 22px/32px var(--f-hand); }
-.p-prob { position: absolute; top: 166px; left: 60px; right: 12px; font: 700 clamp(25px, 7.4vw, 33px)/1.2 var(--f-hand); transform: rotate(-1.4deg); transform-origin: left; white-space: nowrap; }
-.p-inst { position: absolute; top: 230px; left: 60px; font: 400 18px/32px var(--f-hand); color: var(--pencil); }
+.p-body { position: absolute; top: 132px; left: 60px; right: 10px; display: flex; flex-direction: column; }
+.p-num { font: 700 22px/32px var(--f-hand); }
+.p-prob { font: 700 clamp(23px, 6.8vw, 31px)/1.3 var(--f-hand); transform: rotate(-1.4deg); transform-origin: left; white-space: pre; }
+.p-inst { font: 400 18px/32px var(--f-hand); color: var(--pencil); margin-top: 8px; }
 .p-doodle { position: absolute; right: 22px; bottom: 26px; font: 400 15px/1.1 var(--f-hand); color: var(--pencil); transform: rotate(-6deg); opacity: 0.85; text-align: right; }
 .reticle { position: absolute; left: 50px; right: 6px; top: 150px; height: 112px; pointer-events: none; opacity: 0; transition: opacity 0.3s; }
 .reticle i { position: absolute; width: 22px; height: 22px; border: 3px solid var(--scan); }
@@ -299,6 +314,30 @@ button:focus-visible { outline: 2px solid var(--scan); outline-offset: 2px; }
 .btn:hover { border-color: var(--fg); }
 .btn.primary { background: var(--btn); color: var(--btn-fg); border-color: var(--btn); }
 .btn.primary:hover { opacity: 0.9; }
+
+.levels { display: flex; gap: 4px; padding: 4px; border-radius: 999px; background: var(--panel); border: 1px solid var(--line); }
+.levels button { font: 600 13px/1 var(--f-body); color: var(--fg); background: transparent; border: 0; padding: 9px 13px; border-radius: 999px; cursor: pointer; }
+.levels button:hover { background: var(--line); }
+.levels button[aria-pressed="true"] { background: var(--btn); color: var(--btn-fg); }
+
+/* ---------- tabs ---------- */
+.tabs { display: flex; gap: 22px; border-bottom: 1px solid var(--line); }
+.tabs button { font: 700 16px/1 var(--f-display); color: var(--muted); background: none; border: 0; padding: 4px 2px 14px; cursor: pointer; border-bottom: 3px solid transparent; margin-bottom: -1px; }
+.tabs button:hover { color: var(--fg); }
+.tabs button[aria-selected="true"] { color: var(--fg); border-bottom-color: var(--scan); }
+.panel { display: grid; gap: 22px; }
+
+/* ---------- formula sheet ---------- */
+.sheet { display: grid; gap: 28px; }
+.sheet-intro { margin: 0; color: var(--muted); max-width: 70ch; }
+.fgroup h2 { font: 800 22px/1.2 var(--f-display); margin: 0 0 12px; letter-spacing: -0.01em; }
+.fgrid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(100%, 260px), 1fr)); gap: 12px; }
+.fm { background: var(--panel); border: 1px solid var(--line); border-radius: 16px; padding: 14px 16px; display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.fm-name { font: 600 12px/1.2 var(--f-mono); letter-spacing: 0.06em; text-transform: uppercase; color: var(--accent-ink); }
+.fm-f { font: 400 21px/1.45 "STIX Two Text", Georgia, serif; overflow-x: auto; }
+.fm-note { margin: 0; font-size: 13.5px; color: var(--muted); flex: 1; }
+.fm button { align-self: start; font: 600 12.5px/1 var(--f-body); color: var(--fg); background: transparent; border: 1px solid var(--line); border-radius: 999px; padding: 8px 12px; cursor: pointer; }
+.fm button:hover { border-color: var(--fg); }
 
 /* ---------- the four stages ---------- */
 .flow { display: grid; grid-template-columns: repeat(4, minmax(0, 1fr)); gap: 12px; list-style: none; margin: 0; padding: 0; counter-reset: s; }
@@ -321,11 +360,11 @@ kbd { font: 600 12px/1 var(--f-mono); padding: 2px 6px; border-radius: 5px; bord
   .note { grid-template-columns: minmax(0, 1fr); }
 }
 @media (max-width: 420px) {
-  .scene { height: 600px; }
+  .scene { height: 670px; }
   .calc { transform-origin: 50% 50%; }
   .float { scale: 0.9; }
   .flow { grid-template-columns: minmax(0, 1fr); }
-  .p-prob { font-size: 26px; }
+  .p-prob { font-size: 23px; }
 }
 @media (prefers-reduced-motion: reduce) {
   .float, .shadow, .vf-paper, .reticle .beam { animation: none; }
@@ -340,9 +379,9 @@ kbd { font: 600 12px/1 var(--f-mono); padding: 2px 6px; border-radius: 5px; bord
     <div class="top-text">
       <p class="eyebrow">SC‑1 prototype · simulator</p>
       <h1>ScanCalc</h1>
-      <p class="lede">A normal calculator on the front, a camera on the back. Turn it around, do some math on the keys, then scan the worksheet and watch it read the problem, solve it and hand the answer to <b>ANS</b>.</p>
+      <p class="lede">A normal calculator on the front, a camera on the back. Turn it around, do some math on the keys, then scan an Algebra 1 or Algebra 2 worksheet and watch it read the problem, solve it and hand the answer to <b>ANS</b>.</p>
     </div>
-    <div class="views" role="group" aria-label="Turn the calculator">
+    <div class="views" id="viewBtns" role="group" aria-label="Turn the calculator">
       <button type="button" id="vFront" aria-pressed="true">Front</button>
       <button type="button" id="vBack" aria-pressed="false">Back</button>
       <button type="button" id="vSide" aria-pressed="false">Side</button>
@@ -350,6 +389,12 @@ kbd { font: 600 12px/1 var(--f-mono); padding: 2px 6px; border-radius: 5px; bord
     </div>
   </header>
 
+  <nav class="tabs" role="tablist" aria-label="Sections">
+    <button type="button" role="tab" id="tabSim" aria-selected="true" aria-controls="panelSim">Simulator</button>
+    <button type="button" role="tab" id="tabFx" aria-selected="false" aria-controls="panelFx">Formula sheet</button>
+  </nav>
+
+  <div class="panel" id="panelSim" role="tabpanel" aria-labelledby="tabSim">
   <section class="desk" aria-label="Desk">
     <div class="calc-col">
       <div class="scene" id="scene">
@@ -384,20 +429,35 @@ kbd { font: 600 12px/1 var(--f-mono); padding: 2px 6px; border-radius: 5px; bord
                     <div class="read-sub">sending photo · 312 KB</div>
                   </div>
 
+                  <div class="view v-fx" id="vFx" hidden>
+                    <div class="fx-cat" id="fxCat"></div>
+                    <div class="fx-name" id="fxName"></div>
+                    <div class="fx-f" id="fxF"></div>
+                    <div class="fx-note" id="fxNote"></div>
+                    <div class="fx-foot"><span>▲▼ browse</span><span id="fxPos"></span><span>f(x) exit</span></div>
+                  </div>
+
                   <div class="view v-res" id="vRes" hidden>
                     <div class="rs-label">I READ</div>
                     <div class="rs-read" id="rsRead"></div>
                     <div class="rs-ans" id="rsAns"></div>
                     <ol class="rs-steps" id="rsSteps"></ol>
-                    <div class="rs-foot"><span>= use answer</span><span>▲▼ steps</span><span>⌫ retake</span></div>
+                    <div class="rs-foot"><span id="rsHint">= use answer</span><span>▲▼ steps</span><span>⌫ retake</span></div>
                   </div>
                 </div>
               </div>
 
               <div class="keys-top">
                 <button class="key scan" data-k="SCAN" type="button">SCAN</button>
-                <button class="key fn small" data-k="MODE" type="button">MODE</button>
+                <button class="key fn small" data-k="FX" type="button" aria-label="Formulas"><i style="font-family:'STIX Two Text',Georgia,serif;font-size:16px;letter-spacing:0">f(x)</i></button>
                 <button class="key fn" data-k="DEL" type="button" aria-label="Delete">⌫</button>
+              </div>
+              <div class="keys-fn">
+                <button class="key fn mini" data-k="²" type="button">x²</button>
+                <button class="key fn mini" data-k="log(" type="button">log</button>
+                <button class="key fn mini" data-k="ln(" type="button">ln</button>
+                <button class="key fn mini" data-k="π" type="button"><i>π</i></button>
+                <button class="key fn mini" data-k="e" type="button"><i>e</i></button>
               </div>
               <div class="keys">
                 <button class="key" data-k="7" type="button">7</button>
@@ -471,12 +531,19 @@ kbd { font: 600 12px/1 var(--f-mono); padding: 2px 6px; border-radius: 5px; bord
         <div class="holes"><i></i><i></i><i></i></div>
         <div class="p-head"><span>Name <u>&nbsp;</u></span><span>Period 3</span></div>
         <div class="p-title" id="pTitle">Unit 4 · Practice</div>
-        <div class="p-num" id="pNum">#7</div>
-        <div class="p-prob" id="pProb"></div>
-        <div class="p-inst" id="pInst"></div>
+        <div class="p-body" id="pBody">
+          <div class="p-num" id="pNum">#7</div>
+          <div class="p-prob" id="pProb"></div>
+          <div class="p-inst" id="pInst"></div>
+        </div>
         <div class="reticle"><i></i><i></i><i></i><i></i><span class="beam"></span></div>
         <div class="p-doodle">show your work!!<br>↓</div>
         <div class="p-flash" id="pFlash"></div>
+      </div>
+      <div class="levels" role="group" aria-label="Worksheet level">
+        <button type="button" data-level="1" aria-pressed="false">Algebra 1</button>
+        <button type="button" data-level="2" aria-pressed="true">Algebra 2</button>
+        <button type="button" data-level="mix" aria-pressed="false">Mix</button>
       </div>
       <div class="paper-actions">
         <button class="btn" id="newProb" type="button">New problem</button>
@@ -499,7 +566,14 @@ kbd { font: 600 12px/1 var(--f-mono); padding: 2px 6px; border-radius: 5px; bord
     </div>
     <div>
       <h4>Keyboard</h4>
-      <p><kbd>0–9</kbd> <kbd>+ − * /</kbd> <kbd>^</kbd> <kbd>( )</kbd> <kbd>Enter</kbd> = · <kbd>Backspace</kbd> ⌫ · <kbd>Esc</kbd> AC · <kbd>S</kbd> SCAN · <kbd>↑ ↓</kbd> steps</p>
+      <p><kbd>0–9</kbd> <kbd>+ − * /</kbd> <kbd>^</kbd> <kbd>( )</kbd> <kbd>Enter</kbd> = · <kbd>Backspace</kbd> ⌫ · <kbd>Esc</kbd> AC · <kbd>S</kbd> SCAN · <kbd>F</kbd> formulas · <kbd>L</kbd> log · <kbd>P</kbd> π · <kbd>↑ ↓</kbd> browse</p>
+    </div>
+  </div>
+  </div>
+
+  <div class="panel" id="panelFx" role="tabpanel" aria-labelledby="tabFx" hidden>
+    <div class="sheet" id="sheet">
+      <p class="sheet-intro">The formulas that come up most in Algebra 1 and Algebra 2. The same list is built into the calculator: press <b>f(x)</b> and browse with ▲▼, or tap <b>Show on calculator</b> on any card.</p>
     </div>
   </div>
 
@@ -526,6 +600,10 @@ kbd { font: 600 12px/1 var(--f-mono); padding: 2px 6px; border-radius: 5px; bord
         t.push({ t: 'n', v: parseFloat(str) }); i = j; continue;
       }
       if (s.substr(i, 3) === 'ANS') { t.push({ t: 'n', v: 'ANS' }); i += 3; continue; }
+      if (s.substr(i, 3) === 'log') { t.push({ t: 'log' }); i += 3; continue; }
+      if (s.substr(i, 2) === 'ln') { t.push({ t: 'ln' }); i += 2; continue; }
+      if (c === 'π') { t.push({ t: 'n', v: Math.PI }); i++; continue; }
+      if (c === 'e') { t.push({ t: 'n', v: Math.E }); i++; continue; }
       if (OPS[c]) { t.push({ t: OPS[c] }); i++; continue; }
       throw new Error('Bad character');
     }
@@ -537,7 +615,7 @@ kbd { font: 600 12px/1 var(--f-mono); padding: 2px 6px; border-radius: 5px; bord
     ans = ans || 0;
     function peek() { return T[p]; }
     function is(k) { var x = T[p]; return x && x.t === k; }
-    function startsPrimary(x) { return x && (x.t === 'n' || x.t === '(' || x.t === '√'); }
+    function startsPrimary(x) { return x && (x.t === 'n' || x.t === '(' || x.t === '√' || x.t === 'log' || x.t === 'ln'); }
 
     function expr() {
       var v = term();
@@ -579,6 +657,11 @@ kbd { font: 600 12px/1 var(--f-mono); padding: 2px 6px; border-radius: 5px; bord
       if (x.t === 'n') return x.v === 'ANS' ? ans : x.v;
       if (x.t === '(') { var v = expr(); if (is(')')) p++; return v; }   // missing ) closes itself
       if (x.t === '√') { var u = unary(); if (u < 0) throw new Error('√ of negative'); return Math.sqrt(u); }
+      if (x.t === 'log' || x.t === 'ln') {
+        var w = unary();
+        if (w <= 0) throw new Error('log of 0 or less');
+        return x.t === 'log' ? Math.log10(w) : Math.log(w);
+      }
       throw new Error('Syntax');
     }
 
@@ -620,7 +703,7 @@ kbd { font: 600 12px/1 var(--f-mono); padding: 2px 6px; border-radius: 5px; bord
     return steps;
   }
 
-  var KINDS = [
+  var ALG1 = [
     function orderOfOps() {
       var e = rand(2, 5), k = rand(1, 3), diff = e * k;
       var c = rand(diff + 1, diff + 9), d = c - diff, b = rand(2, 9), a = rand(2, 25);
@@ -688,17 +771,227 @@ kbd { font: 600 12px/1 var(--f-mono); padding: 2px 6px; border-radius: 5px; bord
     }
   ];
 
+  /* ---- Algebra 2 ---- */
+  var SUP = { '0': '⁰', '1': '¹', '2': '²', '3': '³', '4': '⁴', '5': '⁵', '6': '⁶', '7': '⁷', '8': '⁸', '9': '⁹',
+              '+': '⁺', '−': '⁻', 'x': 'ˣ', ' ': '' };
+  function sup(v) { return String(v).replace(/./g, function (ch) { return SUP[ch] !== undefined ? SUP[ch] : ch; }); }
+  function sg(v) { return (v < 0 ? '− ' : '+ ') + Math.abs(v); }                  // "+ 3" / "− 3"
+  function co(v) { return v === 1 ? '' : v === -1 ? '−' : n(v); }                // coefficient in front of a letter
+  function quad(a, b, c) {
+    var s = co(a) + 'x²';
+    if (b) s += (b > 0 ? ' + ' : ' − ') + (Math.abs(b) === 1 ? '' : Math.abs(b)) + 'x';
+    if (c) s += ' ' + sg(c);
+    return s;
+  }
+  function xy(a, b) { return co(a) + 'x ' + (b > 0 ? '+ ' : '− ') + (Math.abs(b) === 1 ? '' : Math.abs(b)) + 'y'; }
+  function cpx(a, b) {
+    var bb = Math.abs(b) === 1 ? '' : Math.abs(b);
+    if (!b) return n(a);
+    if (!a) return (b < 0 ? '−' : '') + bb + 'i';
+    return n(a) + (b > 0 ? ' + ' : ' − ') + bb + 'i';
+  }
+  function r2(v) { return n(Math.round(v * 100) / 100); }
+
+  var ALG2 = [
+    function factorQuad() {
+      var r1 = randNZ(-9, 9), r2v = randNZ(-9, 9), b = -(r1 + r2v), c = r1 * r2v;
+      var lo = Math.min(r1, r2v), hi = Math.max(r1, r2v);
+      function f(r) { return '(x ' + (r > 0 ? '− ' + r : '+ ' + (-r)) + ')'; }
+      var same = r1 === r2v;
+      return {
+        title: 'Factoring quadratics', inst: 'Solve by factoring.',
+        problem: quad(1, b, c) + ' = 0',
+        answer: hi, answerText: same ? 'x = ' + n(r1) : 'x = ' + n(lo) + ' or ' + n(hi),
+        ansHint: same ? '= use x' : '= use ' + n(hi),
+        steps: [
+          'Find two numbers that multiply to ' + n(c) + ' and add to ' + n(b) + ' → ' + B(n(-r1) + ' and ' + n(-r2v)),
+          'Factor → ' + B(f(r1) + f(r2v) + ' = 0'),
+          same ? 'Both factors are the same, so there is one root → ' + B('x = ' + n(r1))
+               : 'Set each factor equal to 0 → ' + B('x = ' + n(lo) + ' or x = ' + n(hi))
+        ],
+        verify: function () { return [r1, r2v].every(function (x) { return x * x + b * x + c === 0; }); }
+      };
+    },
+    function quadFormula() {
+      var a, b, c, D;
+      do { a = rand(1, 3); b = randNZ(-9, 9); c = randNZ(-9, 9); D = b * b - 4 * a * c; }
+      while (D <= 0 || Math.sqrt(D) % 1 === 0);
+      var sq = Math.sqrt(D), x1 = (-b - sq) / (2 * a), x2 = (-b + sq) / (2 * a);
+      return {
+        title: 'Quadratic formula', inst: 'Solve. Round to the nearest hundredth.',
+        problem: quad(a, b, c) + ' = 0',
+        answer: x2, answerText: 'x ≈ ' + r2(x1) + ' or ' + r2(x2), ansHint: '= use ' + r2(x2),
+        steps: [
+          'Read off ' + B('a = ' + n(a) + ', b = ' + n(b) + ', c = ' + n(c)),
+          'Discriminant: (' + n(b) + ')² − 4(' + n(a) + ')(' + n(c) + ') = ' + B(D),
+          D + ' is positive and not a perfect square, so there are two irrational roots',
+          'x = (−b ± √D) ÷ 2a → ' + B('x = (' + n(-b) + ' ± √' + D + ') ÷ ' + (2 * a)),
+          'Work out both signs → ' + B('x ≈ ' + r2(x1) + ' or x ≈ ' + r2(x2))
+        ],
+        verify: function () { return [x1, x2].every(function (x) { return Math.abs(a * x * x + b * x + c) < 1e-9; }); }
+      };
+    },
+    function expEq() {
+      var base = pick([2, 3, 5]);
+      var maxN = base === 2 ? 7 : base === 3 ? 4 : 3;
+      if (Math.random() < 0.5) {
+        var k = randNZ(-2, 3), N = rand(2, maxN), x = N - k, V = Math.pow(base, N);
+        var ex = 'x' + (k > 0 ? '+' + k : '−' + (-k));
+        return {
+          title: 'Exponential equations', inst: 'Solve for x.',
+          problem: base + sup(ex) + ' = ' + V,
+          answer: x, answerText: 'x = ' + n(x),
+          steps: [
+            'Write ' + V + ' as a power of ' + base + ' → ' + B(base + sup(ex) + ' = ' + base + sup(N)),
+            'The bases match, so set the exponents equal → ' + B(lin(1, k) + ' = ' + N),
+            (k > 0 ? 'Subtract ' + k : 'Add ' + (-k)) + ' on both sides → ' + B('x = ' + n(x))
+          ],
+          verify: function () { return Math.pow(base, x + k) === V; }
+        };
+      }
+      var m = rand(2, 6), N2 = rand(2, maxN - 1), P = Math.pow(base, N2), V2 = m * P;
+      return {
+        title: 'Exponential equations', inst: 'Solve for x.',
+        problem: m + '·' + base + 'ˣ = ' + V2,
+        answer: N2, answerText: 'x = ' + N2,
+        steps: [
+          'Divide both sides by ' + m + ' → ' + B(base + 'ˣ = ' + P),
+          'Write ' + P + ' as a power of ' + base + ' → ' + B(base + 'ˣ = ' + base + sup(N2)),
+          'The bases match → ' + B('x = ' + N2)
+        ],
+        verify: function () { return m * Math.pow(base, N2) === V2; }
+      };
+    },
+    function logEq() {
+      var b = pick([2, 3, 4, 5]), p2 = rand(1, b === 2 ? 5 : 3), k = randNZ(-6, 9);
+      var P = Math.pow(b, p2), x = P + k, inner = lin(1, -k), sub = '₂₃₄₅'[b - 2];
+      return {
+        title: 'Logarithmic equations', inst: 'Solve for x.',
+        problem: 'log' + sub + '(' + inner + ') = ' + p2,
+        answer: x, answerText: 'x = ' + n(x),
+        steps: [
+          'Rewrite in exponential form → ' + B(inner + ' = ' + b + sup(p2)),
+          b + sup(p2) + ' = ' + P + ' → ' + B(inner + ' = ' + P),
+          (k > 0 ? 'Add ' + k + ' to' : 'Subtract ' + (-k) + ' from') + ' both sides → ' + B('x = ' + n(x)),
+          'Check: the inside is ' + P + ', which is positive, so the answer works ✓'
+        ],
+        verify: function () { return x - k > 0 && Math.abs(Math.log(x - k) / Math.log(b) - p2) < 1e-9; }
+      };
+    },
+    function system() {
+      var x0 = rand(-5, 8), y0 = rand(-5, 8), m = randNZ(-3, 3), k = y0 - m * x0, a, b;
+      do { a = randNZ(-5, 5); b = randNZ(-4, 5); } while (a + b * m === 0);
+      var c = a * x0 + b * y0, cf = a + b * m, bk = b * k;
+      var e1 = xy(a, b) + ' = ' + n(c), e2 = 'y = ' + lin(m, k);
+      return {
+        title: 'Systems of equations', inst: 'Solve the system.',
+        problem: e1 + '\n' + e2, oneLine: e1 + ',  ' + e2,
+        answer: x0, answerText: '(' + n(x0) + ', ' + n(y0) + ')', ansHint: '= use x',
+        steps: [
+          'Substitute the second equation into the first → ' + B(co(a) + 'x ' + (b > 0 ? '+ ' : '− ') + (Math.abs(b) === 1 ? '' : Math.abs(b)) + '(' + lin(m, k) + ') = ' + n(c)),
+          'Distribute and combine like terms → ' + B(lin(cf, bk) + ' = ' + n(c))
+        ].concat(finishLinear(cf, bk, c, [])).concat([
+          'Put x back into y = ' + lin(m, k) + ' → ' + B('y = ' + n(y0)),
+          'The lines cross at ' + B('(' + n(x0) + ', ' + n(y0) + ')')
+        ]),
+        verify: function () { return a * x0 + b * y0 === c && y0 === m * x0 + k && (c - bk) / cf === x0; }
+      };
+    },
+    function absEq() {
+      var m, x1, b, c;
+      do { m = pick([1, 2, 3]); x1 = rand(-4, 9); b = randNZ(-9, 9); c = m * x1 + b; } while (c <= 0 || (2 * b) % m !== 0);
+      var x2 = (-c - b) / m, lo = Math.min(x1, x2), hi = Math.max(x1, x2);
+      return {
+        title: 'Absolute value equations', inst: 'Solve for x.',
+        problem: '|' + lin(m, b) + '| = ' + c,
+        answer: hi, answerText: 'x = ' + n(lo) + ' or ' + n(hi), ansHint: '= use ' + n(hi),
+        steps: [
+          'The inside is either ' + c + ' or −' + c + ', so split into two equations',
+          'Case 1: ' + lin(m, b) + ' = ' + c + ' → ' + B('x = ' + n(x1)),
+          'Case 2: ' + lin(m, b) + ' = −' + c + ' → ' + B('x = ' + n(x2)),
+          'Both make the absolute value equal ' + c + ' ✓'
+        ],
+        verify: function () { return Math.abs(m * x1 + b) === c && Math.abs(m * x2 + b) === c && x1 !== x2; }
+      };
+    },
+    function radicalEq() {
+      var m = pick([1, 1, 2, 3]), r = rand(2, 7), x, k;
+      do { x = rand(-3, 15); k = r * r - m * x; } while (k === 0);
+      return {
+        title: 'Radical equations', inst: 'Solve for x.',
+        problem: '√(' + lin(m, k) + ') = ' + r,
+        answer: x, answerText: 'x = ' + n(x),
+        steps: ['Square both sides → ' + B(lin(m, k) + ' = ' + r * r)]
+          .concat(finishLinear(m, k, r * r, []))
+          .concat(['Check: √' + (r * r) + ' = ' + r + ' ✓']),
+        verify: function () { return Math.sqrt(m * x + k) === r; }
+      };
+    },
+    function complexMul() {
+      var a = randNZ(-6, 6), b = randNZ(-6, 6), c = randNZ(-6, 6), d = randNZ(-6, 6);
+      var re = a * c - b * d, im = a * d + b * c;
+      return {
+        title: 'Complex numbers', inst: 'Multiply. Write in a + bi form.',
+        problem: '(' + cpx(a, b) + ')(' + cpx(c, d) + ')',
+        answer: null, answerText: '= ' + cpx(re, im), ansHint: '= show it',
+        steps: [
+          'FOIL → ' + B(n(a * c) + ' ' + sg(a * d) + 'i ' + sg(b * c) + 'i ' + sg(b * d) + 'i²'),
+          'Replace i² with −1 → ' + B(n(a * c) + ' ' + sg(-b * d) + ' ' + sg(a * d) + 'i ' + sg(b * c) + 'i'),
+          'Combine the real parts and the i parts → ' + B(cpx(re, im))
+        ],
+        verify: function () { return re === a * c - b * d && im === a * d + b * c; }
+      };
+    }
+  ];
+
+  var ALL = ALG1.concat(ALG2);
   function generate(kind) {
-    var f = typeof kind === 'number' ? KINDS[kind] : pick(KINDS);
-    return f();
+    if (typeof kind === 'number') return ALL[kind]();
+    var pool = kind === '1' ? ALG1 : kind === '2' ? ALG2 : ALL;
+    return pick(pool)();
   }
 
-  window.ScanCalc = { evaluate: evaluate, fmt: fmt, generate: generate, kinds: KINDS.length };
+  /* ================= formula sheet (shared by the page and the device) ================= */
+  var FORMULAS = [
+    ['Lines', 'Slope', 'm = (y₂ − y₁) ÷ (x₂ − x₁)', 'Rise over run between two points.'],
+    ['Lines', 'Slope‑intercept form', 'y = mx + b', 'm is the slope, b is where the line crosses the y‑axis.'],
+    ['Lines', 'Point‑slope form', 'y − y₁ = m(x − x₁)', 'Use when you know one point and the slope.'],
+    ['Lines', 'Distance', 'd = √((x₂ − x₁)² + (y₂ − y₁)²)', 'Length between two points.'],
+    ['Lines', 'Midpoint', '((x₁ + x₂) ÷ 2, (y₁ + y₂) ÷ 2)', 'Average the x’s and the y’s.'],
+    ['Quadratics', 'Quadratic formula', 'x = (−b ± √(b² − 4ac)) ÷ 2a', 'Solves any ax² + bx + c = 0.'],
+    ['Quadratics', 'Discriminant', 'D = b² − 4ac', 'D > 0: two real roots. D = 0: one. D < 0: two complex roots.'],
+    ['Quadratics', 'Vertex form', 'y = a(x − h)² + k', 'The vertex is (h, k).'],
+    ['Quadratics', 'Axis of symmetry', 'x = −b ÷ 2a', 'Also the x of the vertex.'],
+    ['Factoring', 'Difference of squares', 'a² − b² = (a + b)(a − b)', ''],
+    ['Factoring', 'Perfect square', '(a ± b)² = a² ± 2ab + b²', ''],
+    ['Factoring', 'Sum / difference of cubes', 'a³ ± b³ = (a ± b)(a² ∓ ab + b²)', ''],
+    ['Exponents', 'Product rule', 'a<sup>m</sup> · a<sup>n</sup> = a<sup>m+n</sup>', 'Same base: add exponents.'],
+    ['Exponents', 'Power rule', '(a<sup>m</sup>)<sup>n</sup> = a<sup>mn</sup>', 'Power of a power: multiply.'],
+    ['Exponents', 'Negative exponent', 'a<sup>−n</sup> = 1 ÷ a<sup>n</sup>', ''],
+    ['Exponents', 'Rational exponent', 'a<sup>m/n</sup> = (ⁿ√a)<sup>m</sup>', 'The bottom is the root, the top is the power.'],
+    ['Logarithms', 'Definition', 'log<sub>b</sub> x = y ⇔ b<sup>y</sup> = x', 'A log asks: what power of b gives x?'],
+    ['Logarithms', 'Product and quotient', 'log<sub>b</sub>(MN) = log<sub>b</sub>M + log<sub>b</sub>N', 'And log(M ÷ N) = log M − log N.'],
+    ['Logarithms', 'Power rule', 'log<sub>b</sub>(M<sup>p</sup>) = p · log<sub>b</sub>M', ''],
+    ['Logarithms', 'Change of base', 'log<sub>b</sub>x = log x ÷ log b', 'How to do any base on this calculator.'],
+    ['Growth', 'Compound interest', 'A = P(1 + r/n)<sup>nt</sup>', 'P start, r rate, n times per year, t years.'],
+    ['Growth', 'Continuous growth', 'A = Pe<sup>rt</sup>', 'Use the e key.'],
+    ['Growth', 'Exponential growth / decay', 'y = a(1 ± r)<sup>t</sup>', '+ for growth, − for decay.'],
+    ['Complex numbers', 'The imaginary unit', 'i² = −1', 'So √(−n) = i√n.'],
+    ['Complex numbers', 'Multiplying', '(a + bi)(c + di) = (ac − bd) + (ad + bc)i', 'FOIL, then swap i² for −1.'],
+    ['Complex numbers', 'Conjugate', '(a + bi)(a − bi) = a² + b²', 'Use it to divide complex numbers.'],
+    ['Sequences', 'Arithmetic: nth term', 'a<sub>n</sub> = a<sub>1</sub> + (n − 1)d', 'd is the common difference.'],
+    ['Sequences', 'Arithmetic: sum', 'S<sub>n</sub> = n(a<sub>1</sub> + a<sub>n</sub>) ÷ 2', ''],
+    ['Sequences', 'Geometric: nth term', 'a<sub>n</sub> = a<sub>1</sub> · r<sup>n−1</sup>', 'r is the common ratio.'],
+    ['Sequences', 'Geometric: sum', 'S<sub>n</sub> = a<sub>1</sub>(1 − r<sup>n</sup>) ÷ (1 − r)', ''],
+    ['Circles', 'Circle equation', '(x − h)² + (y − k)² = r²', 'Center (h, k), radius r.']
+  ].map(function (r) { return { cat: r[0], name: r[1], f: r[2], note: r[3] }; });
+
+  window.ScanCalc = { evaluate: evaluate, fmt: fmt, generate: generate, kinds: ALL.length, formulas: FORMULAS.length };
 
   /* ================= DOM ================= */
   var $ = function (id) { return document.getElementById(id); };
   var calcEl = $('calc'), scene = $('scene');
-  var views = { calc: $('vCalc'), vf: $('vVf'), read: $('vRead'), res: $('vRes') };
+  var views = { calc: $('vCalc'), vf: $('vVf'), read: $('vRead'), res: $('vRes'), fx: $('vFx') };
   var flowItems = Array.prototype.slice.call($('flow').children);
 
   /* ---------- rotation ---------- */
@@ -744,12 +1037,12 @@ kbd { font: 600 12px/1 var(--f-mono); padding: 2px 6px; border-radius: 5px; bord
   /* ---------- screen ---------- */
   var mode = 'calc';
   var st = { expr: '', out: '0', ans: 0, done: false, err: false, history: [], hIdx: -1 };
-  var prob = null, probNo = 7, lastResult = null, timers = [];
+  var prob = null, probNo = 7, lastResult = null, timers = [], level = '2', fxIdx = 0;
 
   function show(v) {
     mode = v;
     Object.keys(views).forEach(function (k) { views[k].hidden = k !== v; });
-    $('stMode').textContent = { calc: 'CALC', vf: 'CAMERA', read: 'SCAN', res: 'RESULT' }[v];
+    $('stMode').textContent = { calc: 'CALC', vf: 'CAMERA', read: 'SCAN', res: 'RESULT', fx: 'FORMULAS' }[v];
   }
 
   function renderCalc() {
@@ -770,7 +1063,10 @@ kbd { font: 600 12px/1 var(--f-mono); padding: 2px 6px; border-radius: 5px; bord
     } else if ('+−×÷^'.indexOf(k) !== -1) {
       if (st.done && !st.err) st.expr = 'ANS';
       st.expr += k;
-    } else if (k === '(' || k === '√') {
+    } else if (k === '²') {
+      if (st.done && !st.err) st.expr = 'ANS';
+      st.expr += k;
+    } else if (k === '(' || k === '√' || k === 'log(' || k === 'ln(' || k === 'π' || k === 'e') {
       if (st.done) st.expr = '';
       st.expr += k;
     } else if (k === ')') {
@@ -792,7 +1088,8 @@ kbd { font: 600 12px/1 var(--f-mono); padding: 2px 6px; border-radius: 5px; bord
       st.done = true;
     } else if (k === 'DEL') {
       st.done = false; st.err = false;
-      st.expr = /ANS$/.test(st.expr) ? st.expr.slice(0, -3) : st.expr.slice(0, -1);
+      var tail = st.expr.match(/(ANS|log\(|ln\()$/);
+      st.expr = st.expr.slice(0, -(tail ? tail[0].length : 1));
     } else if (k === 'AC') {
       st.expr = ''; st.out = '0'; st.done = false; st.err = false;
     } else if (k === 'UP' || k === 'DOWN') {
@@ -807,7 +1104,7 @@ kbd { font: 600 12px/1 var(--f-mono); padding: 2px 6px; border-radius: 5px; bord
   /* ---------- paper ---------- */
   function newProblem() {
     if (mode === 'vf' || mode === 'read') cancelScan();
-    prob = generate();
+    prob = generate(level);
     probNo = rand(3, 24);
     $('pTitle').textContent = 'Unit 4 · ' + prob.title;
     $('pNum').textContent = '#' + probNo;
@@ -816,6 +1113,20 @@ kbd { font: 600 12px/1 var(--f-mono); padding: 2px 6px; border-radius: 5px; bord
     $('vfText').textContent = prob.problem;
   }
   $('newProb').onclick = newProblem;
+  document.querySelectorAll('.levels button').forEach(function (b) {
+    b.onclick = function () {
+      level = b.dataset.level;
+      document.querySelectorAll('.levels button').forEach(function (o) { o.setAttribute('aria-pressed', String(o === b)); });
+      newProblem();
+    };
+  });
+
+  // Frame the scan box around the problem, however many lines it takes.
+  function placeReticle() {
+    var body = $('pBody'), pr = $('pProb'), ret = document.querySelector('.reticle');
+    ret.style.top = (body.offsetTop + pr.offsetTop - 12) + 'px';
+    ret.style.height = (pr.offsetHeight + 24) + 'px';
+  }
 
   /* ---------- scan flow ---------- */
   function setFlow(stage) {
@@ -831,6 +1142,7 @@ kbd { font: 600 12px/1 var(--f-mono); padding: 2px 6px; border-radius: 5px; bord
     clearTimers();
     show('vf');
     setFlow(1);
+    placeReticle();
     $('paper').classList.add('aimed');
     $('scanBtn').textContent = 'Take photo';
     setView('vFront'); turnTo(-8, -24);
@@ -865,8 +1177,10 @@ kbd { font: 600 12px/1 var(--f-mono); padding: 2px 6px; border-radius: 5px; bord
   }
   function showResult() {
     lastResult = prob;
-    $('rsRead').textContent = prob.problem;
+    $('rsRead').textContent = prob.oneLine || prob.problem;
     $('rsAns').textContent = prob.answerText;
+    $('rsAns').className = 'rs-ans' + (prob.answerText.length > 19 ? ' xlong' : prob.answerText.length > 13 ? ' long' : '');
+    $('rsHint').textContent = prob.ansHint || '= use answer';
     var ol = $('rsSteps'); ol.innerHTML = '';
     prob.steps.forEach(function (s) { var li = document.createElement('li'); li.innerHTML = s; ol.appendChild(li); });
     ol.scrollTop = 0;
@@ -874,7 +1188,11 @@ kbd { font: 600 12px/1 var(--f-mono); padding: 2px 6px; border-radius: 5px; bord
     $('scanBtn').textContent = 'Scan again';
   }
   function useAnswer() {
-    st.ans = lastResult.answer; st.expr = 'ANS'; st.out = fmt(lastResult.answer);
+    if (lastResult.answer === null) {          // complex results aren't a single number: show them, keep ANS
+      st.expr = lastResult.problem; st.out = lastResult.answerText.replace(/^= /, '');
+    } else {
+      st.ans = lastResult.answer; st.expr = 'ANS'; st.out = fmt(lastResult.answer);
+    }
     st.done = true; st.err = false;
     setFlow(0);
     $('scanBtn').textContent = 'Scan this problem';
@@ -888,6 +1206,13 @@ kbd { font: 600 12px/1 var(--f-mono); padding: 2px 6px; border-radius: 5px; bord
   /* ---------- key routing by screen ---------- */
   function press(k) {
     if (mode === 'capturing' || mode === 'read') return;
+    if (mode === 'fx') {
+      if (k === 'UP' || k === 'DOWN') showFormula(fxIdx + (k === 'UP' ? -1 : 1));
+      else if (k === 'FX' || k === 'AC' || k === 'DEL') { show('calc'); renderCalc(); }
+      else if (k === 'SCAN') startScan();
+      return;
+    }
+    if (k === 'FX' && mode !== 'vf') { setFlow(0); $('scanBtn').textContent = 'Scan this problem'; showFormula(fxIdx); return; }
     if (k === 'SCAN') { mode === 'vf' ? capture() : startScan(); return; }
     if (mode === 'vf') { if (k === 'DEL' || k === 'AC') cancelScan(); return; }
     if (mode === 'res') {
@@ -896,10 +1221,9 @@ kbd { font: 600 12px/1 var(--f-mono); padding: 2px 6px; border-radius: 5px; bord
       else if (k === 'DOWN') ol.scrollTop += 28;
       else if (k === '=') useAnswer();
       else if (k === 'DEL') startScan();
-      else if (k === 'AC' || k === 'MODE') { setFlow(0); $('scanBtn').textContent = 'Scan this problem'; show('calc'); renderCalc(); }
+      else if (k === 'AC') { setFlow(0); $('scanBtn').textContent = 'Scan this problem'; show('calc'); renderCalc(); }
       return;
     }
-    if (k === 'MODE') { if (lastResult) { show('res'); } return; }
     calcKey(k);
   }
 
@@ -908,9 +1232,10 @@ kbd { font: 600 12px/1 var(--f-mono); padding: 2px 6px; border-radius: 5px; bord
   });
 
   var KEYMAP = { Enter: '=', '=': '=', Backspace: 'DEL', Delete: 'AC', Escape: 'AC', ArrowUp: 'UP', ArrowDown: 'DOWN',
-                 '+': '+', '-': '−', '*': '×', 'x': '×', '/': '÷', '^': '^', '(': '(', ')': ')', '.': '.', 'r': '√', 's': 'SCAN', 'S': 'SCAN', 'a': 'ANS', 'm': 'MODE', ' ': 'SHUTTER' };
+                 '+': '+', '-': '−', '*': '×', 'x': '×', '/': '÷', '^': '^', '(': '(', ')': ')', '.': '.', 'r': '√', 's': 'SCAN', 'S': 'SCAN', 'a': 'ANS', 'f': 'FX', 'F': 'FX', 'l': 'log(', 'L': 'log(', 'n': 'ln(', 'p': 'π', 'P': 'π', 'e': 'e', ' ': 'SHUTTER' };
   document.addEventListener('keydown', function (e) {
     if (e.ctrlKey || e.metaKey || e.altKey) return;
+    if ($('panelSim').hidden) return;
     if (e.target.closest && e.target.closest('button') && (e.key === 'Enter' || e.key === ' ')) return;
     var k = /^[0-9]$/.test(e.key) ? e.key : KEYMAP[e.key];
     if (!k) return;
@@ -920,6 +1245,57 @@ kbd { font: 600 12px/1 var(--f-mono); padding: 2px 6px; border-radius: 5px; bord
     if (btn) { btn.classList.add('down'); setTimeout(function () { btn.classList.remove('down'); }, 110); }
     press(k);
   });
+
+  /* ---------- formulas: on the device ---------- */
+  function showFormula(i) {
+    fxIdx = (i + FORMULAS.length) % FORMULAS.length;
+    var f = FORMULAS[fxIdx];
+    $('fxCat').textContent = f.cat.toUpperCase();
+    $('fxName').textContent = f.name;
+    $('fxF').innerHTML = f.f;
+    $('fxNote').textContent = f.note;
+    $('fxPos').textContent = (fxIdx + 1) + '/' + FORMULAS.length;
+    show('fx');
+  }
+
+  /* ---------- formulas: the sheet tab ---------- */
+  (function buildSheet() {
+    var sheet = $('sheet'), groups = {};
+    FORMULAS.forEach(function (f, i) {
+      if (!groups[f.cat]) {
+        var sec = document.createElement('section'); sec.className = 'fgroup';
+        sec.innerHTML = '<h2></h2><div class="fgrid"></div>';
+        sec.querySelector('h2').textContent = f.cat;
+        sheet.appendChild(sec);
+        groups[f.cat] = sec.querySelector('.fgrid');
+      }
+      var card = document.createElement('article'); card.className = 'fm';
+      card.innerHTML = '<div class="fm-name"></div><div class="fm-f">' + f.f + '</div><p class="fm-note"></p><button type="button">Show on calculator</button>';
+      card.querySelector('.fm-name').textContent = f.name;
+      card.querySelector('.fm-note').textContent = f.note;
+      if (!f.note) card.querySelector('.fm-note').remove();
+      card.querySelector('button').onclick = function () {
+        if (mode === 'vf' || mode === 'capturing' || mode === 'read') cancelScan();
+        setTab('sim');
+        showFormula(i);
+        setView('vFront'); turnTo(-8, -24);
+        $('scene').scrollIntoView({ behavior: 'smooth', block: 'center' });
+      };
+      groups[f.cat].appendChild(card);
+    });
+  })();
+
+  function setTab(t) {
+    var sim = t === 'sim';
+    $('tabSim').setAttribute('aria-selected', String(sim));
+    $('tabFx').setAttribute('aria-selected', String(!sim));
+    $('panelSim').hidden = !sim;
+    $('panelFx').hidden = sim;
+    $('viewBtns').hidden = !sim;
+  }
+  $('tabSim').onclick = function () { setTab('sim'); };
+  $('tabFx').onclick = function () { setTab('fx'); };
+  if (location.hash === '#formulas') setTab('fx');
 
   newProblem();
   renderCalc();

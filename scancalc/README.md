@@ -1,6 +1,6 @@
 # ScanCalc — blueprint
 
-**Try it:** open `scancalc/sim/index.html` in a browser (or `/scancalc/sim/` when the store server is running) for a 3D simulator. You can turn the calculator around, use the keys and scan a random worksheet problem.
+**Try it:** open `scancalc/sim/index.html` in a browser (or `/scancalc/sim/` when the store server is running) for a 3D simulator. You can turn the calculator around, use the keys (including log, ln, π, e and x²), scan a random Algebra 1 or Algebra 2 worksheet problem, and browse the formula sheet.
 
 ## Context
 You want a handheld device that works like a normal calculator from the front. A camera on the back lets you point it at a worksheet or handwritten problem. It reads the problem, solves it, shows the answer **and the steps**, and loads the answer into the calculator so you can keep working with it.
