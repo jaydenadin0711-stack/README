@@ -23,6 +23,13 @@ mic level, sunrise/sunset) around an animated core. It answers time, battery,
 network, timers, notes, arithmetic and diagnostics entirely on-device; set
 `ANTHROPIC_API_KEY` and everything else goes to Claude. See **`jarvis/README.md`**.
 
+## Also in here: Dispatch
+
+Text your laptop from your phone and it does the work: runs commands, edits files,
+opens things, searches the web, and texts you back. It works over real SMS (Twilio)
+or a Telegram bot, only answers you, and asks before anything destructive.
+`npm run dispatch`. See **`dispatch/README.md`**.
+
 ## How payments work (important)
 
 The site **never collects or stores card numbers itself** — doing that without PCI-DSS certification is illegal and would get the store shut down by any payment processor. Instead:
