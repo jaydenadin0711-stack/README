@@ -16,6 +16,18 @@ and running `npm run dispatch` for it to answer.
 
 ---
 
+## Fastest: Mac + iPhone, one command
+
+On the Mac, open **Terminal** and paste:
+
+```bash
+curl -fsSL https://raw.githubusercontent.com/jaydenadin0711-stack/README/claude/peaceful-knuth-ihlw4k/dispatch/setup-mac.sh | bash
+```
+
+It installs everything into `~/Dispatch`, asks for your API key and iPhone number, walks
+you through the one permission it needs, and starts. Run it again later to update.
+The rest of this page is the manual version.
+
 ## 1. Basics (5 minutes)
 
 ```bash
