@@ -20,7 +20,7 @@ const fs = require('fs');
 const os = require('os');
 const path = require('path');
 
-const MODEL = process.env.DISPATCH_MODEL || 'claude-opus-5-5';
+const MODEL = process.env.DISPATCH_MODEL || 'claude-sonnet-5-5';
 const WORKDIR = path.resolve(expandHome(process.env.DISPATCH_WORKDIR || os.homedir()));
 // all   → ask before every command and every file write
 // risky → ask only before commands/writes that look destructive (default)
@@ -314,7 +314,7 @@ class Agent {
         max_tokens: 16000,
         system: systemPrompt(),
         thinking: { type: 'adaptive' },
-        output_config: { effort: 'high' },
+        output_config: { effort: 'medium' },   // Sonnet 5.5's sweet spot for multi-step tool work
         tools: TOOLS,
         // If a safety classifier declines, the API retries on a fallback model in the same call.
         betas: ['server-side-fallback-2026-07-01'],

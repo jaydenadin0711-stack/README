@@ -111,7 +111,7 @@ It runs as your user account, so it can do what you can do. Don't run it as admi
 
 | Variable | Default | |
 |---|---|---|
-| `DISPATCH_MODEL` | `claude-opus-5-5` | which Claude model does the work |
+| `DISPATCH_MODEL` | `claude-sonnet-5-5` | which Claude model does the work (`claude-opus-5-5` is stronger, about 2x the price) |
 | `DISPATCH_WORKDIR` | your home folder | where commands start |
 | `DISPATCH_CONFIRM` | `risky` | `risky`, `all` or `off` |
 | `DISPATCH_PORT` | `3100` | port for the SMS webhook |
@@ -126,4 +126,4 @@ It runs as your user account, so it can do what you can do. Don't run it as admi
   Then follow what `pm2 startup` prints (on Windows use `pm2-installer`).
 
 Every request uses your Anthropic API credit. A typical small job costs a few cents; a long
-one with lots of steps can cost more. Set `DISPATCH_MODEL=claude-sonnet-5-5` to make it cheaper.
+one with lots of steps can cost more. Set a monthly spend limit in the Anthropic console so it can never surprise you.
