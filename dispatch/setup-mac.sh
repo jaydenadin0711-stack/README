@@ -54,12 +54,31 @@ set_env() {  # set_env NAME VALUE — replaces the line in .env
 }
 has_env() { grep -q "^$1=..*" .env; }
 
-if has_env ANTHROPIC_API_KEY; then
-  echo "API key: already set"
-else
-  key=$(ask "Paste your Anthropic API key (starts with sk-ant-): ")
-  set_env ANTHROPIC_API_KEY "$key"
-fi
+# Asks Anthropic whether the key works: 200 = good, 401 = rejected.
+key_status() {
+  curl -s -o /dev/null -w '%{http_code}' https://api.anthropic.com/v1/models \
+    -H "x-api-key: $1" -H "anthropic-version: 2023-06-01"
+}
+clean_key() { printf '%s' "$1" | tr -d '[:space:]"'"'"; }
+
+key=$(clean_key "$(grep '^ANTHROPIC_API_KEY=' .env | head -1 | cut -d= -f2-)")
+while :; do
+  if [ -n "$key" ]; then
+    code=$(key_status "$key")
+    if [ "$code" = "200" ]; then echo "API key: works ✓"; break; fi
+    if [ "$code" = "401" ] || [ "$code" = "403" ]; then
+      echo "That API key was rejected by Anthropic (it's incomplete, deleted, or disabled)."
+      echo "Make a NEW key at console.anthropic.com → API Keys → Create Key, and copy it right away —"
+      echo "the console only shows the whole key once."
+      open "https://console.anthropic.com/settings/keys"
+    else
+      echo "Couldn't check the key (got '$code' — no internet?). Using it anyway."
+      break
+    fi
+  fi
+  key=$(clean_key "$(ask "Paste your Anthropic API key (starts with sk-ant-): ")")
+done
+set_env ANTHROPIC_API_KEY "$key"
 if has_env DISPATCH_IMESSAGE_TO; then
   echo "Phone: already set"
 else

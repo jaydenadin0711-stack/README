@@ -8,7 +8,7 @@
    ============================================================ */
 'use strict';
 
-require('dotenv').config({ path: require('path').join(__dirname, '..', '.env') });
+require('dotenv').config({ path: require('path').join(__dirname, '..', '.env'), override: true });
 const { loadTransports } = require('./transports');
 
 const text = process.argv.slice(2).join(' ').trim();
