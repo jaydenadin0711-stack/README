@@ -62,6 +62,24 @@ key_status() {
 clean_key() { printf '%s' "$1" | tr -d '[:space:]"'"'"; }
 
 key=$(clean_key "$(grep '^ANTHROPIC_API_KEY=' .env | head -1 | cut -d= -f2-)")
+
+# No working key yet? Look for one you already use elsewhere on this Mac
+# (e.g. JARVIS's .env) and offer it — nothing to paste, nothing to mistype.
+if [ "$(key_status "$key")" != "200" ]; then
+  while IFS= read -r f; do
+    [ "$f" -ef "$DIR/.env" ] && continue
+    k=$(clean_key "$(grep '^ANTHROPIC_API_KEY=' "$f" | head -1 | cut -d= -f2-)")
+    [ -n "$k" ] || continue
+    if [ "$(key_status "$k")" = "200" ]; then
+      echo "Found a working API key in $f (…${k: -4})."
+      yn=$(ask "Use it for Dispatch? [Y/n] ")
+      case "$yn" in [nN]*) ;; *) key="$k"; break ;; esac
+    fi
+  done < <(find "$HOME" -maxdepth 4 -name .env -type f \
+             -not -path '*/node_modules/*' -not -path "$HOME/Library/*" \
+             -exec grep -l '^ANTHROPIC_API_KEY=..' {} + 2>/dev/null)
+fi
+
 while :; do
   if [ -n "$key" ]; then
     code=$(key_status "$key")
