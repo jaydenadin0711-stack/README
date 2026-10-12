@@ -35,6 +35,7 @@ function main() {
   if (!transports.length) {
     console.error([
       'No way to reach your phone is configured. Set up at least one in .env:',
+      '  iMessage: DISPATCH_IMESSAGE_TO (Mac only, free)',
       '  SMS:      TWILIO_ACCOUNT_SID, TWILIO_AUTH_TOKEN, TWILIO_FROM, DISPATCH_OWNER_PHONE (+ DISPATCH_PUBLIC_URL)',
       '  Telegram: DISPATCH_TELEGRAM_TOKEN (+ DISPATCH_TELEGRAM_CHAT_ID)',
       'See dispatch/README.md.'

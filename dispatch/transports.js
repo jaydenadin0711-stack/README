@@ -1,7 +1,10 @@
 /* ============================================================
    DISPATCH — how your phone reaches the laptop
 
-   Two ways in. Set up either or both (see dispatch/README.md):
+   Three ways in. Set up any of them (see dispatch/README.md):
+
+   iMessage      — free, Mac only. Texts go through the Messages
+                   app on the laptop. See ./imessage.js.
 
    SMS (Twilio)  — real text messages to your phone number.
                    Needs a Twilio number and a public URL for the
@@ -158,7 +161,8 @@ function telegramTransport(log) {
 }
 
 function loadTransports(log) {
-  return [twilioTransport(log), telegramTransport(log)].filter(Boolean);
+  const { imessageTransport } = require('./imessage');
+  return [imessageTransport(log, splitText), twilioTransport(log), telegramTransport(log)].filter(Boolean);
 }
 
 module.exports = { loadTransports, splitText };

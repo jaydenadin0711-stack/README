@@ -26,8 +26,8 @@ network, timers, notes, arithmetic and diagnostics entirely on-device; set
 ## Also in here: Dispatch
 
 Text your laptop from your phone and it does the work: runs commands, edits files,
-opens things, searches the web, and texts you back. It works over real SMS (Twilio)
-or a Telegram bot, only answers you, and asks before anything destructive.
+opens things, searches the web, and texts you back. It works over iMessage (free, on a Mac),
+real SMS (Twilio) or a Telegram bot, only answers you, and asks before anything destructive.
 `npm run dispatch`. See **`dispatch/README.md`**.
 
 ## How payments work (important)

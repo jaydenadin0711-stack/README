@@ -30,10 +30,46 @@ ANTHROPIC_API_KEY=sk-ant-...        # https://console.anthropic.com/settings/key
 DISPATCH_WORKDIR=~/projects         # where it starts out; it can still go elsewhere
 ```
 
-Then pick how your phone talks to it: **Telegram** (easiest) or **real SMS** (Twilio).
-You can set up both.
+Then pick how your phone talks to it:
 
-## 2a. Telegram — easiest, free, no tunnel
+- **iMessage**: free. Needs a Mac laptop and an iPhone.
+- **Telegram**: free, and works on any laptop.
+- **Real SMS (Twilio)**: costs a little per text.
+
+You can set up more than one.
+
+## 2a. iMessage (Mac + iPhone): free
+
+Dispatch sends texts through the Messages app on your Mac and reads your replies
+from it. No Twilio, no fees. Its messages start with 🤖 so you can tell them apart.
+
+**Pick whose Apple ID the bot uses:**
+
+- **Its own (recommended).** Make a free new Apple ID at appleid.apple.com (an email
+  address is enough). On the Mac, open Messages → Settings → iMessage, sign out of
+  yours and sign in with the new one. The bot is then its own contact in your iPhone.
+  (Your own texts stop showing on the Mac, but your iPhone is unaffected.)
+- **Yours.** Leave Messages signed in as you, and the bot talks in your "note to self"
+  chat (text your own number). Nothing to sign up for, but you're texting yourself.
+
+**Then:**
+
+1. In `.env`, put the number or Apple ID email you'll text it **from** (your iPhone):
+   ```
+   DISPATCH_IMESSAGE_TO=+15551234567
+   ```
+2. Give your terminal permission to read Messages: **System Settings → Privacy & Security →
+   Full Disk Access →** turn on **Terminal** (or iTerm / VS Code, whichever you run it
+   from). Quit and reopen that app.
+3. `npm run dispatch`. The first time, macOS asks whether Terminal may control
+   **Messages**. Click **OK**.
+4. You get "🤖 Dispatch is online" on your iPhone. Text it a job.
+   - Using the bot's own Apple ID: text that Apple ID's email from your iPhone.
+   - Using your own: text your own number.
+
+It only acts on texts from `DISPATCH_IMESSAGE_TO`; everything else is ignored.
+
+## 2b. Telegram — easiest, free, no tunnel
 
 1. In Telegram, message **@BotFather** → `/newbot` → pick a name. It gives you a token.
 2. Put it in `.env`: `DISPATCH_TELEGRAM_TOKEN=123456:ABC...`
@@ -42,7 +78,7 @@ You can set up both.
 
 Until step 4 the bot does nothing for anyone; after it, it only listens to you.
 
-## 2b. Real text messages — Twilio
+## 2c. Real text messages — Twilio
 
 1. Sign up at twilio.com and buy a number (about $1–2 a month plus about a cent per text).
    > **US numbers:** carriers block texts from unregistered numbers. In the Twilio console
@@ -121,7 +157,8 @@ It runs as your user account, so it can do what you can do. Don't run it as admi
 ## Keeping it running
 
 - **Stop the laptop sleeping** while you're away: Windows → Power settings → Sleep: Never
-  (plugged in). Mac → `caffeinate -i npm run dispatch`.
+  (plugged in). Mac → start it with `caffeinate -is npm run dispatch` and leave the lid
+  open, or it sleeps anyway.
 - **Start it at login:** `npm i -g pm2 && pm2 start dispatch/index.js --name dispatch && pm2 save`.
   Then follow what `pm2 startup` prints (on Windows use `pm2-installer`).
 
