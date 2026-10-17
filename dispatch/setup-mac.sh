@@ -21,7 +21,7 @@ say() { printf '\n\033[1m%s\033[0m\n' "$1"; }
 # Read from the keyboard even when this script itself came in through a pipe.
 ask() { local v; read -r -p "$1" v < /dev/tty; printf '%s' "$v"; }
 
-say "1/6  Checking for Node.js"
+say "1/5  Checking for Node.js"
 if ! command -v node >/dev/null 2>&1; then
   if command -v brew >/dev/null 2>&1; then
     brew install node
@@ -33,7 +33,7 @@ if ! command -v node >/dev/null 2>&1; then
 fi
 node -v
 
-say "2/6  Downloading Dispatch to $DIR"
+say "2/5  Downloading Dispatch to $DIR"
 if [ -d "$DIR/.git" ]; then
   git -C "$DIR" fetch -q origin "$BRANCH"
   git -C "$DIR" checkout -q "$BRANCH"
@@ -44,7 +44,7 @@ fi
 cd "$DIR"
 npm install --silent --no-audit --no-fund </dev/null
 
-say "3/6  Settings"
+say "3/5  Settings"
 [ -f .env ] || cp .env.example .env
 
 set_env() {  # set_env NAME VALUE — replaces the line in .env
@@ -106,7 +106,7 @@ else
 fi
 chmod 600 .env
 
-say "4/6  Permission to read Messages"
+say "4/5  Permission to read Messages"
 if sqlite3 -readonly "$HOME/Library/Messages/chat.db" 'SELECT 1;' >/dev/null 2>&1; then
   echo "Already allowed."
 else
@@ -121,45 +121,7 @@ else
   fi
 fi
 
-# Under `curl | bash` this script arrives on stdin, so nothing it runs may read stdin.
-claude_ok() {
-  env -u ANTHROPIC_API_KEY claude -p "Reply with just: ok" --output-format text </dev/null 2>/dev/null | grep -i ok >/dev/null
-}
-
-say "5/6  Card vault (Claude Code)"
-# The vault lives on your Claude account, so Dispatch reaches it through
-# Claude Code signed in as you. Skippable: everything else works without it.
-if ! has_env DISPATCH_VAULT_URL; then
-  url=$(ask "Your card vault link (claude.ai/artifact/…), or press Return to skip: ")
-  url=$(printf '%s' "$url" | tr -d '[:space:]')
-  [ -n "$url" ] && set_env DISPATCH_VAULT_URL "$url"
-fi
-if has_env DISPATCH_VAULT_URL; then
-  export PATH="$HOME/.local/bin:$PATH"
-  if ! command -v claude >/dev/null 2>&1; then
-    echo "Installing Claude Code…"
-    curl -fsSL https://claude.ai/install.sh | bash </dev/null
-    export PATH="$HOME/.local/bin:$PATH"
-  fi
-  # Same as Dispatch does: no API key, so it uses your Claude login.
-  if claude_ok; then
-    echo "Claude Code: signed in ✓"
-  else
-    echo "Claude Code needs you to sign in once. It opens now: sign in with your Claude account,"
-    echo "then type /exit to come back here."
-    ask "Press Return to start… " >/dev/null
-    env -u ANTHROPIC_API_KEY claude < /dev/tty || true
-    if claude_ok; then
-      echo "Claude Code: signed in ✓"
-    else
-      echo "Still not signed in — the card vault won't work until you run 'claude' and sign in. Everything else will."
-    fi
-  fi
-else
-  echo "Skipped — run this setup again any time to add it."
-fi
-
-say "6/6  Starting Dispatch"
+say "5/5  Starting Dispatch"
 echo "If macOS asks whether Terminal may control Messages, click OK."
 echo "You'll get '🤖 Dispatch is online' on your iPhone. Keep this window open and the lid up."
 echo "To stop it: Ctrl+C."
