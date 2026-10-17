@@ -358,6 +358,7 @@ class Agent {
         }
         ctx.log(use.name + ' ' + JSON.stringify(use.input).slice(0, 200));
         const out = await runTool(use.name, use.input || {}, ctx);
+        if (use.name === 'card_vault') ctx.log('vault said: ' + out.replace(/\s+/g, ' ').slice(0, 600));
         results.push({ type: 'tool_result', tool_use_id: use.id, content: out });
       }
       this.messages.push({ role: 'user', content: results });
