@@ -134,6 +134,13 @@ invoices-2026 on my desktop and move the PDFs from Downloads into it", "open you
 | `help` | the list |
 | `y` / `n` | answers an approval question |
 
+**Card vault.** If you gave the setup your vault link, text things like
+"log Wemby Prizm Silver PSA 10, cert 12345678, paid $140 from eBay",
+"sold the Cam Ward for $90 on eBay with eBay fees", or "what's still in my vault?".
+Dispatch hands these to Claude Code on the Mac, which is signed in to your Claude
+account (the vault lives there, not on the Mac). They count toward your Claude plan's
+usage, not your API credit. Photos still have to be added on the vault page.
+
 Text yourself from any script or long job:
 
 ```bash
