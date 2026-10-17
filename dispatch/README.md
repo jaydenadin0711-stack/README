@@ -134,6 +134,13 @@ invoices-2026 on my desktop and move the PDFs from Downloads into it", "open you
 | `help` | the list |
 | `y` / `n` | answers an approval question |
 
+**Card vault.** Dispatch keeps its own list of your cards on the Mac, in
+`~/Documents/Card Vault/` (`vault.csv` there opens in Numbers). Text it things like
+"log Wemby Prizm Silver 2023 Prizm #136, PSA 10, paid $140 from eBay",
+"sold the Cam Ward for $90 on eBay with eBay fees", or "what's still in my vault?".
+It's separate from the @jaymoney_cards Vault web page: changes in one don't show up
+in the other. Deleting a card asks you first.
+
 Text yourself from any script or long job:
 
 ```bash

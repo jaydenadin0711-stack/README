@@ -33,6 +33,7 @@ const IDLE_RESET_MS = 3 * 60 * 60 * 1000;
 const MAX_HISTORY = 120;           // messages before a fresh conversation is started
 
 const IS_WIN = process.platform === 'win32';
+const vault = require('./vault');
 
 /* Commands that can destroy work or reach outside the machine. Erring on
    the side of asking: a false positive costs one "y" from your phone. */
@@ -140,7 +141,8 @@ const TOOLS = [
     }
   },
   // Runs on Anthropic's side; results come back in the same response.
-  { type: 'web_search_20260209', name: 'web_search', max_uses: 5 }
+  { type: 'web_search_20260209', name: 'web_search', max_uses: 5 },
+  vault.VAULT_TOOL
 ];
 
 function runShell(command, cwd, timeoutMs, signal) {
@@ -241,6 +243,9 @@ async function runTool(name, input, ctx) {
       case 'open':
         return await openTarget(String(input.target || ''));
 
+      case 'card_vault':
+        return await vault.vaultTool(input, ctx);
+
       case 'text_user':
         await ctx.say(String(input.message || ''));
         return 'Sent.';
@@ -268,6 +273,7 @@ function systemPrompt() {
     '',
     'The laptop: ' + os.hostname() + ', ' + os.type() + ' ' + os.release() + ' (' + process.platform + '), user ' + os.userInfo().username + '.',
     'Default work directory: ' + WORKDIR,
+    'Their trading card vault is the card_vault tool. Anything about their cards (logging, selling, what they have, profit) goes there.',
     '',
     'How to work:',
     '  • Just do the task. Use the tools — look things up on the machine rather than guessing, and check your work before saying it is done.',
