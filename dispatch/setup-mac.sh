@@ -10,6 +10,7 @@
 # to update and restart.
 # ============================================================
 set -e
+main() {
 
 REPO="https://github.com/jaydenadin0711-stack/README.git"
 BRANCH="claude/peaceful-knuth-ihlw4k"
@@ -41,7 +42,7 @@ else
   git clone -q -b "$BRANCH" "$REPO" "$DIR"
 fi
 cd "$DIR"
-npm install --silent --no-audit --no-fund
+npm install --silent --no-audit --no-fund </dev/null
 
 say "3/6  Settings"
 [ -f .env ] || cp .env.example .env
@@ -120,6 +121,11 @@ else
   fi
 fi
 
+# Under `curl | bash` this script arrives on stdin, so nothing it runs may read stdin.
+claude_ok() {
+  env -u ANTHROPIC_API_KEY claude -p "Reply with just: ok" --output-format text </dev/null 2>/dev/null | grep -i ok >/dev/null
+}
+
 say "5/6  Card vault (Claude Code)"
 # The vault lives on your Claude account, so Dispatch reaches it through
 # Claude Code signed in as you. Skippable: everything else works without it.
@@ -132,18 +138,18 @@ if has_env DISPATCH_VAULT_URL; then
   export PATH="$HOME/.local/bin:$PATH"
   if ! command -v claude >/dev/null 2>&1; then
     echo "Installing Claude Code…"
-    curl -fsSL https://claude.ai/install.sh | bash
+    curl -fsSL https://claude.ai/install.sh | bash </dev/null
     export PATH="$HOME/.local/bin:$PATH"
   fi
   # Same as Dispatch does: no API key, so it uses your Claude login.
-  if env -u ANTHROPIC_API_KEY claude -p "Reply with just: ok" --output-format text 2>/dev/null | grep -qi ok; then
+  if claude_ok; then
     echo "Claude Code: signed in ✓"
   else
     echo "Claude Code needs you to sign in once. It opens now: sign in with your Claude account,"
     echo "then type /exit to come back here."
     ask "Press Return to start… " >/dev/null
     env -u ANTHROPIC_API_KEY claude < /dev/tty || true
-    if env -u ANTHROPIC_API_KEY claude -p "Reply with just: ok" --output-format text 2>/dev/null | grep -qi ok; then
+    if claude_ok; then
       echo "Claude Code: signed in ✓"
     else
       echo "Still not signed in — the card vault won't work until you run 'claude' and sign in. Everything else will."
@@ -158,3 +164,5 @@ echo "If macOS asks whether Terminal may control Messages, click OK."
 echo "You'll get '🤖 Dispatch is online' on your iPhone. Keep this window open and the lid up."
 echo "To stop it: Ctrl+C."
 exec caffeinate -is npm run dispatch
+}
+main "$@"
