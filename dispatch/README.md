@@ -134,12 +134,13 @@ invoices-2026 on my desktop and move the PDFs from Downloads into it", "open you
 | `help` | the list |
 | `y` / `n` | answers an approval question |
 
-**Card vault.** Dispatch keeps its own list of your cards on the Mac, in
-`~/Documents/Card Vault/` (`vault.csv` there opens in Numbers). Text it things like
-"log Wemby Prizm Silver 2023 Prizm #136, PSA 10, paid $140 from eBay",
-"sold the Cam Ward for $90 on eBay with eBay fees", or "what's still in my vault?".
-It's separate from the @jaymoney_cards Vault web page: changes in one don't show up
-in the other. Deleting a card asks you first.
+**Card vault.** Text things like "log Wemby Prizm Silver 2023 Prizm #136, PSA 10, paid $140
+from eBay" or "sold the Cam Ward for $90 on eBay with eBay fees". Dispatch hands it to a
+Claude Code chat in the cloud that can reach your @jaymoney_cards Vault page, and texts you
+"sent". The change shows up on the vault page a few seconds later. Nothing comes back to
+Dispatch, so it can't tell you what's in the vault: look at the page for that. Deleting a
+card asks you first. Needs Claude Code signed in on the Mac and `DISPATCH_VAULT_SESSION`
+in `.env` (the setup asks for it).
 
 Text yourself from any script or long job:
 

@@ -21,7 +21,7 @@ say() { printf '\n\033[1m%s\033[0m\n' "$1"; }
 # Read from the keyboard even when this script itself came in through a pipe.
 ask() { local v; read -r -p "$1" v < /dev/tty; printf '%s' "$v"; }
 
-say "1/5  Checking for Node.js"
+say "1/6  Checking for Node.js"
 if ! command -v node >/dev/null 2>&1; then
   if command -v brew >/dev/null 2>&1; then
     brew install node
@@ -33,7 +33,7 @@ if ! command -v node >/dev/null 2>&1; then
 fi
 node -v
 
-say "2/5  Downloading Dispatch to $DIR"
+say "2/6  Downloading Dispatch to $DIR"
 if [ -d "$DIR/.git" ]; then
   git -C "$DIR" fetch -q origin "$BRANCH"
   git -C "$DIR" checkout -q "$BRANCH"
@@ -44,7 +44,7 @@ fi
 cd "$DIR"
 npm install --silent --no-audit --no-fund </dev/null
 
-say "3/5  Settings"
+say "3/6  Settings"
 [ -f .env ] || cp .env.example .env
 
 set_env() {  # set_env NAME VALUE — replaces the line in .env
@@ -106,7 +106,7 @@ else
 fi
 chmod 600 .env
 
-say "4/5  Permission to read Messages"
+say "4/6  Permission to read Messages"
 if sqlite3 -readonly "$HOME/Library/Messages/chat.db" 'SELECT 1;' >/dev/null 2>&1; then
   echo "Already allowed."
 else
@@ -121,7 +121,31 @@ else
   fi
 fi
 
-say "5/5  Starting Dispatch"
+say "5/6  Card vault (optional)"
+# Card requests go to a cloud Claude Code chat through Claude Code on this Mac,
+# signed in to your Claude account (not the API key).
+if ! has_env DISPATCH_VAULT_SESSION; then
+  sid=$(ask "Your vault chat ID (starts with session_), or press Return to skip: ")
+  sid=$(printf '%s' "$sid" | tr -d '[:space:]')
+  [ -n "$sid" ] && set_env DISPATCH_VAULT_SESSION "$sid"
+fi
+if has_env DISPATCH_VAULT_SESSION; then
+  export PATH="$HOME/.local/bin:$PATH"
+  if ! command -v claude >/dev/null 2>&1; then
+    echo "Installing Claude Code…"
+    curl -fsSL https://claude.ai/install.sh | bash </dev/null
+    export PATH="$HOME/.local/bin:$PATH"
+  fi
+  if env -u ANTHROPIC_API_KEY claude auth status </dev/null 2>/dev/null | grep '"loggedIn": true' >/dev/null; then
+    echo "Claude Code: signed in ✓"
+  else
+    echo "Claude Code isn't signed in. After setup, run 'claude', sign in with your Claude account, and type /exit."
+  fi
+else
+  echo "Skipped."
+fi
+
+say "6/6  Starting Dispatch"
 echo "If macOS asks whether Terminal may control Messages, click OK."
 echo "You'll get '🤖 Dispatch is online' on your iPhone. Keep this window open and the lid up."
 echo "To stop it: Ctrl+C."

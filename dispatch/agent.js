@@ -141,9 +141,8 @@ const TOOLS = [
     }
   },
   // Runs on Anthropic's side; results come back in the same response.
-  { type: 'web_search_20260209', name: 'web_search', max_uses: 5 },
-  vault.VAULT_TOOL
-];
+  { type: 'web_search_20260209', name: 'web_search', max_uses: 5 }
+].concat(vault.SESSION ? [vault.VAULT_TOOL] : []);
 
 function runShell(command, cwd, timeoutMs, signal) {
   return new Promise((resolve) => {
@@ -273,7 +272,7 @@ function systemPrompt() {
     '',
     'The laptop: ' + os.hostname() + ', ' + os.type() + ' ' + os.release() + ' (' + process.platform + '), user ' + os.userInfo().username + '.',
     'Default work directory: ' + WORKDIR,
-    'Their trading card vault is the card_vault tool. Anything about their cards (logging, selling, what they have, profit) goes there.',
+    vault.SESSION ? 'Changes to their trading card vault (logging, selling, editing cards) go through the card_vault tool, in one call with all the details.' : '',
     '',
     'How to work:',
     '  • Just do the task. Use the tools — look things up on the machine rather than guessing, and check your work before saying it is done.',
