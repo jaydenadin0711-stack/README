@@ -34,6 +34,7 @@ const MAX_HISTORY = 120;           // messages before a fresh conversation is st
 
 const IS_WIN = process.platform === 'win32';
 const vault = require('./vault');
+const school = require('./school');
 
 /* Commands that can destroy work or reach outside the machine. Erring on
    the side of asking: a false positive costs one "y" from your phone. */
@@ -142,7 +143,7 @@ const TOOLS = [
   },
   // Runs on Anthropic's side; results come back in the same response.
   { type: 'web_search_20260209', name: 'web_search', max_uses: 5 }
-].concat(vault.SESSION ? [vault.VAULT_TOOL] : []);
+].concat(vault.SESSION ? [vault.VAULT_TOOL] : [], school.FEED ? [school.SCHOOL_TOOL] : []);
 
 function runShell(command, cwd, timeoutMs, signal) {
   return new Promise((resolve) => {
@@ -242,6 +243,9 @@ async function runTool(name, input, ctx) {
       case 'open':
         return await openTarget(String(input.target || ''));
 
+      case 'school_assignments':
+        return await school.schoolTool(input);
+
       case 'card_vault':
         return await vault.vaultTool(input, ctx);
 
@@ -272,6 +276,7 @@ function systemPrompt() {
     '',
     'The laptop: ' + os.hostname() + ', ' + os.type() + ' ' + os.release() + ' (' + process.platform + '), user ' + os.userInfo().username + '.',
     'Default work directory: ' + WORKDIR,
+    school.FEED ? 'For homework, assignments and due dates, use school_assignments (their Canvas feed) — never try to open Canvas or Clever.' : '',
     vault.SESSION ? 'Changes to their trading card vault (logging, selling, editing cards) go through the card_vault tool, in one call with all the details.' : '',
     '',
     'How to work:',

@@ -142,6 +142,12 @@ Dispatch, so it can't tell you what's in the vault: look at the page for that. D
 card asks you first. Needs Claude Code signed in on the Mac and `DISPATCH_VAULT_SESSION`
 in `.env` (the setup asks for it).
 
+**School.** With your Canvas calendar feed link set (Canvas on the web → Calendar →
+"Calendar Feed"), text "what do I have due in math this week?" and it reads your
+assignments and due dates. Read-only: it can't log in, submit or change anything in
+Canvas, and it doesn't go through Clever. Treat the feed link like a password — anyone
+with it can see your calendar.
+
 Text yourself from any script or long job:
 
 ```bash
